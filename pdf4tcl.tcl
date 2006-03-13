@@ -14,6 +14,7 @@ package provide pdf4tcl 0.2
 
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames
+package require snit
 
 namespace eval pdf4tcl {
     # helper variables (constants) packaged into arrays to minimize
@@ -94,6 +95,9 @@ namespace eval pdf4tcl {
         }
     }
 
+    Init
+}
+
     # PDF-Struktur:
     # 1 = Root
     #     2 = Pages
@@ -104,108 +108,104 @@ namespace eval pdf4tcl {
     #             .
     #     X = Fonts
 
-    proc new {name args} {
-        variable pdf
-        variable g
+proc pdf4tcl::new {args} {
+    uplevel 1 pdf4tcl::pdf4tcl create $args
+}
 
-        if {[info exists pdf($name)]} {
-            return -code error "pdf $name already exists"
-        }
+snit::type pdf4tcl::pdf4tcl {
+    variable pdf
+    constructor {args} {
+        variable ::pdf4tcl::g
 
-        set pdf($name) $name
-        set pdf($name,xpos) 0
-        set pdf($name,width) 0
-        set pdf($name,ypos) 0
-        set pdf($name,height) 0
-        set pdf($name,orient) 1
-        set pdf($name,pages) 0
-        set pdf($name,pdf_obj) 4
-        set pdf($name,font_size) 8
-        set pdf($name,out_pos) 0
-        #set pdf($name,xref,0) 0
-        set pdf($name,data_start) 0
-        set pdf($name,data_len) 0
-        set pdf($name,fonts) {}
-        set pdf($name,current_font) ""
-        set pdf($name,font_set) false
-        set pdf($name,in_text_object) false
-        set pdf($name,images) {}
-        set pdf($name,compress) 0
-        set pdf($name,finished) false
-        set pdf($name,inPage) false
+        set pdf(xpos) 0
+        set pdf(width) 0
+        set pdf(ypos) 0
+        set pdf(height) 0
+        set pdf(orient) 1
+        set pdf(pages) 0
+        set pdf(pdf_obj) 4
+        set pdf(font_size) 8
+        set pdf(out_pos) 0
+        set pdf(data_start) 0
+        set pdf(data_len) 0
+        set pdf(fonts) {}
+        set pdf(current_font) ""
+        set pdf(font_set) false
+        set pdf(in_text_object) false
+        set pdf(images) {}
+        set pdf(compress) 0
+        set pdf(finished) false
+        set pdf(inPage) false
 
         # output buffer (we need to compress whole pages)
-        set pdf($name,ob) ""
+        set pdf(ob) ""
 
         # collect output in memory
-        set pdf($name,pdf) ""
+        set pdf(pdf) ""
 
         # Offsets
-        set pdf($name,xoff) 0
-        set pdf($name,yoff) 0
+        set pdf(xoff) 0
+        set pdf(yoff) 0
 
         # we use a4 paper by default
-        set pdf($name,paperwidth) 595
-        set pdf($name,paperheight) 842
+        set pdf(paperwidth) 595
+        set pdf(paperheight) 842
 
         foreach {arg value} $args {
             switch -- $arg {
                 "-paper" {
-                    set papersize [getPaperSize $value]
+                    set papersize [pdf4tcl::getPaperSize $value]
                     if {[llength $papersize]==0} {
-                        cleanup $name
+                        $self destroy
                         return -code error "papersize $value is unknown"
                     }
-                    set pdf($name,paperwidth) [lindex $papersize 0]
-                    set pdf($name,paperheight) [lindex $papersize 1]
+                    set pdf(paperwidth) [lindex $papersize 0]
+                    set pdf(paperheight) [lindex $papersize 1]
                 }
                 "-compress" {
                     if {$value} {
                         if {$g(haveZlib)} {
-                            set pdf($name,compress) 1
+                            set pdf(compress) 1
                         } else {
                             puts stderr "Package zlib not available. Sorry, no compression."
                         }
                     } else {
-                        set pdf($name,compress) 0
+                        set pdf(compress) 0
                     }
                 }
                 default {
-                    cleanup $name
+                    $self destroy
                     return -code error \
                             "unknown option $arg"
                 }
             }
         }
 
-        pdfout $name "%PDF-1.3\n"
+        $self pdfout "%PDF-1.3\n"
 
         # start with Helvetica as default font
-        set pdf($name,font_size) 12
-        set pdf($name,current_font) "Helvetica"
+        set pdf(font_size) 12
+        set pdf(current_font) "Helvetica"
 
-        set proccmd {proc ::%name {args} {set subcmd [lindex $args 0]; set otherargs [lrange $args 1 end]; eval "pdf4tcl::$subcmd %name $otherargs"}}
-        regsub -all {%name} $proccmd "$name" proccmd
-        eval $proccmd
+        #set proccmd {proc ::%name {args} {set subcmd [lindex $args 0]; set otherargs [lrange $args 1 end]; eval "pdf4tcl::$subcmd %name $otherargs"}}
+        #regsub -all {%name} $proccmd "$name" proccmd
+        #eval $proccmd
     }
 
-    proc pdfout {name out} {
-        variable pdf
-
-        append pdf($name,ob) $out
-        incr pdf($name,out_pos) [string length $out]
+    method pdfout {out} {
+        append pdf(ob) $out
+        incr pdf(out_pos) [string length $out]
     }
 
-    proc startPage {name args} {
-        variable pdf
+    method startPage {args} {
         set orient 1
         switch [llength $args] {
             0 {
-                set width $pdf($name,paperwidth)
-                set height $pdf($name,paperheight)
+                set width $pdf(paperwidth)
+                set height $pdf(paperheight)
             }
             1 {
-                set papersize [getPaperSize [lindex $args 0]]
+                set papersize [pdf4tcl::getPaperSize [lindex $args 0]]
                 if {[llength $papersize]==0} {
                     return -code error "papersize [lindex $args 0] is unknown"
                 }
@@ -223,208 +223,200 @@ namespace eval pdf4tcl {
             }
         }
 
-        if {$pdf($name,inPage)} {
-            endPage $name
+        if {$pdf(inPage)} {
+            $self endPage
         }
-        set pdf($name,inPage) 1
-        set pdf($name,ypos) $height
-        set pdf($name,width) $width
-        set pdf($name,height) $height
-        set pdf($name,orient) $orient
-        set pdf($name,xpos) 0
-        incr pdf($name,pages)
+        set pdf(inPage) 1
+        set pdf(ypos) $height
+        set pdf(width) $width
+        set pdf(height) $height
+        set pdf(orient) $orient
+        set pdf(xpos) 0
+        incr pdf(pages)
 
         # dimensions
-        set oid [get_oid $name]
-        store_xref $name
-        pdfout $name "$oid 0 obj\n"
-        pdfout $name "<</Type /Page\n"
-        pdfout $name "/Parent 2 0 R\n"
-        pdfout $name "/Resources 3 0 R\n"
-        pdfout $name [format "/MediaBox \[0 0 %g %g\]\n" $width $height]
-        pdfout $name "/Contents \[[next_oid $name] 0 R \]\n"
-        pdfout $name ">>\n"
-        pdfout $name "endobj\n\n"
+        set oid [$self get_oid]
+        $self store_xref
+        $self pdfout "$oid 0 obj\n"
+        $self pdfout "<</Type /Page\n"
+        $self pdfout "/Parent 2 0 R\n"
+        $self pdfout "/Resources 3 0 R\n"
+        $self pdfout [format "/MediaBox \[0 0 %g %g\]\n" $width $height]
+        $self pdfout "/Contents \[[$self next_oid] 0 R \]\n"
+        $self pdfout ">>\n"
+        $self pdfout "endobj\n\n"
 
         # start of contents
-        set oid [incr_oid $name]
-        store_xref $name
-        pdfout $name "$oid 0 obj\n"
-        pdfout $name "<<\n/Length [next_oid $name] 0 R\n"
-        if {$pdf($name,compress)} {
-            pdfout $name "/Filter \[/FlateDecode\]\n"
+        set oid [$self incr_oid]
+        $self store_xref
+        $self pdfout "$oid 0 obj\n"
+        $self pdfout "<<\n/Length [$self next_oid] 0 R\n"
+        if {$pdf(compress)} {
+            $self pdfout "/Filter \[/FlateDecode\]\n"
         }
-        pdfout $name ">>\nstream\n"
-        set pdf($name,data_start) $pdf($name,out_pos)
-        set pdf($name,in_text_object) false
-        incr_oid $name
+        $self pdfout ">>\nstream\n"
+        set pdf(data_start) $pdf(out_pos)
+        set pdf(in_text_object) false
+        $self incr_oid
 
         # no font set on new pages
-        set pdf($name,font_set) false
+        set pdf(font_set) false
 
         # capture output
-        append pdf($name,pdf) $pdf($name,ob)
-        set pdf($name,ob) ""
+        append pdf(pdf) $pdf(ob)
+        set pdf(ob) ""
     }
 
-    proc endPage {name} {
-        variable pdf
-
-        if {! $pdf($name,inPage)} {
+    method endPage {} {
+        if {! $pdf(inPage)} {
             return
         }
-        if {$pdf($name,in_text_object)} {
-            pdfout $name "\nET\n"
+        if {$pdf(in_text_object)} {
+            $self pdfout "\nET\n"
         }
         # get buffer
-        set data $pdf($name,ob)
-        set pdf($name,ob) ""
-        if {$pdf($name,compress) >0} {
+        set data $pdf(ob)
+        set pdf(ob) ""
+        if {$pdf(compress) >0} {
             set data [zlib compress $data]
         }
-        append pdf($name,pdf) $data
+        append pdf(pdf) $data
         set data_len [string length $data]
-        set pdf($name,out_pos) [expr {$pdf($name,data_start)+$data_len}]
-        pdfout $name "\nendstream\n"
-        pdfout $name "endobj\n\n"
-        store_xref $name
-        pdfout $name "[get_oid $name] 0 obj\n"
+        set pdf(out_pos) [expr {$pdf(data_start)+$data_len}]
+        $self pdfout "\nendstream\n"
+        $self pdfout "endobj\n\n"
+        $self store_xref
+        $self pdfout "[$self get_oid] 0 obj\n"
         incr data_len
-        pdfout $name "$data_len\n"
-        pdfout $name "endobj\n\n"
-        incr_oid $name
-        set pdf($name,inPage) false
+        $self pdfout "$data_len\n"
+        $self pdfout "endobj\n\n"
+        $self incr_oid
+        set pdf(inPage) false
     }
 
-    proc finish {name} {
-        variable pdf
-
-        if {$pdf($name,finished)} {
+    method finish {} {
+        if {$pdf(finished)} {
             return
         }
 
-        if {$pdf($name,inPage)} {
-            endPage $name
+        if {$pdf(inPage)} {
+            $self endPage
         }
-        set pdf($name,xref,1) $pdf($name,out_pos)
-        pdfout $name "1 0 obj\n"
-        pdfout $name "<<\n"
-        pdfout $name "/Type /Catalog\n"
-        pdfout $name "/Pages 2 0 R\n"
-        pdfout $name ">>\n"
-        pdfout $name "endobj\n\n"
+        set pdf(xref,1) $pdf(out_pos)
+        $self pdfout "1 0 obj\n"
+        $self pdfout "<<\n"
+        $self pdfout "/Type /Catalog\n"
+        $self pdfout "/Pages 2 0 R\n"
+        $self pdfout ">>\n"
+        $self pdfout "endobj\n\n"
 
-        set pdf($name,xref,2) $pdf($name,out_pos)
-        pdfout $name "2 0 obj\n"
-        pdfout $name "<<\n/Type /Pages\n"
-        pdfout $name "/Count $pdf($name,pages)\n"
-        pdfout $name "/Kids \["
-        for {set a 0} {$a<$pdf($name,pages)} {incr a} {
+        set pdf(xref,2) $pdf(out_pos)
+        $self pdfout "2 0 obj\n"
+        $self pdfout "<<\n/Type /Pages\n"
+        $self pdfout "/Count $pdf(pages)\n"
+        $self pdfout "/Kids \["
+        for {set a 0} {$a<$pdf(pages)} {incr a} {
             set b [expr {4 + $a*3}]
-            pdfout $name "$b 0 R "
+            $self pdfout "$b 0 R "
         }
-        pdfout $name "\]\n"
-        pdfout $name ">>\n"
-        pdfout $name "endobj\n\n"
+        $self pdfout "\]\n"
+        $self pdfout ">>\n"
+        $self pdfout "endobj\n\n"
 
-        set pdf($name,xref,3) $pdf($name,out_pos)
-        pdfout $name "3 0 obj\n"
-        pdfout $name "<<\n"
-        pdfout $name "/ProcSet\[/PDF /Text /ImageC\]\n"
-        pdfout $name "/Font <<\n"
+        set pdf(xref,3) $pdf(out_pos)
+        $self pdfout "3 0 obj\n"
+        $self pdfout "<<\n"
+        $self pdfout "/ProcSet\[/PDF /Text /ImageC\]\n"
+        $self pdfout "/Font <<\n"
 
         # font references
         set count 0
-        foreach fontname $pdf($name,fonts) {
-            set nr [expr {$pdf($name,pdf_obj)+$count}]
-            pdfout $name "/$fontname $nr 0 R\n"
+        foreach fontname $pdf(fonts) {
+            set nr [expr {$pdf(pdf_obj)+$count}]
+            $self pdfout "/$fontname $nr 0 R\n"
             incr count
         }
-        pdfout $name ">>\n"
+        $self pdfout ">>\n"
 
         # image references
-        if {[llength $pdf($name,images)]>0} {
-            pdfout $name "/XObject <<\n"
-            foreach {key value} $pdf($name,images) {
-                set nr [expr {$pdf($name,pdf_obj)+$count}]
-                pdfout $name "/$key $nr 0 R\n"
+        if {[llength $pdf(images)]>0} {
+            $self pdfout "/XObject <<\n"
+            foreach {key value} $pdf(images) {
+                set nr [expr {$pdf(pdf_obj)+$count}]
+                $self pdfout "/$key $nr 0 R\n"
                 incr count
             }
-            pdfout $name ">>\n"
+            $self pdfout ">>\n"
         }
-        pdfout $name ">>\nendobj\n\n"
+        $self pdfout ">>\nendobj\n\n"
 
         # fonts
-        foreach fontname $pdf($name,fonts) {
-            store_xref $name
-            pdfout $name "[get_oid $name] 0 obj\n"
-            pdfout $name "<<\n/Type /Font\n"
-            pdfout $name "/Subtype /Type1\n"
-            pdfout $name "/Encoding /WinAnsiEncoding\n"
-            pdfout $name "/Name /$fontname\n"
-            pdfout $name "/BaseFont /$fontname\n"
-            pdfout $name ">>\n"
-            pdfout $name "endobj\n\n"
-            incr_oid $name
+        foreach fontname $pdf(fonts) {
+            $self store_xref
+            $self pdfout "[$self get_oid] 0 obj\n"
+            $self pdfout "<<\n/Type /Font\n"
+            $self pdfout "/Subtype /Type1\n"
+            $self pdfout "/Encoding /WinAnsiEncoding\n"
+            $self pdfout "/Name /$fontname\n"
+            $self pdfout "/BaseFont /$fontname\n"
+            $self pdfout ">>\n"
+            $self pdfout "endobj\n\n"
+            $self incr_oid
         }
 
         # images
-        foreach {key value} $pdf($name,images) {
-            store_xref $name
+        foreach {key value} $pdf(images) {
+            $self store_xref
             foreach {img_width img_height img_depth img_length img_data} $value {break}
-            pdfout $name "[get_oid $name] 0 obj\n"
-            pdfout $name "<<\n/Type /XObject\n"
-            pdfout $name "/Subtype /Image\n"
-            pdfout $name "/Width $img_width\n/Height $img_height\n"
-            pdfout $name "/ColorSpace /DeviceRGB\n"
-            pdfout $name "/BitsPerComponent $img_depth\n"
-            pdfout $name "/Filter /DCTDecode\n"
-            pdfout $name "/Length $img_length >>\n"
-            pdfout $name "stream\n"
-            pdfout $name $img_data
-            pdfout $name "\nendstream\n"
-            pdfout $name "endobj\n\n"
-            incr_oid $name
+            $self pdfout "[$self get_oid] 0 obj\n"
+            $self pdfout "<<\n/Type /XObject\n"
+            $self pdfout "/Subtype /Image\n"
+            $self pdfout "/Width $img_width\n/Height $img_height\n"
+            $self pdfout "/ColorSpace /DeviceRGB\n"
+            $self pdfout "/BitsPerComponent $img_depth\n"
+            $self pdfout "/Filter /DCTDecode\n"
+            $self pdfout "/Length $img_length >>\n"
+            $self pdfout "stream\n"
+            $self pdfout $img_data
+            $self pdfout "\nendstream\n"
+            $self pdfout "endobj\n\n"
+            $self incr_oid
         }
 
         # cross reference
-        set xref_pos $pdf($name,out_pos)
-        pdfout $name "xref\n"
-        store_xref $name
-        pdfout $name "0 [get_oid $name]\n"
-        pdfout $name "0000000000 65535 f \n"
-        for {set a 1} {$a<[get_oid $name]} {incr a} {
-            set xref $pdf($name,xref,$a)
-            pdfout $name [format "%010ld 00000 n \n" $xref]
+        set xref_pos $pdf(out_pos)
+        $self pdfout "xref\n"
+        $self store_xref
+        $self pdfout "0 [$self get_oid]\n"
+        $self pdfout "0000000000 65535 f \n"
+        for {set a 1} {$a<[$self get_oid]} {incr a} {
+            set xref $pdf(xref,$a)
+            $self pdfout [format "%010ld 00000 n \n" $xref]
         }
-        pdfout $name "trailer\n"
-        pdfout $name "<<\n"
-        pdfout $name "/Size [get_oid $name]\n"
-        pdfout $name "/Root 1 0 R\n"
-        pdfout $name ">>\n"
-        pdfout $name "\nstartxref\n"
-        pdfout $name "$xref_pos\n"
-        pdfout $name "%%EOF\n"
-        append pdf($name,pdf) $pdf($name,ob)
-        set pdf($name,ob) ""
-        set pdf($name,finished) true
+        $self pdfout "trailer\n"
+        $self pdfout "<<\n"
+        $self pdfout "/Size [$self get_oid]\n"
+        $self pdfout "/Root 1 0 R\n"
+        $self pdfout ">>\n"
+        $self pdfout "\nstartxref\n"
+        $self pdfout "$xref_pos\n"
+        $self pdfout "%%EOF\n"
+        append pdf(pdf) $pdf(ob)
+        set pdf(ob) ""
+        set pdf(finished) true
     }
 
-    proc get {name} {
-        variable pdf
-
-        if {$pdf($name,inPage)} {
-            endPage $name
+    method get {} {
+        if {$pdf(inPage)} {
+            $self endPage
         }
-        if {! $pdf($name,finished)} {
-            finish $name
+        if {! $pdf(finished)} {
+            $self finish
         }
-        return $pdf($name,pdf)
+        return $pdf(pdf)
     }
 
-    proc write {name args} {
-        variable pdf
-
+    method write {args} {
         set chan stdout
         set outfile 0
         foreach {arg value} $args {
@@ -443,30 +435,22 @@ namespace eval pdf4tcl {
         }
 
         fconfigure $chan -translation binary
-        puts -nonewline $chan [get $name]
+        puts -nonewline $chan [$self get]
         if {$outfile} {
             close $chan
         }
         return
     }
 
-    proc cleanup {name} {
-        variable pdf
-
-        foreach key [array names pdf "$name,*"] {
-            unset pdf($key)
-        }
-        unset pdf($name)
-        proc ::$name {} {}
-        return
+    method cleanup {} {
+        $self destroy
     }
 
-    proc setFont {name size {fontname ""}} {
-        variable pdf
-        variable font_widths
+    method setFont {size {fontname ""}} {
+        variable ::pdf4tcl::font_widths
 
         if {[string length $fontname]==0} {
-            set fontname $pdf($name,current_font)
+            set fontname $pdf(current_font)
         }
         # font width already loaded?
         if {! [info exists font_widths($fontname)]} {
@@ -476,21 +460,20 @@ namespace eval pdf4tcl {
                 set font_widths($fontname) $tmp
             }
         }
-        set pdf($name,font_size) $size
-        pdfout $name "/$fontname $size Tf\n"
-        pdfout $name "0 Tr\n"
-        pdfout $name "$size TL\n"
-        if {[lsearch $pdf($name,fonts) $fontname]==-1} {
-            lappend pdf($name,fonts) $fontname
+        set pdf(font_size) $size
+        $self pdfout "/$fontname $size Tf\n"
+        $self pdfout "0 Tr\n"
+        $self pdfout "$size TL\n"
+        if {[lsearch $pdf(fonts) $fontname]==-1} {
+            lappend pdf(fonts) $fontname
         }
-        set pdf($name,current_font) $fontname
+        set pdf(current_font) $fontname
 
-        set pdf($name,font_set) true
+        set pdf(font_set) true
     }
 
     proc loadFontMetrics {font} {
-        variable font_afm
-        variable g
+        variable ::pdf4tcl::font_afm
 
         set file $font_afm($font)
         if {[catch {open $file "r"} if]} {
@@ -527,34 +510,30 @@ namespace eval pdf4tcl {
         }
     }
 
-    proc getStringWidth {name txt} {
-        variable pdf
-        variable font_widths
-
+    method getStringWidth {txt} {
         set w 0
         for {set i 0} {$i<[string length $txt]} {incr i} {
             set ch [string index $txt $i]
-            set w [expr {$w + [getCharWidth $name $ch]}]
+            set w [expr {$w + [$self getCharWidth $ch]}]
         }
         return $w
     }
 
-    proc getCharWidth {name ch} {
-        variable pdf
-        variable font_widths
-        variable glyph_names
+    method getCharWidth {ch} {
+        variable ::pdf4tcl::font_widths
+        variable ::pdf4tcl::glyph_names
 
         if {$ch=="\n"} {
             return 0
         }
 
-        set afm2point [expr {0.001 * $pdf($name,font_size)}]
+        set afm2point [expr {0.001 * $pdf(font_size)}]
         if {[scan $ch %c n]!=1} {
             return 0
         }
         set ucs2 [format "%04.4X" $n]
 
-        array set widths $font_widths($pdf($name,current_font))
+        array set widths $font_widths($pdf(current_font))
         set glyph_name zero
         set w 0
         catch {set w $widths("zero")}
@@ -567,40 +546,32 @@ namespace eval pdf4tcl {
         return [expr {$w*$afm2point}]
     }
 
-    proc setTextPosition {name x y} {
-        variable pdf
-        variable g
-
-        beginTextObj $name
-        set pdf($name,xpos) [expr {$x + $pdf($name,xoff)}]
-        if {$pdf($name,orient)} {
-            set pdf($name,ypos) [expr {$pdf($name,height) - $y - \
-                                               $pdf($name,yoff)}]
+    method setTextPosition {x y} {
+        $self beginTextObj
+        set pdf(xpos) [expr {$x + $pdf(xoff)}]
+        if {$pdf(orient)} {
+            set pdf(ypos) [expr {$pdf(height) - $y - \
+                                               $pdf(yoff)}]
         } else {
-            set pdf($name,ypos) [expr {$y + $pdf($name,yoff)}]
+            set pdf(ypos) [expr {$y + $pdf(yoff)}]
         }
-        pdfout $name [format "1 0 0 1 %s %s Tm\n" \
-                              [nf $pdf($name,xpos)] [nf $pdf($name,ypos)]]
+        $self pdfout [format "1 0 0 1 %s %s Tm\n" \
+                              [nf $pdf(xpos)] [nf $pdf(ypos)]]
     }
 
     # draw text at current position with angle ang
-    proc drawText {name str {ang 0}} {
-        variable pdf
-
-        beginTextObj $name
-        if {! $pdf($name,font_set)} {
-            #SetBaseFont $name $pdf($name,current_font)
-            setFont $name $pdf($name,font_size) $pdf($name,current_font)
+    method drawText {str {ang 0}} {
+        $self beginTextObj
+        if {! $pdf(font_set)} {
+            #SetBaseFont $name $pdf(current_font)
+            $self setFont $pdf(font_size) $pdf(current_font)
         }
-        pdfout $name "([cleanText $str]) '\n"
-        set pdf($name,ypos) [expr {$pdf($name,ypos) + \
-                                           $pdf($name,font_size)}]
+        $self pdfout "([cleanText $str]) '\n"
+        set pdf(ypos) [expr {$pdf(ypos) + \
+                                           $pdf(font_size)}]
     }
 
-    proc drawTextAt {name x y str args} {
-        variable pdf
-        variable g
-
+    method drawTextAt {x y str args} {
         set align "left"
         set angle 0
         foreach {arg value} $args {
@@ -618,36 +589,33 @@ namespace eval pdf4tcl {
             }
         }
 
-        beginTextObj $name
+        $self beginTextObj
 
-        if {! $pdf($name,font_set)} {
-            setFont $name $pdf($name,font_size)
+        if {! $pdf(font_set)} {
+            $self setFont $pdf(font_size)
         }
 
         if {$align == "right"} {
-            set x [expr {$x - [getStringWidth $name $str]}]
+            set x [expr {$x - [$self getStringWidth $str]}]
         } elseif {$align == "center"} {
-            set x [expr {$x - [getStringWidth $name $str] / 2 * cos($angle*3.1415926/180.0)}]
-            set y [expr {$y - [getStringWidth $name $str] / 2 * sin($angle*3.1415926/180.0)}]
+            set x [expr {$x - [$self getStringWidth $str] / 2 * cos($angle*3.1415926/180.0)}]
+            set y [expr {$y - [$self getStringWidth $str] / 2 * sin($angle*3.1415926/180.0)}]
         }
         if {$angle != 0} {
-            set pdf($name,xpos) [expr {$x + $pdf($name,xoff)}]
-            if {$pdf($name,orient)} {
-                set pdf($name,ypos) [expr {$pdf($name,height) - $y - $pdf($name,yoff)}]
+            set pdf(xpos) [expr {$x + $pdf(xoff)}]
+            if {$pdf(orient)} {
+                set pdf(ypos) [expr {$pdf(height) - $y - $pdf(yoff)}]
             } else {
-                set pdf($name,ypos) [expr {$y + $pdf($name,yoff)}]
+                set pdf(ypos) [expr {$y + $pdf(yoff)}]
             }
-            rotateText $name $angle
+            $self rotateText $angle
         } else {
-            setTextPosition $name $x $y
+            $self setTextPosition $x $y
         }
-        pdfout $name "([cleanText $str]) Tj\n"
+        $self pdfout "([cleanText $str]) Tj\n"
     }
 
-    proc drawTextBox {name x y width height txt args} {
-        variable pdf
-        variable g
-
+    method drawTextBox {x y width height txt args} {
         foreach {arg value} $args {
             switch -- $arg {
                 "-align" {
@@ -660,13 +628,13 @@ namespace eval pdf4tcl {
             }
         }
 
-        beginTextObj $name
+        $self beginTextObj
 
         # pre-calculate some values
-        set font_height $pdf($name,font_size)
-        set space_width [getCharWidth $name " "]
+        set font_height $pdf(font_size)
+        set space_width [$self getCharWidth " "]
         set ystart $y
-        if {!$pdf($name,orient)} {
+        if {!$pdf(orient)} {
             set y [expr {$y+$height-3*$font_height/2}]
         }
         set len [string length $txt]
@@ -684,7 +652,7 @@ namespace eval pdf4tcl {
             if {[regexp "\[ \t\r\n-\]" $ch]} {
                 set lastbp $pos
             }
-            set w [getCharWidth $name $ch]
+            set w [$self getCharWidth $ch]
             if {($cwidth+$w)>$width || $pos>=$len || $ch=="\n"} {
                 if {$pos>=$len} {
                     set done true
@@ -699,29 +667,29 @@ namespace eval pdf4tcl {
                         set words [split $sent " "]
                         if {[llength $words]>1 && (!$done) && $ch!="\n"} {
                             # determine additional width per space
-                            set sw [getStringWidth $name $sent]
+                            set sw [$self getStringWidth $sent]
                             set add [expr {($width-$sw)/([llength $words]-1)}]
                             # display words
                             set xx $x
                             for {set i 0} {$i<[llength $words]} {incr i} {
-                                drawTextAt $name $xx $y [lindex $words $i]
-                                set xx [expr {$xx+[getStringWidth $name [lindex $words $i]]+$space_width+$add}]
+                                $self drawTextAt $xx $y [lindex $words $i]
+                                set xx [expr {$xx+[$self getStringWidth [lindex $words $i]]+$space_width+$add}]
                             }
                         } else {
-                            drawTextAt $name $x $y $sent
+                            $self drawTextAt $x $y $sent
                         }
                     }
                     "right" {
-                        drawTextAt $name [expr {$x+$width}] $y $sent -align right
+                        $self drawTextAt [expr {$x+$width}] $y $sent -align right
                     }
                     "center" {
-                        drawTextAt $name [expr {$x+$width/2.0}] $y $sent -align center
+                        $self drawTextAt [expr {$x+$width/2.0}] $y $sent -align center
                     }
                     default {
-                        drawTextAt $name $x $y $sent
+                        $self drawTextAt $x $y $sent
                     }
                 }
-                if {$pdf($name,orient)} {
+                if {$pdf(orient)} {
                     set y [expr {$y+$font_height}]
                 } else {
                     set y [expr {$y-$font_height}]
@@ -744,87 +712,73 @@ namespace eval pdf4tcl {
 
     ###<jpo 2004-11-08: replaced "on off" by "args"
     ###                 to enable resetting dashed lines
-    proc setLineStyle {name width args} {
-        variable pdf
-
-        endTextObj $name
-        pdfout $name "$width w\n"
-        pdfout $name "\[$args\] 0 d\n"
+    method setLineStyle {width args} {
+        $self endTextObj
+        $self pdfout "$width w\n"
+        $self pdfout "\[$args\] 0 d\n"
     }
 
-    proc line {name x1 y1 x2 y2} {
-        variable pdf
-        variable g
-
-        endTextObj $name
-        if {$pdf($name,orient)} {
-            set y1 [expr {$pdf($name,height)-$y1}]
-            set y2 [expr {$pdf($name,height)-$y2}]
+    method line {x1 y1 x2 y2} {
+        $self endTextObj
+        if {$pdf(orient)} {
+            set y1 [expr {$pdf(height)-$y1}]
+            set y2 [expr {$pdf(height)-$y2}]
         }
-        pdfout $name [format "%g %g m\n" [nf [expr {$x1+$pdf($name,xoff)}]] [nf [expr {$y1+$pdf($name,yoff)}]]]
-        pdfout $name [format "%g %g l\n" [nf [expr {$x2+$pdf($name,xoff)}]] [nf [expr {$y2+$pdf($name,yoff)}]]]
-        pdfout $name "S\n"
+        $self pdfout [format "%g %g m\n" [nf [expr {$x1+$pdf(xoff)}]] [nf [expr {$y1+$pdf(yoff)}]]]
+        $self pdfout [format "%g %g l\n" [nf [expr {$x2+$pdf(xoff)}]] [nf [expr {$y2+$pdf(yoff)}]]]
+        $self pdfout "S\n"
     }
 
     ###>2004-11-03 jpo
-    proc qCurve {name x1 y1 xc yc x2 y2} {
-        variable pdf
-        variable g
-
-        endTextObj $name
-        if {$pdf($name,orient)} {
-            set y1 [expr {$pdf($name,height)-$y1}]
-            set y2 [expr {$pdf($name,height)-$y2}]
-            set yc [expr {$pdf($name,height)-$yc}]
+    method qCurve {x1 y1 xc yc x2 y2} {
+        $self endTextObj
+        if {$pdf(orient)} {
+            set y1 [expr {$pdf(height)-$y1}]
+            set y2 [expr {$pdf(height)-$y2}]
+            set yc [expr {$pdf(height)-$yc}]
         }
-        pdfout $name [format "%g %g m\n" [nf [expr {$x1+$pdf($name,xoff)}]] [nf [expr {$y1+$pdf($name,yoff)}]]]
-        pdfout $name [format "%g %g %g %g %g %g c\n" \
-                              [nf [expr {0.3333*$x1+0.6667*$xc+$pdf($name,xoff)}]] \
-                              [nf [expr {0.3333*$y1+0.6667*$yc+$pdf($name,yoff)}]] \
-                              [nf [expr {0.3333*$x2+0.6667*$xc+$pdf($name,xoff)}]] \
-                              [nf [expr {0.3333*$y2+0.6667*$yc+$pdf($name,yoff)}]] \
-                              [nf [expr {$x2+$pdf($name,xoff)}]] \
-                              [nf [expr {$y2+$pdf($name,yoff)}]] \
+        $self pdfout [format "%g %g m\n" [nf [expr {$x1+$pdf(xoff)}]] [nf [expr {$y1+$pdf(yoff)}]]]
+        $self pdfout [format "%g %g %g %g %g %g c\n" \
+                              [nf [expr {0.3333*$x1+0.6667*$xc+$pdf(xoff)}]] \
+                              [nf [expr {0.3333*$y1+0.6667*$yc+$pdf(yoff)}]] \
+                              [nf [expr {0.3333*$x2+0.6667*$xc+$pdf(xoff)}]] \
+                              [nf [expr {0.3333*$y2+0.6667*$yc+$pdf(yoff)}]] \
+                              [nf [expr {$x2+$pdf(xoff)}]] \
+                              [nf [expr {$y2+$pdf(yoff)}]] \
                              ]
-        pdfout $name "S\n"
+        $self pdfout "S\n"
     }
     ###<jpo
 
     ###>2004-11-07 jpo
     # polygon name isFilled x0 y0 x1 y1 ...
-    proc polygon {name isFilled args} {
-        variable pdf
-        variable g
-
-        endTextObj $name
+    method polygon {isFilled args} {
+        $self endTextObj
         if {$isFilled} {set op "b"} else {set op "s"}
         set start 1
         foreach {x y} $args {
-            if {$pdf($name,orient)} {
-                set y [expr {$pdf($name,height)-$y}]
+            if {$pdf(orient)} {
+                set y [expr {$pdf(height)-$y}]
             }
             if {$start} {
-                pdfout $name [format "%g %g m\n" \
-                                      [nf [expr {$x+$pdf($name,xoff)}]] \
-                                      [nf [expr {$y+$pdf($name,yoff)}]]]
+                $self pdfout [format "%g %g m\n" \
+                                      [nf [expr {$x+$pdf(xoff)}]] \
+                                      [nf [expr {$y+$pdf(yoff)}]]]
                 set start 0
             } else {
-                pdfout $name [format "%g %g l\n" \
-                                      [nf [expr {$x+$pdf($name,xoff)}]] \
-                                      [nf [expr {$y+$pdf($name,yoff)}]]]
+                $self pdfout [format "%g %g l\n" \
+                                      [nf [expr {$x+$pdf(xoff)}]] \
+                                      [nf [expr {$y+$pdf(yoff)}]]]
             }
         }
-        pdfout $name " $op\n"
+        $self pdfout " $op\n"
     }
 
-    proc circle {name isFilled x y r} {
-        variable pdf
-        variable g
-
-        endTextObj $name
+    method circle {isFilled x y r} {
+        $self endTextObj
         if {$isFilled} {set op "b"} else {set op "s"}
-        if {$pdf($name,orient)} {
-            set y [expr {$pdf($name,height)-$y}]
+        if {$pdf(orient)} {
+            set y [expr {$pdf(height)-$y}]
         }
         set sq [expr {4.0*(sqrt(2.0)-1.0)/3.0}]
         set x0(0) [expr {$x+$r}]
@@ -853,19 +807,19 @@ namespace eval pdf4tcl {
         set y2(3) [expr {$y-$r*$sq}]
         set x3(3) [expr {$x+$r}]
         set y3(3) $y
-        pdfout $name [format "%g %g m\n" \
-                              [nf [expr {$x0(0)+$pdf($name,xoff)}]] \
-                              [nf [expr {$y0(0)+$pdf($name,yoff)}]]]
+        $self pdfout [format "%g %g m\n" \
+                              [nf [expr {$x0(0)+$pdf(xoff)}]] \
+                              [nf [expr {$y0(0)+$pdf(yoff)}]]]
         for {set i 0} {$i < 4} {incr i} {
-            pdfout $name [format "%g %g %g %g %g %g c\n" \
-                                  [nf [expr {$x1($i)+$pdf($name,xoff)}]] \
-                                  [nf [expr {$y1($i)+$pdf($name,yoff)}]] \
-                                  [nf [expr {$x2($i)+$pdf($name,xoff)}]] \
-                                  [nf [expr {$y2($i)+$pdf($name,yoff)}]] \
-                                  [nf [expr {$x3($i)+$pdf($name,xoff)}]] \
-                                  [nf [expr {$y3($i)+$pdf($name,yoff)}]]]
+            $self pdfout [format "%g %g %g %g %g %g c\n" \
+                                  [nf [expr {$x1($i)+$pdf(xoff)}]] \
+                                  [nf [expr {$y1($i)+$pdf(yoff)}]] \
+                                  [nf [expr {$x2($i)+$pdf(xoff)}]] \
+                                  [nf [expr {$y2($i)+$pdf(yoff)}]] \
+                                  [nf [expr {$x3($i)+$pdf(xoff)}]] \
+                                  [nf [expr {$y3($i)+$pdf(yoff)}]]]
         }
-        pdfout $name " $op\n"
+        $self pdfout " $op\n"
     }
 
     # scale with r, rotate by phi, and move by (dx, dy)
@@ -893,18 +847,15 @@ namespace eval pdf4tcl {
         return [list $x0 $y0 $x1 $y1 $x2 $y2 $x3 $y3]
     }
 
-    proc arc {name x0 y0 r phi extend} {
-        variable pdf
-        variable g
-
+    method arc {x0 y0 r phi extend} {
         if {abs($extend) >= 360.0} {
-            circle $name 0 $x0 $y0 $r
+            $self circle 0 $x0 $y0 $r
             return
         }
-        endTextObj $name
+        $self endTextObj
         if {abs($extend) < 0.01} return
-        if {$pdf($name,orient)} {
-            set y0 [expr {$pdf($name,height)-$y0}]
+        if {$pdf(orient)} {
+            set y0 [expr {$pdf(height)-$y0}]
         }
         set count 1
         while {abs($extend) > 90} {
@@ -916,47 +867,44 @@ namespace eval pdf4tcl {
         set phi2 [expr {0.5*$extend}]
         set x [expr {$x0+$r*cos($phi)}]
         set y [expr {$y0+$r*sin($phi)}]
-        pdfout $name [format "%g %g m\n" \
-                              [nf [expr {$x+$pdf($name,xoff)}]] \
-                              [nf [expr {$y+$pdf($name,yoff)}]]]
+        $self pdfout [format "%g %g m\n" \
+                              [nf [expr {$x+$pdf(xoff)}]] \
+                              [nf [expr {$y+$pdf(yoff)}]]]
         set points [simplearc $phi2]
         set phi [expr {$phi+$phi2}]
         for {set i 0} {$i < $count} {incr i} {
             foreach {x y x1 y1 x2 y2 x3 y3} \
                     [transform $r $phi $x0 $y0 $points] break
             set phi [expr {$phi+$extend}]
-            pdfout $name [format "%g %g %g %g %g %g c\n" \
-                                  [nf [expr {$x1+$pdf($name,xoff)}]] \
-                                  [nf [expr {$y1+$pdf($name,yoff)}]] \
-                                  [nf [expr {$x2+$pdf($name,xoff)}]] \
-                                  [nf [expr {$y2+$pdf($name,yoff)}]] \
-                                  [nf [expr {$x3+$pdf($name,xoff)}]] \
-                                  [nf [expr {$y3+$pdf($name,yoff)}]]]
+            $self pdfout [format "%g %g %g %g %g %g c\n" \
+                                  [nf [expr {$x1+$pdf(xoff)}]] \
+                                  [nf [expr {$y1+$pdf(yoff)}]] \
+                                  [nf [expr {$x2+$pdf(xoff)}]] \
+                                  [nf [expr {$y2+$pdf(yoff)}]] \
+                                  [nf [expr {$x3+$pdf(xoff)}]] \
+                                  [nf [expr {$y3+$pdf(yoff)}]]]
         }
-        pdfout $name " S\n"
+        $self pdfout " S\n"
     }
     ###<jpo
 
-    proc arrow {name x1 y1 x2 y2 sz {angle 20}} {
-        line $name $x1 $y1 $x2 $y2
+    method arrow {x1 y1 x2 y2 sz {angle 20}} {
+        $self line $x1 $y1 $x2 $y2
         set rad [expr {$angle*3.1415926/180.0}]
         set ang [expr {atan2(($y1-$y2), ($x1-$x2))}]
-        line $name $x2 $y2 [expr {$x2+$sz*cos($ang+$rad)}] [expr {$y2+$sz*sin($ang+$rad)}]
-        line $name $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}]
+        $self line $x2 $y2 [expr {$x2+$sz*cos($ang+$rad)}] [expr {$y2+$sz*sin($ang+$rad)}]
+        $self line $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}]
     }
 
-    proc setFillColor {name red green blue} {
-        pdfout $name "$red $green $blue rg\n"
+    method setFillColor {red green blue} {
+        $self pdfout "$red $green $blue rg\n"
     }
 
-    proc setStrokeColor {name red green blue} {
-        pdfout $name "$red $green $blue RG\n"
+    method setStrokeColor {red green blue} {
+        $self pdfout "$red $green $blue RG\n"
     }
 
-    proc rectangle {name x y w h args} {
-        variable pdf
-        variable g
-
+    method rectangle {x y w h args} {
         set filled 0
         foreach {arg value} $args {
             switch -- $arg {
@@ -968,54 +916,47 @@ namespace eval pdf4tcl {
                 }
             }
         }
-        endTextObj $name
-        if {$pdf($name,orient)} {
-            set y [expr {$pdf($name,height)-$y}]
+        $self endTextObj
+        if {$pdf(orient)} {
+            set y [expr {$pdf(height)-$y}]
             set h [expr {0-$h}]
         }
-        pdfout $name [format "%g %g $w $h re\n" [nf [expr {$x+$pdf($name,xoff)}]] [nf [expr {$y+$pdf($name,yoff)}]]]
+        $self pdfout [format "%g %g $w $h re\n" [nf [expr {$x+$pdf(xoff)}]] [nf [expr {$y+$pdf(yoff)}]]]
         if {$filled} {
-            pdfout $name "B\n"
+            $self pdfout "B\n"
         } else {
-            pdfout $name "B\n"
+            $self pdfout "B\n"
         }
     }
 
-    proc moveTo {name x1 y1} {
-        variable pdf
+    method moveTo {x1 y1} {
 
-        endTextObj $name
-        set y1 [expr {$pdf($name,height)-$y1}]
-        pdfout $name [format "%g %g m\n" [nf [expr {$x1+$pdf($name,xoff)}]] [[expr {$y1+$pdf($name,yoff)}]]]
+        $self endTextObj
+        set y1 [expr {$pdf(height)-$y1}]
+        $self pdfout [format "%g %g m\n" [nf [expr {$x1+$pdf(xoff)}]] [[expr {$y1+$pdf(yoff)}]]]
     }
 
-    proc closePath {name} {
-        pdfout $name "b\n"
+    method closePath {} {
+        $self pdfout "b\n"
     }
 
-    proc rotateText {name angle} {
-        variable pdf
-        variable g
-
-        beginTextObj $name
+    method rotateText {angle} {
+        $self beginTextObj
         set rad [expr {$angle*3.1415926/180.0}]
         set c [nf [expr {cos($rad)}]]
         set s [nf [expr {sin($rad)}]]
-        pdfout $name "$c [expr {0-$s}] $s $c $pdf($name,xpos) $pdf($name,ypos) Tm\n"
+        $self pdfout "$c [expr {0-$s}] $s $c $pdf(xpos) $pdf(ypos) Tm\n"
     }
 
-    proc skewText {name xangle yangle} {
-        variable pdf
-
+    method skewText {xangle yangle} {
         set tx [expr {tan($xangle*3.1415926/180.0)}]
         set ty [expr {tan($yangle*3.1415926/180.0)}]
-        pdfout $name [format "1 %g %g 1 %g %g Tm\n" $tx $ty $pdf($name,xpos) $pdf($name,ypos)]
-        set pdf($name,xpos) 0
-        set pdf($name,ypos) $pdf($name,height)
+        $self pdfout [format "1 %g %g 1 %g %g Tm\n" $tx $ty $pdf(xpos) $pdf(ypos)]
+        set pdf(xpos) 0
+        set pdf(ypos) $pdf(height)
     }
 
-    proc addJpeg {name filename id} {
-        variable pdf
+    method addJpeg {filename id} {
 
         set imgOK false
         if {[catch {open $filename "r"} if]} {
@@ -1049,16 +990,14 @@ namespace eval pdf4tcl {
             }
         }
         if {$imgOK} {
-            lappend pdf($name,images) $id [list $width $height $depth $img_length $img]
+            lappend pdf(images) $id [list $width $height $depth $img_length $img]
         } else {
             return -code error "something is wrong with jpeg data in file $filename"
         }
     }
 
-    proc putImage {name id x y args} {
-        variable pdf
-
-        array set aimg $pdf($name,images)
+    method putImage {id x y args} {
+        array set aimg $pdf(images)
         foreach {width height depth length data} $aimg($id) {break}
 
         set w $width
@@ -1078,31 +1017,27 @@ namespace eval pdf4tcl {
             set w [expr {$width*$h/$height}]
         }
 
-        endTextObj $name
-        if {$pdf($name,orient)} {
-            set y [expr {$pdf($name,height)-$y-$h}]
+        $self endTextObj
+        if {$pdf(orient)} {
+            set y [expr {$pdf(height)-$y-$h}]
         }
-        pdfout $name "q\n$w 0 0 $h $x $y cm\n/$id Do\nQ\n"
+        $self pdfout "q\n$w 0 0 $h $x $y cm\n/$id Do\nQ\n"
         return
     }
 
     # start text object, if not already in text
-    proc beginTextObj {name} {
-        variable pdf
-
-        if {! $pdf($name,in_text_object)} {
-            pdfout $name "BT\n"
-            set pdf($name,in_text_object) true
+    method beginTextObj {} {
+        if {! $pdf(in_text_object)} {
+            $self pdfout "BT\n"
+            set pdf(in_text_object) true
         }
     }
 
     # end text object, if in text, else do nothing
-    proc endTextObj {name} {
-        variable pdf
-
-        if {$pdf($name,in_text_object)} {
-            pdfout $name "ET\n"
-            set pdf($name,in_text_object) false
+    method endTextObj {} {
+        if {$pdf(in_text_object)} {
+            $self pdfout "ET\n"
+            set pdf(in_text_object) false
         }
     }
 
@@ -1112,34 +1047,26 @@ namespace eval pdf4tcl {
     }
 
     # helper function: return current object id
-    proc get_oid {name} {
-        variable pdf
-
-        return $pdf($name,pdf_obj)
+    method get_oid {} {
+        return $pdf(pdf_obj)
     }
 
     # helper function: return next object id (without incrementing)
-    proc next_oid {name} {
-        variable pdf
-
-        set oid [get_oid $name]
+    method next_oid {} {
+        set oid [$self get_oid]
         return [expr {$oid+1}]
     }
 
     # helper function: increment object id and return new value
-    proc incr_oid {name} {
-        variable pdf
-
-        incr pdf($name,pdf_obj)
-        return $pdf($name,pdf_obj)
+    method incr_oid {} {
+        incr pdf(pdf_obj)
+        return $pdf(pdf_obj)
     }
 
     # helper function: set xref of current oid to current out_pos
-    proc store_xref {name} {
-        variable pdf
-
-        set oid $pdf($name,pdf_obj)
-        set pdf($name,xref,$oid) $pdf($name,out_pos)
+    method store_xref {} {
+        set oid $pdf(pdf_obj)
+        set pdf(xref,$oid) $pdf(out_pos)
     }
 
     # helper function for formatting floating point numbers
@@ -1148,8 +1075,6 @@ namespace eval pdf4tcl {
         set factor 10000.0
         return [expr {round($n*$factor)/$factor}]
     }
-
-    Init
 }
 
 # vim: tw=0
