@@ -1,0 +1,36 @@
+# Test the ones in the examples directory
+#
+# $Id$
+
+source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
+
+file link tcl.jpg ../examples/tcl.jpg
+
+test examples-1.1 {example test0} -body {
+    source ../examples/test0.tcl
+    exec diff ../examples/test0.pdf test0.pdf
+} -result {}
+
+test examples-1.2 {example test1} -body {
+    source ../examples/test1.tcl
+    exec diff ../examples/test1.pdf test1.pdf
+} -result {}
+
+test examples-1.3 {example test2} -body {
+    source ../examples/test2.tcl
+    exec diff ../examples/test2.pdf test2.pdf
+} -result {}
+
+test examples-1.4 {example test4} -body {
+    source ../examples/test4.tcl
+    exec diff ../examples/test4.pdf test4.pdf
+} -result {}
+
+test examples-1.5 {example test5} -body {
+    source ../examples/test5.tcl
+    exec diff ../examples/test5.pdf test5.pdf
+} -result {}
+
+# Cleanup
+eval file delete [glob test*.pdf]
+file delete tcl.jpg
