@@ -10,7 +10,7 @@
 # Version 0.1   base features for generating correct pdf files
 # Version 0.2   more graphic operators, fixed font handling
 
-package provide pdf4tcl 0.2
+package provide pdf4tcl 0.2.1
 
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames
@@ -25,13 +25,15 @@ namespace eval pdf4tcl {
     variable font_afm
     variable paper_sizes
 
-    # state variable, indexed by user supplied name
-    variable pdf
-
     # path to adobe afm files
     set g(ADOBE_AFM_PATH) {}
     # change this to reflect your machines install!
-    set g(ADOBE_AFM_PATH) {/usr/share/texmf/fonts/afm/adobe/*}
+    lappend g(ADOBE_AFM_PATH) {/usr/share/texmf/fonts/afm/adobe/*}
+    #lappend g(ADOBE_AFM_PATH) {/usr/share/enscript}
+    #lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/ghostscript}
+    #lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/Type1}
+    #lappend g(ADOBE_AFM_PATH) {/usr/share/a2ps/afm}
+    #lappend g(ADOBE_AFM_PATH) {/usr/share/ogonkify/afm}
 
     # font width array
     array set font_widths {}
@@ -54,9 +56,6 @@ namespace eval pdf4tcl {
         letter { 612  792}
     }
 
-    # state variable
-    array set pdf {}
-
     if {[catch {package require zlib} err]} {
         set g(haveZlib) 0
     } else {
@@ -64,10 +63,10 @@ namespace eval pdf4tcl {
     }
 
     proc Init {} {
-        loadAfmMapping
+        LoadAfmMapping
     }
 
-    proc loadAfmMapping {} {
+    proc LoadAfmMapping {} {
         variable font_afm
         variable g
 
@@ -76,15 +75,17 @@ namespace eval pdf4tcl {
                 set if [open $file "r"]
                 while {[gets $if line]!=-1} {
                     if {[regexp {^FontName\s*(.*)$} $line dummy fontname]} {
-                        close $if
                         set font_afm($fontname) $file
                         break
                     }
                 }
+                close $if
             }
         }
+        #parray font_afm
     }
 
+    # Utility to look up paper size by name
     proc getPaperSize {papername} {
         variable paper_sizes
 
@@ -95,40 +96,111 @@ namespace eval pdf4tcl {
         }
     }
 
+    # Return a list of known paper sizes
+    proc getPaperSizeList {} {
+        variable paper_sizes
+        return [array names paper_sizes]
+    }
+
+    # Get points from a measurement.
+    proc getPoints {val} {
+        if {[string is double -strict $val]} {
+            return $val
+        }
+        if {[regexp {^\s*(\S+?)\s*([[:alpha:]]+)\s*$} $val -> num unit]} {
+            if {[string is double -strict $num]} {
+                switch -- $unit {
+                    mm {
+                        return [expr {$num / 25.4 * 72.0}]
+                    }
+                    i {
+                        return [expr {$num * 72.0}]
+                    }
+                }
+            }
+        }
+        return -code error "Unknown value $val"
+    }
+
+    # Wrapper to create pdf4tcl object
+    proc new {args} {
+        uplevel 1 pdf4tcl::pdf4tcl create $args
+    }
+
     Init
 }
 
-    # PDF-Struktur:
-    # 1 = Root
-    #     2 = Pages
-    #     3 = Resources
-    #     4 = First page
-    #             .
-    #             .
-    #             .
-    #     X = Fonts
+# PDF-Struktur:
+# 1 = Root
+#     2 = Pages
+#     3 = Resources
+#     4 = First page
+#             .
+#             .
+#             .
+#     X = Fonts
 
-proc pdf4tcl::new {args} {
-    uplevel 1 pdf4tcl::pdf4tcl create $args
-}
 
+# Object used for generating pdf
 snit::type pdf4tcl::pdf4tcl {
     variable pdf
+
+    # Global option handling
+    option -paper     -default a4     -validatemethod CheckPaper
+    option -landscape -default 0      -validatemethod CheckBoolean
+    option -orient    -default 1      -validatemethod CheckBoolean
+    option -compress  -default 0      -validatemethod CheckBoolean \
+            -configuremethod SetCompress
+    option -margin    -default 0      -validatemethod CheckMargin
+
+    method CheckPaper {option value} {
+        set papersize [pdf4tcl::getPaperSize $value]
+        if {[llength $papersize] == 0} {
+            return -code error "papersize $value is unknown"
+        }
+    }
+
+    method CheckMargin {option value} {
+        switch {[llength $value]} {
+            1 - 2 - 4 {}
+            default {
+                return -code error "Bad margin list '$list'"
+            }
+        }
+    }
+
+    method CheckBoolean {option value} {
+        if {![string is boolean -strict $value]} {
+            return -code error "option $option must have a boolean value."
+        }
+    }
+
+    method SetCompress {option value} {
+        variable ::pdf4tcl::g
+        if {$value} {
+            if {$g(haveZlib)} {
+                set options($option) 1
+            } else {
+                puts stderr "Package zlib not available. Sorry, no compression."
+            }
+        } else {
+            set options($option) 0
+        }
+    }
+
     constructor {args} {
         variable ::pdf4tcl::g
 
-        set pdf(xpos) 0
-        set pdf(width) 0
-        set pdf(ypos) 0
-        set pdf(height) 0
-        set pdf(orient) 1
+        $self configurelist $args
+
+        # Document data
         set pdf(pages) 0
         set pdf(pdf_obj) 4
-        set pdf(font_size) 8
         set pdf(out_pos) 0
         set pdf(data_start) 0
         set pdf(data_len) 0
         set pdf(fonts) {}
+        set pdf(font_size) 8
         set pdf(current_font) ""
         set pdf(font_set) false
         set pdf(in_text_object) false
@@ -136,6 +208,17 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(compress) 0
         set pdf(finished) false
         set pdf(inPage) false
+
+        # Page data
+        set pdf(xpos) 0
+        set pdf(width) 0
+        set pdf(ypos) 0
+        set pdf(height) 0
+        set pdf(orient) 1
+        set pdf(marginleft)   0
+        set pdf(marginright)  0
+        set pdf(margintop)    0
+        set pdf(marginbottom) 0
 
         # output buffer (we need to compress whole pages)
         set pdf(ob) ""
@@ -147,79 +230,108 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(xoff) 0
         set pdf(yoff) 0
 
-        # we use a4 paper by default
-        set pdf(paperwidth) 595
-        set pdf(paperheight) 842
-
-        foreach {arg value} $args {
-            switch -- $arg {
-                "-paper" {
-                    set papersize [pdf4tcl::getPaperSize $value]
-                    if {[llength $papersize]==0} {
-                        $self destroy
-                        return -code error "papersize $value is unknown"
-                    }
-                    set pdf(paperwidth) [lindex $papersize 0]
-                    set pdf(paperheight) [lindex $papersize 1]
-                }
-                "-compress" {
-                    if {$value} {
-                        if {$g(haveZlib)} {
-                            set pdf(compress) 1
-                        } else {
-                            puts stderr "Package zlib not available. Sorry, no compression."
-                        }
-                    } else {
-                        set pdf(compress) 0
-                    }
-                }
-                default {
-                    $self destroy
-                    return -code error \
-                            "unknown option $arg"
-                }
-            }
-        }
-
+        # Start on pdfout
         $self pdfout "%PDF-1.3\n"
 
         # start with Helvetica as default font
         set pdf(font_size) 12
         set pdf(current_font) "Helvetica"
-
-        #set proccmd {proc ::%name {args} {set subcmd [lindex $args 0]; set otherargs [lrange $args 1 end]; eval "pdf4tcl::$subcmd %name $otherargs"}}
-        #regsub -all {%name} $proccmd "$name" proccmd
-        #eval $proccmd
     }
 
+    # Add data to accumulated pdf output
     method pdfout {out} {
         append pdf(ob) $out
         incr pdf(out_pos) [string length $out]
     }
 
     method startPage {args} {
-        set orient 1
-        switch [llength $args] {
-            0 {
-                set width $pdf(paperwidth)
-                set height $pdf(paperheight)
-            }
-            1 {
-                set papersize [pdf4tcl::getPaperSize [lindex $args 0]]
-                if {[llength $papersize]==0} {
-                    return -code error "papersize [lindex $args 0] is unknown"
+        set localopts(-orient)    $options(-orient)
+        set localopts(-landscape) $options(-landscape)
+        set localopts(-margin)    $options(-margin)
+        set localopts(-paper)     $options(-paper)
+        set usepaper 1
+        set paperset 0
+        set landscapeset 0
+
+        if {[llength $args] == 1} {
+            # Single arg = paper
+            $self CheckPaper -paper [lindex $args 0]
+            set localopts(-paper) [lindex $args 0]
+            set paperset 1
+        } elseif {[llength $args] == 2 && [string is digit [join $args ""]]} {
+            # Old style two numeric args
+            set width  [lindex $args 0]
+            set height [lindex $args 1]
+            set usepaper 0
+            set paperset 1
+        } elseif {[llength $args] == 3 && [string is digit [join $args ""]]} {
+            # Old style three numeric args
+            set width  [lindex $args 0]
+            set height [lindex $args 1]
+            set localopts(-orient) [lindex $args 2]
+            set usepaper 0
+            set paperset 1
+        } elseif {[llength $args] % 2 != 0} {
+            # Uneven, error
+            return -code error "AAAARRRGH"
+        } else {
+            # Parse options
+            foreach {option value} $args {
+                switch -- $option {
+                    -paper {
+                        $self CheckPaper $option $value
+                        set paperset 1
+                    }
+                    -landscape {
+                        $self CheckBoolean $option $value
+                        set landscapeset 1
+                    }
+                    -margin {
+                        $self CheckMargin $option $value
+                    }
+                    -orient {
+                        $self CheckBoolean $option $value
+                    }
+                    default {
+                        return -code error "Unknown option $option"
+                    }
                 }
-                set width [lindex $papersize 0]
-                set height [lindex $papersize 1]
+                set localopts($option) $value
+            }
+        }
+
+        if {$usepaper} {
+            set papersize [pdf4tcl::getPaperSize $localopts(-paper)]
+            set width  [lindex $papersize 0]
+            set height [lindex $papersize 1]
+        }
+        # Switch if landscape has been asked for
+        if {(!$paperset || $landscapeset) && $localopts(-landscape)} {
+            set tmp    $width
+            set width  $height
+            set height $tmp
+        }
+
+        # Fill in margins
+        set value $localopts(-margin)
+        switch {[llength $value]} {
+            1 {
+                set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 0]]
             }
             2 {
-                set width [lindex $args 0]
-                set height [lindex $args 1]
+                set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 1]]
+                set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 1]]
             }
-            3 {
-                set width [lindex $args 0]
-                set height [lindex $args 1]
-                set orient [lindex $args 2]
+            4 {
+                set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 1]]
+                set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 2]]
+                set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 3]]
             }
         }
 
@@ -230,7 +342,7 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(ypos) $height
         set pdf(width) $width
         set pdf(height) $height
-        set pdf(orient) $orient
+        set pdf(orient) $localopts(-orient)
         set pdf(xpos) 0
         incr pdf(pages)
 
@@ -444,6 +556,28 @@ snit::type pdf4tcl::pdf4tcl {
 
     method cleanup {} {
         $self destroy
+    }
+
+    # Transform user coordinates to page coordinates
+    # This should take into account orientation, rotation, margins.
+    method Trans {x y txName tyName} {
+        upvar 1 $txName tx $tyName ty
+
+        set px [pdf4tcl::getPoints $x]
+        set py [pdf4tcl::getPoints $y]
+
+        set tx [expr {$px + $pdf(xoff)}]
+        set ty [expr {$py + $pdf(yoff)}]
+        if {$pdf(orient)} {
+            set ty [expr {$pdf(height) - $ty}]
+        }
+    }
+
+    # Returns width and height of drawable area, excluding margins.
+    method getDrawableArea {} {
+        set w [expr {$pdf(width) - $pdf(marginleft) - $pdf(marginright)}]
+        set h [expr {$pdf(height) - $pdf(margintop)  - $pdf(marginbottom)}]
+        return [list $w $h]
     }
 
     method setFont {size {fontname ""}} {
