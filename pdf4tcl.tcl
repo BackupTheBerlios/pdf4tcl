@@ -2,7 +2,8 @@
 # this is a port of pdf4php from php to tcl
 
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
-# Jens Pönisch <jens@ruessel.in-chemnitz.de>
+#                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
+# Copyright (c) 2006 by Peter Spjuth <peter.spjuth@space.se>
 
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -31,7 +32,7 @@ namespace eval pdf4tcl {
     lappend g(ADOBE_AFM_PATH) {/usr/share/texmf/fonts/afm/adobe/*}
     #lappend g(ADOBE_AFM_PATH) {/usr/share/enscript}
     #lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/ghostscript}
-    #lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/Type1}
+    lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/Type1}
     #lappend g(ADOBE_AFM_PATH) {/usr/share/a2ps/afm}
     #lappend g(ADOBE_AFM_PATH) {/usr/share/ogonkify/afm}
 
@@ -86,14 +87,20 @@ namespace eval pdf4tcl {
     }
 
     # Utility to look up paper size by name
+    # A two element list of width and height is also allowed.
     proc getPaperSize {papername} {
         variable paper_sizes
 
         if {[info exists paper_sizes($papername)]} {
             return $paper_sizes($papername)
-        } else {
+        }
+        if {[catch {set len [llength $papername]}] || $len != 2} {
             return {}
         }
+        foreach {w h} $papername break
+        set w [getPoints $w]
+        set h [getPoints $h]
+        return [list $w $h]
     }
 
     # Return a list of known paper sizes
@@ -103,6 +110,8 @@ namespace eval pdf4tcl {
     }
 
     # Get points from a measurement.
+    # No unit means points.
+    # Supported units are "mm", "cm", and "i".
     proc getPoints {val} {
         if {[string is double -strict $val]} {
             return $val
@@ -112,6 +121,9 @@ namespace eval pdf4tcl {
                 switch -- $unit {
                     mm {
                         return [expr {$num / 25.4 * 72.0}]
+                    }
+                    cm {
+                        return [expr {$num / 2.54 * 72.0}]
                     }
                     i {
                         return [expr {$num * 72.0}]
@@ -161,10 +173,16 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     method CheckMargin {option value} {
-        switch {[llength $value]} {
-            1 - 2 - 4 {}
+        switch [llength $value] {
+            1 - 2 - 4 {
+                foreach elem $value {
+                    if {[catch {pdf4tcl::getPoints $elem}]} {
+                        return -code error "Bad margin value '$elem'"
+                    }
+                }
+            }
             default {
-                return -code error "Bad margin list '$list'"
+                return -code error "Bad margin list '$value'"
             }
         }
     }
@@ -210,15 +228,10 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(inPage) false
 
         # Page data
-        set pdf(xpos) 0
-        set pdf(width) 0
-        set pdf(ypos) 0
-        set pdf(height) 0
-        set pdf(orient) 1
-        set pdf(marginleft)   0
-        set pdf(marginright)  0
-        set pdf(margintop)    0
-        set pdf(marginbottom) 0
+        # Fill in page properies
+        $self SetPageSize $options(-paper) $options(-landscape)
+        $self SetPageMargin $options(-margin)
+        set pdf(orient) $options(-orient)
 
         # output buffer (we need to compress whole pages)
         set pdf(ob) ""
@@ -226,7 +239,7 @@ snit::type pdf4tcl::pdf4tcl {
         # collect output in memory
         set pdf(pdf) ""
 
-        # Offsets
+        # Offsets FIXA
         set pdf(xoff) 0
         set pdf(yoff) 0
 
@@ -244,77 +257,9 @@ snit::type pdf4tcl::pdf4tcl {
         incr pdf(out_pos) [string length $out]
     }
 
-    method startPage {args} {
-        set localopts(-orient)    $options(-orient)
-        set localopts(-landscape) $options(-landscape)
-        set localopts(-margin)    $options(-margin)
-        set localopts(-paper)     $options(-paper)
-        set usepaper 1
-        set paperset 0
-        set landscapeset 0
-
-        if {[llength $args] == 1} {
-            # Single arg = paper
-            $self CheckPaper -paper [lindex $args 0]
-            set localopts(-paper) [lindex $args 0]
-            set paperset 1
-        } elseif {[llength $args] == 2 && [string is digit [join $args ""]]} {
-            # Old style two numeric args
-            set width  [lindex $args 0]
-            set height [lindex $args 1]
-            set usepaper 0
-            set paperset 1
-        } elseif {[llength $args] == 3 && [string is digit [join $args ""]]} {
-            # Old style three numeric args
-            set width  [lindex $args 0]
-            set height [lindex $args 1]
-            set localopts(-orient) [lindex $args 2]
-            set usepaper 0
-            set paperset 1
-        } elseif {[llength $args] % 2 != 0} {
-            # Uneven, error
-            return -code error "AAAARRRGH"
-        } else {
-            # Parse options
-            foreach {option value} $args {
-                switch -- $option {
-                    -paper {
-                        $self CheckPaper $option $value
-                        set paperset 1
-                    }
-                    -landscape {
-                        $self CheckBoolean $option $value
-                        set landscapeset 1
-                    }
-                    -margin {
-                        $self CheckMargin $option $value
-                    }
-                    -orient {
-                        $self CheckBoolean $option $value
-                    }
-                    default {
-                        return -code error "Unknown option $option"
-                    }
-                }
-                set localopts($option) $value
-            }
-        }
-
-        if {$usepaper} {
-            set papersize [pdf4tcl::getPaperSize $localopts(-paper)]
-            set width  [lindex $papersize 0]
-            set height [lindex $papersize 1]
-        }
-        # Switch if landscape has been asked for
-        if {(!$paperset || $landscapeset) && $localopts(-landscape)} {
-            set tmp    $width
-            set width  $height
-            set height $tmp
-        }
-
-        # Fill in margins
-        set value $localopts(-margin)
-        switch {[llength $value]} {
+    # Fill in page margin from a user specified value
+    method SetPageMargin {value} {
+        switch -- [llength $value] {
             1 {
                 set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
                 set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 0]]
@@ -333,17 +278,84 @@ snit::type pdf4tcl::pdf4tcl {
                 set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 2]]
                 set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 3]]
             }
+            default {
+                puts "ARARARARARAR '$value'"
+            }
+        }
+    }
+
+    method SetPageSize {paper landscape} {
+        set papersize [pdf4tcl::getPaperSize $paper]
+        set width  [lindex $papersize 0]
+        set height [lindex $papersize 1]
+
+        # Switch if landscape has been asked for
+        if {$landscape} {
+            set tmp    $width
+            set width  $height
+            set height $tmp
+        }
+        set pdf(width)  $width
+        set pdf(height) $height
+        set pdf(xpos)   0
+        set pdf(ypos)   $height
+    }
+
+    method startPage {args} {
+        set localopts(-orient)    $options(-orient)
+        set localopts(-landscape) $options(-landscape)
+        set localopts(-margin)    $options(-margin)
+        set localopts(-paper)     $options(-paper)
+
+        if {[llength $args] == 1} {
+            # Single arg = paper
+            $self CheckPaper -paper [lindex $args 0]
+            set localopts(-paper) [lindex $args 0]
+        } elseif {[llength $args] == 2 && [string is digit [join $args ""]]} {
+            # Old style two numeric args
+            $self CheckPaper -paper $args
+            set localopts(-paper) $args
+        } elseif {[llength $args] == 3 && [string is digit [join $args ""]]} {
+            # Old style three numeric args
+            $self CheckPaper -paper [lrange $args 0 1]
+            set localopts(-paper)   [lrange $args 0 1]
+            set localopts(-orient)  [lindex $args 2]
+        } elseif {[llength $args] % 2 != 0} {
+            # Uneven, error
+            return -code error "AAAARRRGH"
+        } else {
+            # Parse options
+            foreach {option value} $args {
+                switch -- $option {
+                    -paper {
+                        $self CheckPaper $option $value
+                    }
+                    -landscape {
+                        $self CheckBoolean $option $value
+                    }
+                    -margin {
+                        $self CheckMargin $option $value
+                    }
+                    -orient {
+                        $self CheckBoolean $option $value
+                    }
+                    default {
+                        return -code error "Unknown option $option"
+                    }
+                }
+                set localopts($option) $value
+            }
         }
 
         if {$pdf(inPage)} {
             $self endPage
         }
-        set pdf(inPage) 1
-        set pdf(ypos) $height
-        set pdf(width) $width
-        set pdf(height) $height
+        # Fill in page properies
+        $self SetPageSize $localopts(-paper) $localopts(-landscape)
+        $self SetPageMargin $localopts(-margin)
         set pdf(orient) $localopts(-orient)
-        set pdf(xpos) 0
+
+        set pdf(inPage) 1
         incr pdf(pages)
 
         # dimensions
@@ -353,7 +365,7 @@ snit::type pdf4tcl::pdf4tcl {
         $self pdfout "<</Type /Page\n"
         $self pdfout "/Parent 2 0 R\n"
         $self pdfout "/Resources 3 0 R\n"
-        $self pdfout [format "/MediaBox \[0 0 %g %g\]\n" $width $height]
+        $self pdfout [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
         $self pdfout "/Contents \[[$self next_oid] 0 R \]\n"
         $self pdfout ">>\n"
         $self pdfout "endobj\n\n"
@@ -558,18 +570,33 @@ snit::type pdf4tcl::pdf4tcl {
         $self destroy
     }
 
-    # Transform user coordinates to page coordinates
-    # This should take into account orientation, rotation, margins.
+    # Transform absolute user coordinates to page coordinates
+    # This should take into account orientation, margins.
     method Trans {x y txName tyName} {
         upvar 1 $txName tx $tyName ty
 
         set px [pdf4tcl::getPoints $x]
         set py [pdf4tcl::getPoints $y]
 
-        set tx [expr {$px + $pdf(xoff)}]
-        set ty [expr {$py + $pdf(yoff)}]
+        set tx [expr {$px + $pdf(marginleft)}]
         if {$pdf(orient)} {
+            set ty [expr {$py + $pdf(margintop)}]
             set ty [expr {$pdf(height) - $ty}]
+        } else {
+            set ty [expr {$py + $pdf(marginbottom)}]
+        }
+    }
+
+    # Transform relative user coordinates to page coordinates
+    # This should take into account orientation.
+    method TransR {x y txName tyName} {
+        upvar 1 $txName tx $tyName ty
+
+        set tx [pdf4tcl::getPoints $x]
+        set ty [pdf4tcl::getPoints $y]
+
+        if {$pdf(orient)} {
+            set ty [expr {- $ty}]
         }
     }
 
@@ -682,13 +709,7 @@ snit::type pdf4tcl::pdf4tcl {
 
     method setTextPosition {x y} {
         $self beginTextObj
-        set pdf(xpos) [expr {$x + $pdf(xoff)}]
-        if {$pdf(orient)} {
-            set pdf(ypos) [expr {$pdf(height) - $y - \
-                                               $pdf(yoff)}]
-        } else {
-            set pdf(ypos) [expr {$y + $pdf(yoff)}]
-        }
+        $self Trans $x $y pdf(xpos) pdf(ypos)
         $self pdfout [format "1 0 0 1 %s %s Tm\n" \
                               [nf $pdf(xpos)] [nf $pdf(ypos)]]
     }
@@ -910,7 +931,11 @@ snit::type pdf4tcl::pdf4tcl {
 
     method circle {isFilled x y r} {
         $self endTextObj
-        if {$isFilled} {set op "b"} else {set op "s"}
+        if {$isFilled} {
+            set op "b"
+        } else {
+            set op "s"
+        }
         if {$pdf(orient)} {
             set y [expr {$pdf(height)-$y}]
         }
