@@ -15,7 +15,7 @@ p1 setFillColor 0.3 0.6 0.9
 p1 rectangle 400 40 166 166
 p1 setFillColor 0 0 0
 p1 drawTextAt 100 200 "linksbündig"
-p1 drawTextAt 100 214 "rechtsbündig ¤" -align right
+p1 drawTextAt 100 214 "rechtsbündig \xAC" -align right
 p1 drawTextAt 100 228 "zentriert" -align center
 p1 setFont 8 "Times-Roman"
 p1 drawTextAt 100 242 "Dies ist ein etwas längerer Satz in einer kleineren Schriftart."
@@ -54,7 +54,7 @@ p1 setFillColor 0.3 0.6 0.9
 p1 rectangle 400 40 166 166
 p1 setFillColor 0 0 0
 p1 drawTextAt 100 200 "linksbündig"
-p1 drawTextAt 100 214 "rechtsbündig ¤" -align right
+p1 drawTextAt 100 214 "rechtsbündig \xAC" -align right
 p1 drawTextAt 100 228 "zentriert" -align center
 p1 setFont 8 "Times-Roman"
 p1 drawTextAt 100 242 "Dies ist ein etwas längerer Satz in einer kleineren Schriftart."
