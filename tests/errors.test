@@ -1,0 +1,58 @@
+# Test error cases                                                   -*-tcl-*-
+#
+# $Id$
+
+source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
+
+test errors-1.1 {startPage option errors} -body {
+    pdf4tcl::new apa
+    set res {}
+    lappend res [catch {apa startPage -paper miffo}]
+    lappend res [catch {apa startPage -margin {1 2 3}}]
+    lappend res [catch {apa startPage -margin {1 x}}]
+    lappend res [catch {apa startPage -landscape x}]
+    lappend res [catch {apa startPage -orient urga}]
+    lappend res [catch {apa startPage miffo}]
+    lappend res [catch {apa startPage -orient urga -margin}]
+    lappend res [catch {apa startPage -badoption x}]
+} -result {1 1 1 1 1 1 1 1} -cleanup {apa destroy}
+
+test errors-1.2 {write errors} -body {
+    pdf4tcl::new apa
+    set res {}
+
+    set f [makeFile {} unwritable.tmp]
+    file attributes $f -permissions ugo-w
+    lappend res [catch {apa write -file $f}]
+    removeFile unwritable.tmp
+
+    lappend res [catch {apa write -badoptiona x}]
+} -result {1 1} -cleanup {apa destroy}
+
+test errors-1.3 {setFont errors} -body {
+    pdf4tcl::new apa
+    set res {}
+
+    lappend res [catch {apa setFont 10 "no_such_font"} msg] $msg
+} -result {1 {Could not load font metrics for no_such_font}} \
+        -cleanup {apa destroy}
+
+test errors-1.4 {misc option errors} -body {
+    pdf4tcl::new apa
+    set res {}
+    lappend res [catch {apa drawTextAt  0 0 0     -badoption x}]
+    lappend res [catch {apa drawTextBox 0 0 0 0 0 -badoption x}]
+    lappend res [catch {apa rectangle   0 0 0 0   -badoption x}]
+} -result {1 1 1} -cleanup {apa destroy}
+
+test errors-1.5 {addJpeg errors} -body {
+    pdf4tcl::new apa
+    set res {}
+
+    # Bad file
+    set f [makeFile {xxxxxxx} dummy.tmp]
+    lappend res [catch {apa addJPeg $f 0}]
+    removeFile dummy.tmp
+    # No file
+    lappend res [catch {apa addJPeg $f 0}]
+} -result {1 1} -cleanup {apa destroy}

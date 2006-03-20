@@ -1,10 +1,12 @@
-# Test the ones in the examples directory
+# Test the examples in the examples directory                        -*-tcl-*-
 #
 # $Id$
 
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 
-file link tcl.jpg ../examples/tcl.jpg
+if {![file exists tcl.jpg]} {
+    file link tcl.jpg ../examples/tcl.jpg
+}
 
 test examples-1.1 {example test0} -body {
     source ../examples/test0.tcl

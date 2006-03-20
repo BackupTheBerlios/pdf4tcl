@@ -7,5 +7,9 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
-set ::auto_path [concat [list [file join [pwd] ..]] $::auto_path]
+set tmp [file join [pwd] ..]
+set ::auto_path [concat [list $tmp] $::auto_path]
+if {[file exists $tmp/pdf4tcl.tcl_i]} {
+    source $tmp/pdf4tcl.tcl_i
+}
 package require pdf4tcl
