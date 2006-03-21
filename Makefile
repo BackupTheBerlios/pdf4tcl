@@ -5,12 +5,18 @@
 NAGELFAR = nagelfar
 ESKIL    = eskil
 
+# Documentation
+doc : pdf4tcl.html pdf4tcl.n
+
+pdf4tcl.html pdf4tcl.n : pdf4tcl.man mkdoc.tcl
+	mkdoc.tcl
+
+# Tests
 test: cleancc
 	tclsh tests/all.tcl
 
 check:
 	nagelfar pdf4tcl.tcl -filter '*Unknown variable*'
-
 
 # Code coverage tests
 SRCFILES = pdf4tcl.tcl
