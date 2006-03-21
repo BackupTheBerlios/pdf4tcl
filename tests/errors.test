@@ -51,8 +51,9 @@ test errors-1.5 {addJpeg errors} -body {
 
     # Bad file
     set f [makeFile {xxxxxxx} dummy.tmp]
-    lappend res [catch {apa addJPeg $f 0}]
+    lappend res [catch {apa addJpeg $f 0} msg] $msg
     removeFile dummy.tmp
     # No file
-    lappend res [catch {apa addJPeg $f 0}]
-} -result {1 1} -cleanup {apa destroy}
+    lappend res [catch {apa addJpeg $f 0} msg] $msg
+} -match glob -result {1 {*does not contain*} 1 {Could not open*}} \
+        -cleanup {apa destroy}
