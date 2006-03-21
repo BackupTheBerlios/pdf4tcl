@@ -1,0 +1,64 @@
+# Test graphic commands                                              -*-tcl-*-
+#
+# $Id$
+
+source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
+
+proc mytest {cmd pattern} {
+    pdf4tcl::new apa -orient 0
+    apa startPage
+    eval apa $cmd
+    set res [apa get]
+    apa destroy
+
+    regexp {stream.*endstream} $res res
+    regsub -all {\s+} $res " " res
+
+    set pattern *[string trim $pattern]*
+    regsub -all {\s+} $pattern " " pattern
+
+    if {[string match *[string trim $pattern]* $res]} {
+        return 1
+    } else {
+        return $res
+    }
+}
+
+test graphics-1.1 {circle} -body {
+    mytest {circle 0  10  10  5} {
+        15 10 m
+        15 12.761 12.761 15 10 15 c
+        7.239 15 5 12.761 5 10 c
+        5 7.239 7.239 5 10 5 c
+        12.761 5 15 7.239 15 10 c
+        s
+    }
+} -result 1
+
+test graphics-1.2 {circle} -body {
+    mytest {circle 1  10  10  5} {
+        15 10 m
+        15 12.761 12.761 15 10 15 c
+        7.239 15 5 12.761 5 10 c
+        5 7.239 7.239 5 10 5 c
+        12.761 5 15 7.239 15 10 c
+        b
+    }
+} -result 1
+
+test graphics-2.1 {arc} -body {
+    # 360 degree arc = circle
+    mytest {arc 10  10  5 50 360} {
+        15 10 m
+        15 12.761 12.761 15 10 15 c
+        7.239 15 5 12.761 5 10 c
+        5 7.239 7.239 5 10 5 c
+        12.761 5 15 7.239 15 10 c
+        s
+    }
+} -result 1
+
+test graphics-2.2 {arc} -body {
+    # 0 degree arc = nothing
+    mytest {arc 10  10  5 60 0.0001} {stream endstream}
+} -result 1

@@ -44,3 +44,19 @@ test page-1.3 {page settings, margin} -body {
     lappend res [apa getDrawableArea]
 } -result {{575 822} {555 782} {565 772}} \
         -cleanup {apa destroy}
+
+
+test page-2.1 {misc page handling} -body {
+    pdf4tcl::new apa
+    # Test multiple page commands to check robustness
+    apa startPage
+    apa startPage
+    apa endPage
+    apa endPage
+    apa startPage
+    apa startPage
+    apa finish
+    apa finish
+    apa get
+} -cleanup {apa destroy} -match glob \
+        -result "%PDF*/Page*/Page*/Page*/Page*/Pages*/Count 4*%%EOF\n"
