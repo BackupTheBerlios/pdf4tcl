@@ -10,6 +10,7 @@
 
 # Version 0.1   base features for generating correct pdf files
 # Version 0.2   more graphic operators, fixed font handling
+# Version 0.3   Redesigned to use Snit. TBW
 
 package provide pdf4tcl 0.2.1
 
@@ -162,7 +163,7 @@ snit::type pdf4tcl::pdf4tcl {
     option -landscape -default 0      -validatemethod CheckBoolean
     option -orient    -default 1      -validatemethod CheckBoolean
     option -compress  -default 0      -validatemethod CheckBoolean \
-            -configuremethod SetCompress
+            -configuremethod SetCompress -readonly 1
     option -margin    -default 0      -validatemethod CheckMargin
 
     method CheckPaper {option value} {
@@ -223,7 +224,7 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(font_set) false
         set pdf(in_text_object) false
         set pdf(images) {}
-        set pdf(compress) 0
+        set pdf(compress) $options(-compress)
         set pdf(finished) false
         set pdf(inPage) false
 
@@ -238,10 +239,6 @@ snit::type pdf4tcl::pdf4tcl {
 
         # collect output in memory
         set pdf(pdf) ""
-
-        # Offsets FIXA
-        set pdf(xoff) 0
-        set pdf(yoff) 0
 
         # Start on pdfout
         $self pdfout "%PDF-1.3\n"
@@ -707,11 +704,15 @@ snit::type pdf4tcl::pdf4tcl {
         return [expr {$w*$afm2point}]
     }
 
-    method setTextPosition {x y} {
+    method setTextPosition {x y {internal 0}} {
         $self beginTextObj
-        $self Trans $x $y pdf(xpos) pdf(ypos)
-        $self pdfout [format "1 0 0 1 %s %s Tm\n" \
-                              [nf $pdf(xpos)] [nf $pdf(ypos)]]
+        if {$internal} {
+            set pdf(xpos) $x
+            set pdf(ypos) $y
+        } else {
+            $self Trans $x $y pdf(xpos) pdf(ypos)
+        }
+        $self pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) Tm
     }
 
     # draw text at current position with angle ang
@@ -722,6 +723,7 @@ snit::type pdf4tcl::pdf4tcl {
             $self setFont $pdf(font_size) $pdf(current_font)
         }
         $self pdfout "([cleanText $str]) '\n"
+        # FIXA?
         set pdf(ypos) [expr {$pdf(ypos) + \
                                            $pdf(font_size)}]
     }
@@ -750,22 +752,20 @@ snit::type pdf4tcl::pdf4tcl {
             $self setFont $pdf(font_size)
         }
 
+        $self Trans $x $y x y
+        set strWidth [$self getStringWidth $str]
         if {$align == "right"} {
-            set x [expr {$x - [$self getStringWidth $str]}]
+            set x [expr {$x - $strWidth}]
         } elseif {$align == "center"} {
-            set x [expr {$x - [$self getStringWidth $str] / 2 * cos($angle*3.1415926/180.0)}]
-            set y [expr {$y - [$self getStringWidth $str] / 2 * sin($angle*3.1415926/180.0)}]
+            set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
+            set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
         }
         if {$angle != 0} {
-            set pdf(xpos) [expr {$x + $pdf(xoff)}]
-            if {$pdf(orient)} {
-                set pdf(ypos) [expr {$pdf(height) - $y - $pdf(yoff)}]
-            } else {
-                set pdf(ypos) [expr {$y + $pdf(yoff)}]
-            }
+            set pdf(xpos) $x
+            set pdf(ypos) $y
             $self rotateText $angle
         } else {
-            $self setTextPosition $x $y
+            $self setTextPosition $x $y 1
         }
         $self pdfout "([cleanText $str]) Tj\n"
     }
@@ -789,7 +789,7 @@ snit::type pdf4tcl::pdf4tcl {
         set font_height $pdf(font_size)
         set space_width [$self getCharWidth " "]
         set ystart $y
-        if {!$pdf(orient)} {
+        if {!$pdf(orient)} { #FIXA
             set y [expr {$y+$height-3*$font_height/2}]
         }
         set len [string length $txt]
@@ -844,7 +844,7 @@ snit::type pdf4tcl::pdf4tcl {
                         $self drawTextAt $x $y $sent
                     }
                 }
-                if {$pdf(orient)} {
+                if {$pdf(orient)} { #FIXA
                     set y [expr {$y+$font_height}]
                 } else {
                     set y [expr {$y-$font_height}]
@@ -869,39 +869,36 @@ snit::type pdf4tcl::pdf4tcl {
     ###                 to enable resetting dashed lines
     method setLineStyle {width args} {
         $self endTextObj
-        $self pdfout "$width w\n"
+        $self pdfoutcmd $width "w"
         $self pdfout "\[$args\] 0 d\n"
     }
 
-    method line {x1 y1 x2 y2} {
+    method line {x1 y1 x2 y2 {internal 0}} {
         $self endTextObj
-        if {$pdf(orient)} {
-            set y1 [expr {$pdf(height)-$y1}]
-            set y2 [expr {$pdf(height)-$y2}]
+        if {!$internal} {
+            $self Trans $x1 $y1 x1 y1
+            $self Trans $x2 $y2 x2 y2
         }
-        $self pdfout [format "%g %g m\n" [nf [expr {$x1+$pdf(xoff)}]] [nf [expr {$y1+$pdf(yoff)}]]]
-        $self pdfout [format "%g %g l\n" [nf [expr {$x2+$pdf(xoff)}]] [nf [expr {$y2+$pdf(yoff)}]]]
-        $self pdfout "S\n"
+        $self pdfoutcmd $x1 $y1 "m"
+        $self pdfoutcmd $x2 $y2 "l"
+        $self pdfoutcmd "S"
     }
 
     ###>2004-11-03 jpo
     method qCurve {x1 y1 xc yc x2 y2} {
         $self endTextObj
-        if {$pdf(orient)} {
-            set y1 [expr {$pdf(height)-$y1}]
-            set y2 [expr {$pdf(height)-$y2}]
-            set yc [expr {$pdf(height)-$yc}]
-        }
-        $self pdfout [format "%g %g m\n" [nf [expr {$x1+$pdf(xoff)}]] [nf [expr {$y1+$pdf(yoff)}]]]
-        $self pdfout [format "%g %g %g %g %g %g c\n" \
-                              [nf [expr {0.3333*$x1+0.6667*$xc+$pdf(xoff)}]] \
-                              [nf [expr {0.3333*$y1+0.6667*$yc+$pdf(yoff)}]] \
-                              [nf [expr {0.3333*$x2+0.6667*$xc+$pdf(xoff)}]] \
-                              [nf [expr {0.3333*$y2+0.6667*$yc+$pdf(yoff)}]] \
-                              [nf [expr {$x2+$pdf(xoff)}]] \
-                              [nf [expr {$y2+$pdf(yoff)}]] \
-                             ]
-        $self pdfout "S\n"
+        $self Trans $x1 $y1 x1 y1
+        $self Trans $xc $yc xc yc
+        $self Trans $x2 $y2 x2 y2
+        $self pdfoutcmd $x1 $y1 "m"
+        $self pdfoutcmd \
+                [expr {0.3333*$x1+0.6667*$xc}] \
+                [expr {0.3333*$y1+0.6667*$yc}] \
+                [expr {0.3333*$x2+0.6667*$xc}] \
+                [expr {0.3333*$y2+0.6667*$yc}] \
+                $x2 \
+                $y2 "c"
+        $self pdfoutcmd "S"
     }
     ###<jpo
 
@@ -912,21 +909,15 @@ snit::type pdf4tcl::pdf4tcl {
         if {$isFilled} {set op "b"} else {set op "s"}
         set start 1
         foreach {x y} $args {
-            if {$pdf(orient)} {
-                set y [expr {$pdf(height)-$y}]
-            }
+            $self Trans $x $y x y
             if {$start} {
-                $self pdfout [format "%g %g m\n" \
-                                      [nf [expr {$x+$pdf(xoff)}]] \
-                                      [nf [expr {$y+$pdf(yoff)}]]]
+                $self pdfoutcmd $x $y "m"
                 set start 0
             } else {
-                $self pdfout [format "%g %g l\n" \
-                                      [nf [expr {$x+$pdf(xoff)}]] \
-                                      [nf [expr {$y+$pdf(yoff)}]]]
+                $self pdfoutcmd $x $y "l"
             }
         }
-        $self pdfout " $op\n"
+        $self pdfoutcmd $op
     }
 
     method circle {isFilled x y r} {
@@ -936,9 +927,9 @@ snit::type pdf4tcl::pdf4tcl {
         } else {
             set op "s"
         }
-        if {$pdf(orient)} {
-            set y [expr {$pdf(height)-$y}]
-        }
+        $self Trans $x $y x y
+        set r [pdf4tcl::getPoints $r]
+
         set sq [expr {4.0*(sqrt(2.0)-1.0)/3.0}]
         set x0(0) [expr {$x+$r}]
         set y0(0) $y
@@ -966,19 +957,16 @@ snit::type pdf4tcl::pdf4tcl {
         set y2(3) [expr {$y-$r*$sq}]
         set x3(3) [expr {$x+$r}]
         set y3(3) $y
-        $self pdfout [format "%g %g m\n" \
-                              [nf [expr {$x0(0)+$pdf(xoff)}]] \
-                              [nf [expr {$y0(0)+$pdf(yoff)}]]]
+        $self pdfoutcmd $x0(0) $y0(0) "m"
         for {set i 0} {$i < 4} {incr i} {
-            $self pdfout [format "%g %g %g %g %g %g c\n" \
-                                  [nf [expr {$x1($i)+$pdf(xoff)}]] \
-                                  [nf [expr {$y1($i)+$pdf(yoff)}]] \
-                                  [nf [expr {$x2($i)+$pdf(xoff)}]] \
-                                  [nf [expr {$y2($i)+$pdf(yoff)}]] \
-                                  [nf [expr {$x3($i)+$pdf(xoff)}]] \
-                                  [nf [expr {$y3($i)+$pdf(yoff)}]]]
+            $self pdfoutcmd $x1($i) \
+                            $y1($i) \
+                            $x2($i) \
+                            $y2($i) \
+                            $x3($i) \
+                            $y3($i) "c"
         }
-        $self pdfout " $op\n"
+        $self pdfoutcmd " $op"
     }
 
     # scale with r, rotate by phi, and move by (dx, dy)
@@ -1013,9 +1001,10 @@ snit::type pdf4tcl::pdf4tcl {
         }
         $self endTextObj
         if {abs($extend) < 0.01} return
-        if {$pdf(orient)} {
-            set y0 [expr {$pdf(height)-$y0}]
-        }
+
+        $self Trans $x0 $y0 x0 y0
+        set r [pdf4tcl::getPoints $r]
+
         set count 1
         while {abs($extend) > 90} {
             set count [expr {2*$count}]
@@ -1026,33 +1015,29 @@ snit::type pdf4tcl::pdf4tcl {
         set phi2 [expr {0.5*$extend}]
         set x [expr {$x0+$r*cos($phi)}]
         set y [expr {$y0+$r*sin($phi)}]
-        $self pdfout [format "%g %g m\n" \
-                              [nf [expr {$x+$pdf(xoff)}]] \
-                              [nf [expr {$y+$pdf(yoff)}]]]
+        $self pdfoutcmd $x $y "m"
         set points [simplearc $phi2]
         set phi [expr {$phi+$phi2}]
         for {set i 0} {$i < $count} {incr i} {
             foreach {x y x1 y1 x2 y2 x3 y3} \
                     [transform $r $phi $x0 $y0 $points] break
             set phi [expr {$phi+$extend}]
-            $self pdfout [format "%g %g %g %g %g %g c\n" \
-                                  [nf [expr {$x1+$pdf(xoff)}]] \
-                                  [nf [expr {$y1+$pdf(yoff)}]] \
-                                  [nf [expr {$x2+$pdf(xoff)}]] \
-                                  [nf [expr {$y2+$pdf(yoff)}]] \
-                                  [nf [expr {$x3+$pdf(xoff)}]] \
-                                  [nf [expr {$y3+$pdf(yoff)}]]]
+            $self pdfoutcmd $x1 $y1 $x2 $y2 $x3 $y3 "c"
         }
         $self pdfout " S\n"
     }
     ###<jpo
 
     method arrow {x1 y1 x2 y2 sz {angle 20}} {
-        $self line $x1 $y1 $x2 $y2
+        $self Trans $x1 $y1 x1 y1
+        $self Trans $x2 $y2 x2 y2
+        set sz [pdf4tcl::getPoints $sz]
+
+        $self line $x1 $y1 $x2 $y2 1
         set rad [expr {$angle*3.1415926/180.0}]
         set ang [expr {atan2(($y1-$y2), ($x1-$x2))}]
-        $self line $x2 $y2 [expr {$x2+$sz*cos($ang+$rad)}] [expr {$y2+$sz*sin($ang+$rad)}]
-        $self line $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}]
+        $self line $x2 $y2 [expr {$x2+$sz*cos($ang+$rad)}] [expr {$y2+$sz*sin($ang+$rad)}] 1
+        $self line $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}] 1
     }
 
     method setFillColor {red green blue} {
@@ -1076,23 +1061,21 @@ snit::type pdf4tcl::pdf4tcl {
             }
         }
         $self endTextObj
-        if {$pdf(orient)} {
-            set y [expr {$pdf(height)-$y}]
-            set h [expr {0-$h}]
-        }
-        $self pdfout [format "%g %g $w $h re\n" [nf [expr {$x+$pdf(xoff)}]] [nf [expr {$y+$pdf(yoff)}]]]
+        $self Trans $x $y x y
+        $self TransR $w $h w h
+
+        $self pdfoutcmd $x $y $w $h "re"
         if {$filled} {
-            $self pdfout "B\n"
+            $self pdfoutcmd "B"
         } else {
-            $self pdfout "B\n"
+            $self pdfoutcmd "S"
         }
     }
 
     method moveTo {x1 y1} {
-
         $self endTextObj
-        set y1 [expr {$pdf(height)-$y1}]
-        $self pdfout [format "%g %g m\n" [nf [expr {$x1+$pdf(xoff)}]] [[expr {$y1+$pdf(yoff)}]]]
+        $self Trans $x1 $y1 x1 y1
+        $self pdfoutcmd $x1 $y1 "m"
     }
 
     method closePath {} {
@@ -1104,13 +1087,13 @@ snit::type pdf4tcl::pdf4tcl {
         set rad [expr {$angle*3.1415926/180.0}]
         set c [nf [expr {cos($rad)}]]
         set s [nf [expr {sin($rad)}]]
-        $self pdfout "$c [expr {0-$s}] $s $c $pdf(xpos) $pdf(ypos) Tm\n"
+        $self pdfoutcmd $c [expr {-$s}] $s $c $pdf(xpos) $pdf(ypos) "Tm"
     }
 
     method skewText {xangle yangle} {
         set tx [expr {tan($xangle*3.1415926/180.0)}]
         set ty [expr {tan($yangle*3.1415926/180.0)}]
-        $self pdfout [format "1 %g %g 1 %g %g Tm\n" $tx $ty $pdf(xpos) $pdf(ypos)]
+        $self pdfoutcmd 1 $tx $ty 1 $pdf(xpos) $pdf(ypos) "Tm"
         set pdf(xpos) 0
         set pdf(ypos) $pdf(height)
     }
@@ -1126,7 +1109,6 @@ snit::type pdf4tcl::pdf4tcl {
         close $if
         binary scan $img "H4" h
         if {$h != "ffd8"} {
-            close $if
             return -code error "file does not contain JPEG data."
         }
         set pos 2
@@ -1159,14 +1141,15 @@ snit::type pdf4tcl::pdf4tcl {
         array set aimg $pdf(images)
         foreach {width height depth length data} $aimg($id) {break}
 
+        $self Trans $x $y x y
         set w $width
         set h $height
         set wfix 0
         set hfix 0
         foreach {arg value} $args {
             switch -- $arg {
-                "-width" {set w $value; set wfix 1}
-                "-height" {set h $value; set hfix 1}
+                "-width"  {set w [pdf4tcl::getPoints $value]; set wfix 1}
+                "-height" {set h [pdf4tcl::getPoints $value]; set hfix 1}
             }
         }
         if {$wfix && !$hfix} {
@@ -1178,7 +1161,7 @@ snit::type pdf4tcl::pdf4tcl {
 
         $self endTextObj
         if {$pdf(orient)} {
-            set y [expr {$pdf(height)-$y-$h}]
+            set y [expr {$y-$h}]
         }
         $self pdfout "q\n$w 0 0 $h $x $y cm\n/$id Do\nQ\n"
         return
@@ -1233,6 +1216,18 @@ snit::type pdf4tcl::pdf4tcl {
         # precision: 4 digits
         set factor 10000.0
         return [expr {round($n*$factor)/$factor}]
+    }
+
+    # Helper to format a line consisiting of numbers and a command
+    method pdfoutcmd {args} {
+        set str ""
+        foreach num [lrange $args 0 end-1] {
+            # Up to 3 decimals
+            append str [string trimright [string trimright [format "%.3f" $num] "0"] "."]
+            append str " "
+        }
+        append str "[lindex $args end]\n"
+        $self pdfout $str
     }
 }
 
