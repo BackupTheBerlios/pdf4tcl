@@ -33,6 +33,23 @@ test examples-1.5 {example test5} -body {
     exec diff ../examples/test5.pdf test5.pdf
 } -result {} -cleanup {catch {p1 destroy}}
 
+test examples-2.1 {experiment} -body {
+    pdf4tcl::new apa
+    apa getDrawableArea
+    apa startPage
+    apa setTextPosition 10 10
+    for {set t 70} {$t < 90} {incr t} {
+        set size [expr {$t / 10.0}]
+        apa setFont $size Courier
+        set txt "Courier $size"
+        set w [apa getCharWidth $txt] 
+        apa drawText "$txt is $w wide"
+    }
+    apa write -file experiment.pdf
+    apa destroy
+    set x {}
+} -result {}
+
 # Cleanup
 eval file delete [glob test*.pdf]
 file delete tcl.jpg
