@@ -254,6 +254,12 @@ snit::type pdf4tcl::pdf4tcl {
         incr pdf(out_pos) [string length $out]
     }
 
+    # Add data to accumulated pdf output
+    method pdfoutn {args} {
+        set out [join $args " "]\n
+        $self pdfout $out
+    }
+
     # Fill in page margin from a user specified value
     method SetPageMargin {value} {
         switch -- [llength $value] {
@@ -563,6 +569,7 @@ snit::type pdf4tcl::pdf4tcl {
         return
     }
 
+    # Deprecated destroy function
     method cleanup {} {
         $self destroy
     }
@@ -607,7 +614,7 @@ snit::type pdf4tcl::pdf4tcl {
     method setFont {size {fontname ""}} {
         variable ::pdf4tcl::font_widths
 
-        if {[string length $fontname]==0} {
+        if {$fontname eq ""} {
             set fontname $pdf(current_font)
         }
         # font width already loaded?
@@ -619,9 +626,9 @@ snit::type pdf4tcl::pdf4tcl {
             }
         }
         set pdf(font_size) $size
-        $self pdfout "/$fontname $size Tf\n"
-        $self pdfout "0 Tr\n"
-        $self pdfout "$size TL\n"
+        $self pdfoutn "/$fontname $size" "Tf"
+        $self pdfoutcmd 0 "Tr"
+        $self pdfoutcmd $size "TL"
         if {[lsearch $pdf(fonts) $fontname]==-1} {
             lappend pdf(fonts) $fontname
         }
@@ -712,7 +719,7 @@ snit::type pdf4tcl::pdf4tcl {
         } else {
             $self Trans $x $y pdf(xpos) pdf(ypos)
         }
-        $self pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) Tm
+        $self pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) "Tm"
     }
 
     # draw text at current position with angle ang
@@ -724,13 +731,13 @@ snit::type pdf4tcl::pdf4tcl {
         }
         $self pdfout "([cleanText $str]) '\n"
         # FIXA?
-        set pdf(ypos) [expr {$pdf(ypos) + \
-                                           $pdf(font_size)}]
+        set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size)}]
     }
 
     method drawTextAt {x y str args} {
         set align "left"
         set angle 0
+        set fill 0
         foreach {arg value} $args {
             switch -- $arg {
                 "-align" {
@@ -739,14 +746,15 @@ snit::type pdf4tcl::pdf4tcl {
                 "-angle" {
                     set angle $value
                 }
+                "-fill" {
+                    set fill $value
+                }
                 default {
                     return -code error \
                             "unknown option $arg"
                 }
             }
         }
-
-        $self beginTextObj
 
         if {! $pdf(font_set)} {
             $self setFont $pdf(font_size)
@@ -760,6 +768,14 @@ snit::type pdf4tcl::pdf4tcl {
             set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
             set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
         }
+        if {$fill} {
+            # Experimental fill, does not work yet...
+            # Temporarily shift fill color
+            $self pdfout "$pdf(bgColor) rg\n"
+            $self DrawRect $x $y $strWidth $pdf(font_size) 0 1
+            $self pdfout "$pdf(fillColor) rg\n"
+        }
+        $self beginTextObj
         if {$angle != 0} {
             set pdf(xpos) $x
             set pdf(ypos) $y
@@ -1040,20 +1056,41 @@ snit::type pdf4tcl::pdf4tcl {
         $self line $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}] 1
     }
 
+    method setBgColor {red green blue} {
+        set pdf(bgColor) [list $red $green $blue]
+    }
+
     method setFillColor {red green blue} {
+        set pdf(fillColor) [list $red $green $blue]
         $self pdfout "$red $green $blue rg\n"
     }
 
     method setStrokeColor {red green blue} {
+        set pdf(strokeColor) [list $red $green $blue]
         $self pdfout "$red $green $blue RG\n"
+    }
+
+    method DrawRect {x y w h stroke filled} {
+        $self pdfoutcmd $x $y $w $h "re"
+        if {$filled && $stroke} {
+            $self pdfoutcmd "B"
+        } elseif {$filled && !$stroke} {
+            $self pdfoutcmd "f"
+        } else {
+            $self pdfoutcmd "S"
+        }
     }
 
     method rectangle {x y w h args} {
         set filled 0
+        set stroke 1
         foreach {arg value} $args {
             switch -- $arg {
                 "-filled" {
                     set filled 1
+                }
+                "-nostroke" {
+                    set stroke 0
                 }
                 default {
                     return -code error "unknown option $arg"
@@ -1064,12 +1101,7 @@ snit::type pdf4tcl::pdf4tcl {
         $self Trans $x $y x y
         $self TransR $w $h w h
 
-        $self pdfoutcmd $x $y $w $h "re"
-        if {$filled} {
-            $self pdfoutcmd "B"
-        } else {
-            $self pdfoutcmd "S"
-        }
+        $self DrawRect $x $y $w $h $stroke $filled
     }
 
     method moveTo {x1 y1} {
