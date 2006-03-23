@@ -30,9 +30,23 @@ qualified, and in the specified namespace otherwise.
 The options and their values coming after the name of the object are
 used to set the initial configuration of the object.
 
-[call [cmd ::pdf4tcl::paperSize] [arg "paper"]]
+[call [cmd ::pdf4tcl::getPaperSize] [arg "paper"]]
 
 This call returns the size of a named paper type, e.g. "a4".
+
+
+[call [cmd ::pdf4tcl::getPaperSizeList]]
+
+This call returns the list of known paper types.
+
+
+[call [cmd ::pdf4tcl::getPoints] [arg "val"]]
+
+This call translates a measurement to points (1/72 inch).
+The format of [arg "val"] is '[arg "num"] [opt [arg "unit"]]' where
+[arg "num"] is a valid integer or double. [arg "unit"] may be one of
+[option "mm"], [option "cm"], or [option "i"]. If no [arg "unit"]
+is given, the value is interpreted as points.
 
 
 [list_end]
@@ -100,11 +114,61 @@ The legal configuration options are described in section
 This method destroys the object it is invoked for.
 
 
-[call [arg objectName] [method xxx] [arg yyy]]
+[call [arg objectName] [method startPage] [opt [arg "option value"]...]]
 
-This method runs the [arg text] through the configured formatting
-engine and returns the generated string as its result. An error will
-be thrown if no [option -format] was configured for the object.
+This method starts a new page in the document. The page will have the
+default page settings for the document unless overridden by [arg "option"].
+
+
+[call [arg objectName] [method endPage]]
+
+This method ends a page in the document.
+
+
+[call [arg objectName] [method finish]]
+
+This method ends the document.
+
+
+[call [arg objectName] [method get]]
+
+This method returns the generated pdf.
+This will do [method endPage] and [method finish] if needed.
+
+
+[call [arg objectName] [method write] [opt [arg "-file filename"]]]
+
+This method writes the generated pdf to the given [arg "filename"].
+If no [arg "filename"] is given, it is written to stdout.
+This will do [method endPage] and [method finish] if needed.
+
+
+[call [arg objectName] [method getDrawableArea]]
+
+This method returns the size of the available area on the page,
+after removing margins.  The return value is a list of width and height,
+in points.
+
+
+[call [arg objectName] [method setFont] [arg "size"] [opt [arg "fontname"]]]
+
+This method sets the font used by text drawing routines.
+
+[call [arg objectName] [method getStringWidth] [arg "str"]]
+[call [arg objectName] [method getCharWidth] [arg "char"]]
+[call [arg objectName] [method setTextPosition] [arg "x"] [arg "y"]]
+[call [arg objectName] [method drawText] [arg "str"]]
+[call [arg objectName] [method drawTextAt] [arg "x"] [arg "y"] [arg "str"] [opt [arg "option value"]...]]
+[call [arg objectName] [method drawTextBox] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "str"] [opt [arg "option value"]...]]
+[call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
+[call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
+[call [arg objectName] [method qCurve] [arg "x1"] [arg "y1"] [arg "xc"] [arg "yc"] [arg "x2"] [arg "y2"]]
+[call [arg objectName] [method polygon] [arg "isfilled"] [opt [arg "x y"]...]]
+[call [arg objectName] [method circle] [arg "isfilled"] [arg "x"] [arg "y"] [arg "radius"]]
+[call [arg objectName] [method arc] [arg "x"] [arg "y"] [arg "radius"] [arg "phi"] [arg "extend"]]
+[call [arg objectName] [method arrow] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "size"] [opt [arg "angle"]]]
+
+[call [arg objectName] [method rectangle] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [opt [arg "option value"]...]]
 
 [list_end]
 
@@ -117,18 +181,32 @@ All pdf4tcl objects understand the following configuration options:
 
 [opt_def -paper [arg name]]
 
-The argument of this option defines the paper size.
+The argument of this option defines the default paper size for
+the document.
 
 [nl]
 
 The default value of this option is "a4".
 
+[opt_def -landscape [arg boolean]]
+
+[opt_def -orient [arg boolean]]
+
+[opt_def -margin [arg values]]
+
+[opt_def -compress [arg boolean]]
+
 [list_end]
 
 [section EXAMPLES]
-[para]
-
-
+[example_begin]
+  pdf4tcl::new mypdf -paper a3
+  mypdf startPage
+  mypdf setFont 12 Courier
+  mypdf drawTextAt 50 50 "Hejsan"
+  mypdf write -file mypdf.pdf
+  mypdf destroy
+[example_end]
 
 [see_also doctools]
 [keywords pdf document]
