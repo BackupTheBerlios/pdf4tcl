@@ -2,6 +2,7 @@
 #
 # $Id$
 
+# TOOL paths
 NAGELFAR = nagelfar
 ESKIL    = eskil
 
@@ -10,6 +11,11 @@ doc : pdf4tcl.html pdf4tcl.n
 
 pdf4tcl.html pdf4tcl.n : pdf4tcl.man mkdoc.tcl
 	mkdoc.tcl
+
+# Helpers
+
+metrics:
+	tclsh tools/extract-metrics.tcl metrics.tcl
 
 # Tests
 test: cleancc
