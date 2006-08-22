@@ -30,6 +30,7 @@ foreach path $lpath {
         set fixed 0
         set ascend 0
         set descend 0
+        set bbox {0 0 0 0}
         array unset widths
         array set widths {}
         while {[gets $if line]!=-1} {
@@ -47,6 +48,9 @@ foreach path $lpath {
             }
             if {[regexp {^Descender\s*([^\s]*)} $line dummy match]} {
                 set descend $match
+            }
+            if {[regexp {^FontBBox\s*(\S+.*)} $line dummy match]} {
+                set bbox $match
             }
             if {! $inMetrics} {
                 if {[regexp {^StartCharMetrics} $line]} {
@@ -76,7 +80,7 @@ foreach path $lpath {
         }
         set font_widths($fontname) $wl
         set font_metrics($fontname) [list ascend $ascend descend $descend \
-                                             fixed $fixed]
+                                             bbox $bbox fixed $fixed]
     }
 }
 
