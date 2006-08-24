@@ -23,6 +23,7 @@ namespace eval pdf4tcl {
     # variable import statements
     variable g
     variable font_widths
+    variable font_metrics
     variable glyph_names
     variable font_afm
     variable paper_sizes
@@ -36,9 +37,12 @@ namespace eval pdf4tcl {
     lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/Type1}
     #lappend g(ADOBE_AFM_PATH) {/usr/share/a2ps/afm}
     #lappend g(ADOBE_AFM_PATH) {/usr/share/ogonkify/afm}
+    lappend g(ADOBE_AFM_PATH) /usr/X11R6/lib/X11/fonts/Type1
+    lappend g(ADOBE_AFM_PATH) /usr/lib/openoffice/share/psprint/fontmetric
 
     # font width array
     array set font_widths {}
+    array set font_metrics {}
 
     # font name to afm file mapping array
     array set font_afm {}
@@ -85,6 +89,8 @@ namespace eval pdf4tcl {
             }
         }
         #parray font_afm
+        #puts [join [lsort -dict [array names ::pdf4tcl::font_widths]] \n]
+        #exit
     }
 
     # Utility to look up paper size by name
@@ -227,6 +233,7 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(compress) $options(-compress)
         set pdf(finished) false
         set pdf(inPage) false
+        set pdf(fillColor) [list 0 0 0]
 
         # Page data
         # Fill in page properies
@@ -246,6 +253,21 @@ snit::type pdf4tcl::pdf4tcl {
         # start with Helvetica as default font
         set pdf(font_size) 12
         set pdf(current_font) "Helvetica"
+    }
+
+    # Allow storage of data in this object
+    # TBC if this shall be kept.
+    method custom {name args} {
+        variable custom
+        if {[llength $args] == 0} {
+            if {[info exists custom($name)]} {
+                return $custom($name)
+            } else {
+                return -code error "Unknown custom variable '$name'"
+            }
+        }
+        set data [lindex $args 0]
+        set custom($name) $data
     }
 
     # Add data to accumulated pdf output
@@ -675,6 +697,17 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Supported metrics are ascend, descend, fixed, bboxy
+    method getFontMetric {metric} {
+        array set tmp $::pdf4tcl::font_metrics($pdf(current_font))
+        switch $metric {
+            bboxy   {set val [lindex $tmp(bbox) 1]}
+            fixed   {return $tmp(fixed)}
+            default {set val $tmp($metric)}
+        }
+        return [expr {$val * 0.001 * $pdf(font_size)}]
+    }
+
     method getStringWidth {txt} {
         set w 0
         for {set i 0} {$i<[string length $txt]} {incr i} {
@@ -734,6 +767,78 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size)}]
     }
 
+    # Draw a text string
+    # Returns the width of the drawn string.
+    method text {str args} {
+        set align "left"
+        set angle 0
+        set fill 0
+        set x $pdf(xpos)
+        set y $pdf(ypos)
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-align" {
+                    set align $value
+                }
+                "-angle" {
+                    set angle $value
+                }
+                "-fill" {
+                    set fill $value
+                }
+                "-y" {
+                    $self Trans 0 $value _ y
+                }
+                "-x" {
+                    $self Trans $value 0 x _
+                }
+                default {
+                    return -code error \
+                            "unknown option $arg"
+                }
+            }
+        }
+
+        if {! $pdf(font_set)} {
+            $self setFont $pdf(font_size)
+        }
+
+        #$self Trans $x $y x y
+        set strWidth [$self getStringWidth $str]
+        if {$align == "right"} {
+            set x [expr {$x - $strWidth}]
+        } elseif {$align == "center"} {
+            set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
+            set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
+        }
+        if {[llength $fill] > 1 || $fill} {
+            set bboxy [$self getFontMetric bboxy]
+            set dy [expr {$y + [$self getFontMetric bboxy]}]
+            $self endTextObj
+            # Temporarily shift fill color
+            if {[llength $fill] > 1} {
+                $self pdfout "$fill rg\n"
+            } else {
+                $self pdfout "$pdf(bgColor) rg\n"
+            }
+            $self DrawRect $x $dy $strWidth $pdf(font_size) 0 1
+            $self pdfout "$pdf(fillColor) rg\n"
+        }
+        $self beginTextObj
+        if {$angle != 0} {
+            set pdf(xpos) $x
+            set pdf(ypos) $y
+            $self rotateText $angle
+        } else {
+            $self setTextPosition $x $y 1
+        }
+        $self pdfout "([cleanText $str]) Tj\n"
+        set pdf(xpos) [expr {$x + $strWidth}]
+        return $strWidth
+    }
+
+    # Draw a text string at a given position.
+    # Returns the width of the drawn string.
     method drawTextAt {x y str args} {
         set align "left"
         set angle 0
@@ -769,10 +874,12 @@ snit::type pdf4tcl::pdf4tcl {
             set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
         }
         if {$fill} {
-            # Experimental fill, does not work yet...
+            set bboxy [$self getFontMetric bboxy]
+            set dy [expr {$y + [$self getFontMetric bboxy]}]
+            $self endTextObj
             # Temporarily shift fill color
             $self pdfout "$pdf(bgColor) rg\n"
-            $self DrawRect $x $y $strWidth $pdf(font_size) 0 1
+            $self DrawRect $x $dy $strWidth $pdf(font_size) 0 1
             $self pdfout "$pdf(fillColor) rg\n"
         }
         $self beginTextObj
@@ -784,6 +891,7 @@ snit::type pdf4tcl::pdf4tcl {
             $self setTextPosition $x $y 1
         }
         $self pdfout "([cleanText $str]) Tj\n"
+        return $strWidth
     }
 
     method drawTextBox {x y width height txt args} {
