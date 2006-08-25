@@ -165,12 +165,15 @@ snit::type pdf4tcl::pdf4tcl {
     variable pdf
 
     # Global option handling
-    option -paper     -default a4     -validatemethod CheckPaper
-    option -landscape -default 0      -validatemethod CheckBoolean
+    option -paper     -default a4     -validatemethod CheckPaper \
+            -configuremethod SetPageOption
+    option -landscape -default 0      -validatemethod CheckBoolean \
+            -configuremethod SetPageOption
     option -orient    -default 1      -validatemethod CheckBoolean
     option -compress  -default 0      -validatemethod CheckBoolean \
             -configuremethod SetCompress -readonly 1
-    option -margin    -default 0      -validatemethod CheckMargin
+    option -margin    -default 0      -validatemethod CheckMargin \
+            -configuremethod SetPageOption
 
     method CheckPaper {option value} {
         set papersize [pdf4tcl::getPaperSize $value]
@@ -213,9 +216,14 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
-    constructor {args} {
-        variable ::pdf4tcl::g
+    method SetPageOption {option value} {
+        set options($option) $value
+        # Fill in page properies
+        $self SetPageSize   $options(-paper) $options(-landscape)
+        $self SetPageMargin $options(-margin)
+    }
 
+    constructor {args} {
         $self configurelist $args
 
         # Document data
@@ -237,7 +245,7 @@ snit::type pdf4tcl::pdf4tcl {
 
         # Page data
         # Fill in page properies
-        $self SetPageSize $options(-paper) $options(-landscape)
+        $self SetPageSize   $options(-paper) $options(-landscape)
         $self SetPageMargin $options(-margin)
         set pdf(orient) $options(-orient)
 
@@ -253,21 +261,6 @@ snit::type pdf4tcl::pdf4tcl {
         # start with Helvetica as default font
         set pdf(font_size) 12
         set pdf(current_font) "Helvetica"
-    }
-
-    # Allow storage of data in this object
-    # TBC if this shall be kept.
-    method custom {name args} {
-        variable custom
-        if {[llength $args] == 0} {
-            if {[info exists custom($name)]} {
-                return $custom($name)
-            } else {
-                return -code error "Unknown custom variable '$name'"
-            }
-        }
-        set data [lindex $args 0]
-        set custom($name) $data
     }
 
     # Add data to accumulated pdf output
@@ -708,40 +701,58 @@ snit::type pdf4tcl::pdf4tcl {
         return [expr {$val * 0.001 * $pdf(font_size)}]
     }
 
+    # Get the width of a string under the current font.
     method getStringWidth {txt} {
         set w 0
         for {set i 0} {$i<[string length $txt]} {incr i} {
             set ch [string index $txt $i]
-            set w [expr {$w + [$self getCharWidth $ch]}]
+            set w [expr {$w + [GetCharWidth $pdf(current_font) $ch]}]
         }
-        return $w
+        return [expr {$w * $pdf(font_size)}]
     }
 
-    method getCharWidth {ch} {
-        variable ::pdf4tcl::font_widths
-        variable ::pdf4tcl::glyph_names
-
-        if {$ch=="\n"} {
+    # Get the width of a character
+    # This is a proc for performance reasons since it is called a lot.
+    # Currently this is four times slower as a method.
+    # With a method it would be preferable to keep the cache in
+    # the instance to clean things up.
+    proc GetCharWidth {font ch} {
+        if {$ch eq "\n" || [string length $ch] != 1} {
             return 0
         }
 
-        set afm2point [expr {0.001 * $pdf(font_size)}]
+        if {[info exists ::pdf4tcl::FontWidthsCh($font,$ch)]} {
+            return $::pdf4tcl::FontWidthsCh($font,$ch)
+        }
+
+        if {![info exists ::pdf4tcl::FontWidthsCurrent] || \
+                    $::pdf4tcl::FontWidthsCurrent ne $font} {
+            array unset ::pdf4tcl::FontWidths
+            array set ::pdf4tcl::FontWidths $::pdf4tcl::font_widths($font)
+            set ::pdf4tcl::FontWidthsCurrent $font
+        }
+
         if {[scan $ch %c n]!=1} {
             return 0
         }
         set ucs2 [format "%04.4X" $n]
 
-        array set widths $font_widths($pdf(current_font))
         set glyph_name zero
         set w 0
-        catch {set w $widths("zero")}
-        catch {set glyph_name $glyph_names($ucs2)}
-        switch -- $glyph_name {
-            "spacehackarabic" {set glyph_name "space"}
-        }
-        catch {set w $widths($glyph_name)}
+        catch {set w $::pdf4tcl::FontWidths(zero)}
+        catch {set glyph_name $::pdf4tcl::glyph_names($ucs2)}
+        if {$glyph_name eq "spacehackarabic"} {set glyph_name "space"}
+
+        catch {set w $::pdf4tcl::FontWidths($glyph_name)}
         ###puts stderr "ch: $ch  n: $n  ucs2: $ucs2  glyphname: $glyph_name  width: $w"
-        return [expr {$w*$afm2point}]
+        set res [expr {$w * 0.001}]
+        set ::pdf4tcl::FontWidthsCh($font,$ch) $res
+        return $res
+    }
+
+    # Get the width of a character under the current font.
+    method getCharWidth {ch} {
+        return [expr {[GetCharWidth $pdf(current_font) $ch] * $pdf(font_size)}]
     }
 
     method setTextPosition {x y {internal 0}} {
