@@ -16,12 +16,14 @@ snit::type printexp {
     option -cpl      -default 80
     option -cpln     -default 5
     option -headsize -default 8
+    option -headleft -default "Header Text Left"
+    option -headright -default "Header Text Right"
+    option -headnpages -default "10"
     option -file     -default exp.pdf
 
     variable width
     variable height
     variable hoy
-    variable foy
     variable fontsize
     variable linesize
     variable nlines
@@ -45,7 +47,6 @@ snit::type printexp {
         $pdf setFont $options(-headsize) Courier
         set headoffset [expr {$options(-headsize) + [$pdf getFontMetric bboxy]}]
         set hoy $headoffset
-        set foy [expr {$height - $options(-headsize) + $headoffset}]
 
         # Figure out font size from number of chars per line
         set charwidthHead [$pdf getCharWidth "0"]
@@ -57,15 +58,16 @@ snit::type printexp {
         set linesize  $fontsize
         set offset    [expr {$fontsize + [$pdf getFontMetric bboxy]}]
         set charwidth [$pdf getCharWidth "0"]
-        set nlinesf [expr {($height - 2 * $options(-headsize)) / $linesize}]
+        set nlinesf [expr {($height - $options(-headsize)) / $linesize}]
         # Number of lines per page
         set nlines  [expr {int($nlinesf - 1.0)}]
-        set nlines 66
+        #set nlines 66
         # Offsets to starting points in both subpages.
         set ox1 $charwidth
         set ox2 [expr {$width / 2.0 + $charwidth}]
         set oy  [expr {($nlinesf - $nlines) / 2.0 * $linesize + \
-                                     $offset + $headoffset}]
+                                     $offset + $options(-headsize)}]
+
         # Reset current page
         set page 0
     }
@@ -81,22 +83,17 @@ snit::type printexp {
         $pdf setLineStyle 0.5
         # Outer border
         $pdf rectangle 0 $options(-headsize) \
-                $width [expr {$height - 2 * $options(-headsize)}]
+                $width [expr {$height - $options(-headsize)}]
         # Center line
         $pdf line [expr {$width / 2.0}] $options(-headsize) \
-                [expr {$width / 2.0}] [expr {$height - $options(-headsize)}]
+                [expr {$width / 2.0}] $height
 
         # Header
         $pdf setFont $options(-headsize) Courier
-        $pdf drawTextAt 0 $hoy "Header Text Left"
+        $pdf drawTextAt 0 $hoy $options(-headleft)
         $pdf drawTextAt [expr {$width / 2.0}] $hoy \
-                "Header Text C Page $page" -align center
-        $pdf drawTextAt $width $hoy "Header Text Right" -align right
-        # Footer
-        $pdf drawTextAt 0 $foy "Footer Text Left"
-        $pdf drawTextAt [expr {$width / 2.0}] $foy \
-                "Footer Text C" -align center
-        $pdf drawTextAt $width $foy "Footer Text Right" -align right
+                "Page $page of $options(-headnpages)" -align center
+        $pdf drawTextAt $width $hoy $options(-headright) -align right
 
         # Normal font
         $pdf setFont $fontsize Courier
@@ -124,7 +121,8 @@ snit::type printexp {
             $pdf text "hoppsan" -fill "0.5 0.5 1.0"
             $pdf text "Miffo"
             #$pdf drawTextAt $ox2 [expr {$oy + $line * $linesize}] "Hejsan" -fill 1
-            $pdf drawTextAt $ox2 [expr {$oy + $line * $linesize}] $strcpl -fill 1
+            #$pdf drawTextAt $ox2 [expr {$oy + $line * $linesize}] $strcpl -fill 1
+            $pdf text $strcpl -x $ox2 -y [expr {$oy + $line * $linesize}] -fill 1
         }
     }
 
