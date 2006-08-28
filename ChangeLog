@@ -1,3 +1,32 @@
+2006-08-28  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Removed -fill from drawTextAt, restoring the 0.2 API.
+
+2006-08-24  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Added getFontMetric method.
+	* Added text method, including fill support.
+
+2006-03-23  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Added -nostroke to rect method.
+	* Added setBgColor method.
+	* Added -fill to drawTextAt method
+
+2006-03-20  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Support e.g. "5mm" as user coordinate.
+	* Allow two-element point list as paper size.
+
+2006-03-17  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Use Snit's option handling.
+	* Support -landscape -margin etc. in both document and new page.
+
+2006-03-13  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Clean up and rearranged to Snit object.
+
 2005-01-14  Jens Pönisch   <jens@ruessel.in-chemnitz.de>
 
 	* fixed circle implementation
