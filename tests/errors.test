@@ -57,3 +57,20 @@ test errors-1.5 {addJpeg errors} -body {
     lappend res [catch {apa addJpeg $f 0} msg] $msg
 } -match glob -result {1 {*does not contain*} 1 {Could not open*}} \
         -cleanup {apa destroy}
+
+test errors-1.6 {write errors} -body {
+    set f [makeFile {} unwritable.tmp]
+    file attributes $f -permissions ugo-w
+
+    set res {}
+    lappend res [catch {pdf4tcl::new apa -file $f}]
+
+    set f [makeFile {} writable.tmp]
+    lappend res [catch {pdf4tcl::new apa -file $f}]
+    apa destroy
+
+    removeFile unwritable.tmp
+    removeFile writable.tmp
+
+    set res
+} -result {1 0} -cleanup {catch {apa destroy}}
