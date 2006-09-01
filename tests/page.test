@@ -60,3 +60,25 @@ test page-2.1 {misc page handling} -body {
     apa get
 } -cleanup {apa destroy} -match glob \
         -result "%PDF*/Page*/Page*/Page*/Page*/Pages*/Count 4*%%EOF\n"
+
+test page-2.2 {misc page handling, with file} -body {
+    set f [makeFile {} writable.tmp]
+    pdf4tcl::new apa -file $f
+    # Test multiple page commands to check robustness
+    apa startPage
+    apa startPage
+    apa endPage
+    apa endPage
+    apa startPage
+    apa startPage
+    apa finish
+    apa finish
+    apa destroy
+
+    set ch [open $f]
+    set data [read $ch]
+    close $ch
+    removeFile writable.tmp
+    set data
+} -match glob \
+        -result "%PDF*/Page*/Page*/Page*/Page*/Pages*/Count 4*%%EOF\n"
