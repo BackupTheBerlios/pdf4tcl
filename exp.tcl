@@ -33,10 +33,15 @@ snit::type printexp {
     variable page
 
     constructor {args} {
+        set tmp(-file) $options(-file)
+        catch {array set tmp $args}
         install pdf using pdf4tcl::pdf4tcl %AUTO% \
-                -landscape 1 -paper a4 -margin 15mm
+                -landscape 1 -paper a4 -margin 15mm -file $tmp(-file)
         $self configurelist $args
         $self StartPrint
+    }
+    destructor {
+        catch {$pdf destroy}
     }
 
     method StartPrint {} {
@@ -70,6 +75,9 @@ snit::type printexp {
 
         # Reset current page
         set page 0
+    }
+    method getNLines {} {
+        return $nlines
     }
 
     # Start a new page
@@ -128,14 +136,17 @@ snit::type printexp {
 
     # Finish a print job
     method endPrint {} {
-        $pdf write -file $options(-file)
+        $pdf finish
         $pdf destroy
         $self destroy
     }
 }
 
     set prev [clock clicks] ; puts "Ping"
-set print [printexp %AUTO%]
+set print [printexp %AUTO% -cpl 150]
+set nlines [$print getNLines]
+#puts $nlines
+$print configure -headnpages [expr {1000 / $nlines}]
     set new [clock clicks] ; puts "Ping [expr {$new - $prev}]" ; set prev $new
 $print onePage
     set new [clock clicks] ; puts "Ping [expr {$new - $prev}]" ; set prev $new
@@ -143,3 +154,17 @@ $print onePage
     set new [clock clicks] ; puts "Ping [expr {$new - $prev}]" ; set prev $new
 $print endPrint
     set new [clock clicks] ; puts "Ping [expr {$new - $prev}]" ; set prev $new
+
+
+# Another experiment
+pdf4tcl::new apa -file experiment.pdf
+apa startPage
+apa setTextPosition 10 10
+for {set t 70} {$t < 90} {incr t} {
+    set size [expr {$t / 10.0}]
+    apa setFont $size Courier
+    set txt "Courier $size"
+    set w [apa getCharWidth $txt] 
+    apa drawText "$txt is $w wide"
+}
+apa destroy
