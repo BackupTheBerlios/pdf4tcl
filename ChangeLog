@@ -1,3 +1,8 @@
+2006-09-01  Peter Spjuth   <peter.spjuth@space.se>
+
+	* Added -file option, to continoulsy write ot to file instead of
+	  accumulating in memory.
+
 2006-08-28  Peter Spjuth   <peter.spjuth@space.se>
 
 	* Removed -fill from drawTextAt, restoring the 0.2 API.
