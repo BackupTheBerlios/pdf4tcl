@@ -168,6 +168,7 @@ snit::type pdf4tcl::pdf4tcl {
     # Global option handling
     #######################################################################
 
+    option -file      -default "" -readonly 1
     option -paper     -default a4     -validatemethod CheckPaper \
             -configuremethod SetPageOption
     option -landscape -default 0      -validatemethod CheckBoolean \
@@ -259,6 +260,15 @@ snit::type pdf4tcl::pdf4tcl {
         # output buffer (we need to compress whole pages)
         set pdf(ob) ""
 
+        # Write to file directly if requested.
+        set pdf(ch) ""
+        if {$options(-file) ne ""} {
+            if {[catch {open $options(-file) "w"} ch]} {
+                return -code error "Could not open file $options(-file) for writing: $ch"
+            }
+            set pdf(ch) $ch
+        }
+
         # collect output in memory
         set pdf(pdf) ""
 
@@ -269,6 +279,20 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(font_size) 12
         set pdf(current_font) "Helvetica"
     }
+
+    destructor {
+        if {[info exists pdf(ch)] && $pdf(ch) ne ""} {
+            catch {$self finish}
+            catch {close $pdf(ch)}
+            set pdf(ch) ""
+        }
+    }
+
+    # Deprecated destroy function
+    method cleanup {} {
+        $self destroy
+    }
+
 
     #######################################################################
     # Collect PDF Output
@@ -434,7 +458,11 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(font_set) false
 
         # capture output
-        append pdf(pdf) $pdf(ob)
+        if {$pdf(ch) eq ""} {
+            append pdf(pdf) $pdf(ob)
+        } else {
+            puts -nonewline $pdf(ch) $pdf(ob)
+        }
         set pdf(ob) ""
     }
 
@@ -452,7 +480,11 @@ snit::type pdf4tcl::pdf4tcl {
         if {$pdf(compress) >0} {
             set data [zlib compress $data]
         }
-        append pdf(pdf) $data
+        if {$pdf(ch) eq ""} {
+            append pdf(pdf) $data
+        } else {
+            puts -nonewline $pdf(ch) $data
+        }
         set data_len [string length $data]
         set pdf(out_pos) [expr {$pdf(data_start)+$data_len}]
         $self Pdfout "\nendstream\n"
@@ -574,7 +606,11 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfout "\nstartxref\n"
         $self Pdfout "$xref_pos\n"
         $self Pdfout "%%EOF\n"
-        append pdf(pdf) $pdf(ob)
+        if {$pdf(ch) eq ""} {
+            append pdf(pdf) $pdf(ob)
+        } else {
+            puts -nonewline $pdf(ch) $pdf(ob)
+        }
         set pdf(ob) ""
         set pdf(finished) true
     }
@@ -615,11 +651,6 @@ snit::type pdf4tcl::pdf4tcl {
             close $chan
         }
         return
-    }
-
-    # Deprecated destroy function
-    method cleanup {} {
-        $self destroy
     }
 
     # Transform absolute user coordinates to page coordinates
