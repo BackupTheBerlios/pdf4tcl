@@ -1,5 +1,6 @@
 ##nagelfar syntax snit::type x c
 ##nagelfar syntax method x x c
 ##nagelfar syntax constructor x c
+##nagelfar syntax destructor c
 ##nagelfar syntax option x p*
 ##nagelfar syntax zlib s x
