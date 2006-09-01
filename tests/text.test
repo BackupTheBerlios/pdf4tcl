@@ -1,0 +1,44 @@
+# Test text commands                                                 -*-tcl-*-
+#
+# $Id$
+
+source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
+
+test text-1.1 {text method} -body {
+    mytest {text "Hej hopp"} {
+        BT 1 0 0 1 0 842 Tm (Hej hopp) Tj ET
+    }
+} -result 1
+
+test text-2.1 {text method, align} -body {
+    mytest {setFont 10 Courier} {text Gurka -x 10 -y 10 -align left} {
+        BT 1 0 0 1 10 10 Tm (Gurka) Tj ET
+    }
+} -result 1
+
+test text-2.2 {text method, align} -body {
+    mytest {setFont 10 Courier} {text Gurka -x 35 -align right} {
+        BT 1 0 0 1 5 842 Tm (Gurka) Tj ET
+    }
+} -result 1
+
+test text-2.3 {text method, align} -body {
+    mytest {setFont 10 Courier} {text Gurkan -x 45 -y 75 -align center} {
+        BT 1 0 0 1 27 75 Tm (Gurkan) Tj ET
+    }
+} -result 1
+
+test text-3.1 {text method, fill} -body {
+    mytest {setFont 10 Courier} {setBgColor 0.2 0.3 0.4} {text Gurkan -x 10 -y 10 -fill 1} {
+        0.2 0.3 0.4 rg 10 7.5 36 10 re f 0 0 0 rg BT
+    }
+} -result 1
+
+test text-3.2 {text method, fill} -body {
+    mytest {setFont 20 Courier} \
+            {setBgColor 0.2 0.3 0.4} \
+            {setFillColor 0.1 0.6 0.5} \
+            {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} {
+        0.6 0.7 0.8 rg 10 5 72 20 re f 0.1 0.6 0.5 rg BT
+    }
+} -result 1

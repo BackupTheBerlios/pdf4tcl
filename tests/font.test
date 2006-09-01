@@ -1,0 +1,24 @@
+# Test font handling                                                 -*-tcl-*-
+#
+# $Id$
+
+source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
+
+test font-1.1 {font metrics} -body {
+    set pdf [pdf4tcl::new %AUTO%]
+    $pdf setFont 10 Courier
+    set res {}
+    lappend res [$pdf getFontMetric bboxy]
+    lappend res [$pdf getFontMetric fixed]
+    lappend res [$pdf getFontMetric ascend]
+    lappend res [$pdf getFontMetric descend]
+
+    $pdf setFont 20
+    lappend res [$pdf getFontMetric bboxy]
+    lappend res [$pdf getFontMetric fixed]
+    lappend res [$pdf getFontMetric ascend]
+    lappend res [$pdf getFontMetric descend]
+
+    $pdf destroy
+    set res
+} -result {-2.5 1 6.29 -1.57 -5.0 1 12.58 -3.14}
