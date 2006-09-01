@@ -4,26 +4,6 @@
 
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 
-proc mytest {cmd pattern} {
-    pdf4tcl::new apa -orient 0
-    apa startPage
-    eval apa $cmd
-    set res [apa get]
-    apa destroy
-
-    regexp {stream.*endstream} $res res
-    regsub -all {\s+} $res " " res
-
-    set pattern *[string trim $pattern]*
-    regsub -all {\s+} $pattern " " pattern
-
-    if {[string match *[string trim $pattern]* $res]} {
-        return 1
-    } else {
-        return $res
-    }
-}
-
 test graphics-1.1 {circle} -body {
     mytest {circle 0  10  10  5} {
         15 10 m
