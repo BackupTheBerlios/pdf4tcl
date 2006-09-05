@@ -1,6 +1,6 @@
 [comment {-*- tcl -*- doctools manpage}]
 [manpage_begin pdf4tcl n 0.3]
-[copyright {2006 Peter Spjuth <peter.spjuth@space.se>}]
+[copyright {2006 Peter Spjuth}]
 [moddesc   {Pdf document generation}]
 [titledesc {Pdf document generation}]
 [require Tcl 8.4]
@@ -9,7 +9,7 @@
 [description]
 
 This package provides a container class for
-generationg [term {pdf}] documents.
+generating [term {pdf}] documents.
 
 [section {PUBLIC API}]
 [subsection {PACKAGE COMMANDS}]
@@ -24,15 +24,22 @@ explained in full detail in the sections [sectref {OBJECT COMMAND}]
 and [sectref {OBJECT METHODS}]. The object command will be created
 under the current namespace if the [arg objectName] is not fully
 qualified, and in the specified namespace otherwise.
+If [arg objectName] is %AUTO% a name will generated.
+The return value is the newly created object's name.
 
 [nl]
 
 The options and their values coming after the name of the object are
 used to set the initial configuration of the object.
+See [sectref {OBJECT CONFIGURATION}].
+
 
 [call [cmd ::pdf4tcl::getPaperSize] [arg "paper"]]
 
 This call returns the size of a named paper type, e.g. "a4".
+The argument [arg "paper"] may also be a two element list
+with values as accepted by [cmd ::pdf4tcl::getPoints].
+The return value is a list with width and height in points.
 
 
 [call [cmd ::pdf4tcl::getPaperSizeList]]
@@ -112,12 +119,15 @@ The legal configuration options are described in section
 [call [arg objectName] [method destroy]]
 
 This method destroys the object it is invoked for.
+If the [option -file] option was given at object creation,
+the output file will be finished and closed.
 
 
 [call [arg objectName] [method startPage] [opt [arg "option value"]...]]
 
 This method starts a new page in the document. The page will have the
 default page settings for the document unless overridden by [arg "option"].
+See [sectref {PAGE CONFIGURATION}] for page settings.
 
 
 [call [arg objectName] [method endPage]]
@@ -128,20 +138,24 @@ This method ends a page in the document.
 [call [arg objectName] [method finish]]
 
 This method ends the document.
+This will do [method endPage] if needed.
+If the [option -file] option was given at object creation,
+the output file will be finished and closed.
 
 
 [call [arg objectName] [method get]]
 
 This method returns the generated pdf.
 This will do [method endPage] and [method finish] if needed.
-
+If the [option -file] option was given at object creation, nothing is returned.
 
 [call [arg objectName] [method write] [opt [arg "-file filename"]]]
 
 This method writes the generated pdf to the given [arg "filename"].
 If no [arg "filename"] is given, it is written to stdout.
 This will do [method endPage] and [method finish] if needed.
-
+If the [option -file] option was given at object creation, an empty file
+is created.
 
 [call [arg objectName] [method getDrawableArea]]
 
@@ -155,11 +169,33 @@ in points.
 This method sets the font used by text drawing routines.
 
 [call [arg objectName] [method getStringWidth] [arg "str"]]
+
+This method returns the width of a string under the current font.
+
 [call [arg objectName] [method getCharWidth] [arg "char"]]
+
+This method returns the width of a character under the current font.
+
 [call [arg objectName] [method setTextPosition] [arg "x"] [arg "y"]]
+
+Set coordinate for next text command.
+
 [call [arg objectName] [method drawText] [arg "str"]]
+
+Draw text.
+
+[call [arg objectName] [method text] [arg "str"] [opt [arg "option value"]...]]
+
+Draw text.
+
 [call [arg objectName] [method drawTextAt] [arg "x"] [arg "y"] [arg "str"] [opt [arg "option value"]...]]
+
+Draw text.
+
 [call [arg objectName] [method drawTextBox] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "str"] [opt [arg "option value"]...]]
+
+Draw text.
+
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
 [call [arg objectName] [method qCurve] [arg "x1"] [arg "y1"] [arg "xc"] [arg "yc"] [arg "x2"] [arg "y2"]]
@@ -175,26 +211,60 @@ This method sets the font used by text drawing routines.
 
 [subsection {OBJECT CONFIGURATION}]
 
-All pdf4tcl objects understand the following configuration options:
+All pdf4tcl objects understand the options from [sectref {PAGE CONFIGURATION}],
+which defines default page settings when used with a pdf4tcl object.
+The objects also understand the following configuration options:
+
+[list_begin opt]
+
+[opt_def -compress [arg boolean]]
+
+Pages will be zlib compressed if this option is set to true.
+This requires the presence of the zlib package.
+This option can only be set at object creation.
+
+[opt_def -file [arg filename]]
+
+Continuously write pdf to [arg filename] instead of storing it
+in memory.
+This option can only be set at object creation.
+
+[list_end]
+
+[subsection {PAGE CONFIGURATION}]
 
 [list_begin opt]
 
 [opt_def -paper [arg name]]
 
-The argument of this option defines the default paper size for
-the document.
-
+The argument of this option defines the paper size.
+The paper size may be a string like "a4", where valid values
+are available through [cmd ::pdf4tcl::getPaperSizeList].
+Paper size may also be a two element list specifying width and height.
 [nl]
-
 The default value of this option is "a4".
 
 [opt_def -landscape [arg boolean]]
 
+If true, paper width and height are switched.
+[nl]
+The default value of this option is false.
+
 [opt_def -orient [arg boolean]]
 
-[opt_def -margin [arg values]]
+If true, the y axis of the coordinate system is inverted.
+Normally origo is in the top left corner. With [option -orient] true,
+origo is in the bottom left corner.
+[nl]
+The default value of this option is false.
 
-[opt_def -compress [arg boolean]]
+[opt_def -margin [arg values]]
+The margin is a one, two or four element list of margins.
+For one element, it specifies all margins.
+Two elements specify left/right and top/bottom.
+Four elements specify left, right, top and bottom.
+[nl]
+The default value of this option is zero.
 
 [list_end]
 
