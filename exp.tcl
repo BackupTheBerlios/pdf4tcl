@@ -98,10 +98,10 @@ snit::type printexp {
 
         # Header
         $pdf setFont $options(-headsize) Courier
-        $pdf drawTextAt 0 $hoy $options(-headleft)
-        $pdf drawTextAt [expr {$width / 2.0}] $hoy \
-                "Page $page of $options(-headnpages)" -align center
-        $pdf drawTextAt $width $hoy $options(-headright) -align right
+        $pdf text $options(-headleft) -x 0 -y $hoy 
+        $pdf text "Page $page of $options(-headnpages)" \
+                -x [expr {$width / 2.0}] -y $hoy -align center
+        $pdf text $options(-headright) -x $width -y $hoy -align right
 
         # Normal font
         $pdf setFont $fontsize Courier
@@ -167,4 +167,10 @@ for {set t 70} {$t < 90} {incr t} {
     set w [apa getCharWidth $txt] 
     apa drawText "$txt is $w wide"
 }
+
+apa setTextPosition 200 200
+apa text "11111111"
+apa line 190 190 210 210
+apa line 190 210 210 190
+
 apa destroy
