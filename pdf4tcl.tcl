@@ -775,8 +775,7 @@ snit::type pdf4tcl::pdf4tcl {
     # Get the width of a string under the current font.
     method getStringWidth {txt} {
         set w 0
-        for {set i 0} {$i<[string length $txt]} {incr i} {
-            set ch [string index $txt $i]
+        foreach ch [split $txt ""] {
             set w [expr {$w + [GetCharWidth $pdf(current_font) $ch]}]
         }
         return [expr {$w * $pdf(font_size)}]
@@ -843,20 +842,33 @@ snit::type pdf4tcl::pdf4tcl {
         } else {
             $self Trans $x $y pdf(xpos) pdf(ypos)
         }
+        # Store for reference
+        set pdf(origxpos) $pdf(xpos)
+        set pdf(origypos) $pdf(ypos)
+
         $self Pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) "Tm"
     }
 
-    # Draw text at current position with angle ang
-    # Current text position is updated??? FIXA
-    method drawText {str {ang 0}} {
+    # Draw text at current position, with a newline before
+    method drawText {str} {
         $self beginTextObj
         if {! $pdf(font_set)} {
-            #SetBaseFont $name $pdf(current_font)
             $self setFont $pdf(font_size) $pdf(current_font)
         }
         $self Pdfout "([CleanText $str]) '\n"
-        # FIXA?
+        # Update to next line
+        set strWidth [$self getStringWidth $str]
         set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size)}]
+        set pdf(xpos) [expr {$pdf(origxpos) + $strWidth}]
+    }
+
+    # Move text position to new line, relative to last
+    # setTextPosition command.
+    method newLine {} {
+        # Update to next line
+        set y [expr {$pdf(ypos) - $pdf(font_size)}]
+        set x $pdf(origxpos)
+        $self setTextPosition $x $y
     }
 
     # Draw a text string
@@ -867,6 +879,7 @@ snit::type pdf4tcl::pdf4tcl {
         set fill 0
         set x $pdf(xpos)
         set y $pdf(ypos)
+        set posSet 0
         foreach {arg value} $args {
             switch -- $arg {
                 "-align" {
@@ -880,9 +893,11 @@ snit::type pdf4tcl::pdf4tcl {
                 }
                 "-y" {
                     $self Trans 0 $value _ y
+                    set posSet 1
                 }
                 "-x" {
                     $self Trans $value 0 x _
+                    set posSet 1
                 }
                 default {
                     return -code error \
@@ -895,13 +910,14 @@ snit::type pdf4tcl::pdf4tcl {
             $self setFont $pdf(font_size)
         }
 
-        #$self Trans $x $y x y
         set strWidth [$self getStringWidth $str]
         if {$align == "right"} {
             set x [expr {$x - $strWidth}]
+            set posSet 1
         } elseif {$align == "center"} {
             set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
             set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
+            set posSet 1
         }
         if {[llength $fill] > 1 || $fill} {
             set bboxy [$self getFontMetric bboxy]
@@ -921,7 +937,7 @@ snit::type pdf4tcl::pdf4tcl {
             set pdf(xpos) $x
             set pdf(ypos) $y
             $self rotateText $angle
-        } else {
+        } elseif {$posSet} {
             $self setTextPosition $x $y 1
         }
         $self Pdfout "([CleanText $str]) Tj\n"
@@ -930,6 +946,7 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # Draw a text string at a given position.
+    # This function is deprecated, use text.
     method drawTextAt {x y str args} {
         set align "left"
         set angle 0
