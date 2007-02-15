@@ -6,6 +6,21 @@
 NAGELFAR = nagelfar
 ESKIL    = eskil
 
+all: links doc
+
+# Export
+links: pkg/pkgIndex.tcl pkg/pdf4tcl.tcl pkg/metrics.tcl pkg/glyphnames.tcl
+
+pkg/pkgIndex.tcl:
+	ln -fs ../pkgIndex.tcl pkg
+pkg/pdf4tcl.tcl:
+	ln -fs ../pdf4tcl.tcl pkg
+pkg/metrics.tcl:
+	ln -fs ../metrics.tcl pkg
+pkg/glyphnames.tcl:
+	ln -fs ../glyphnames.tcl pkg
+
+
 # Documentation
 doc : pdf4tcl.html pdf4tcl.n
 
