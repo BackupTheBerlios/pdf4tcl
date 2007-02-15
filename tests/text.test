@@ -42,3 +42,47 @@ test text-3.2 {text method, fill} -body {
         0.6 0.7 0.8 rg 10 5 72 20 re f 0.1 0.6 0.5 rg BT
     }
 } -result 1
+
+test text-3.3 {text method, fill, text position} -body {
+    mytest {setFont 20 Courier} \
+            {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} \
+            {text Tomat -fill {0.1 0.1 0.1}} {
+                0.6 0.7 0.8 rg 10 5 72 20 re f 0 0 0 rg BT
+                1 0 0 1 10 10 Tm
+                (Gurkan) Tj ET
+                0.1 0.1 0.1 rg 82 5 60 20 re f 0 0 0 rg BT
+                1 0 0 1 82 10 Tm
+                (Tomat) Tj
+            }
+} -result 1
+
+test text-4.1 {setTextPosition, -x -y does not effect newLine} -body {
+    mytest {setFont 20 Courier} \
+            {setTextPosition 100 100} \
+            {text Hej} \
+            {text Hopp} \
+            {text Lingon -x 150 -y 150} \
+            {newLine} \
+            {text Miffo} {
+                1 0 0 1 100 100 Tm
+                (Hej) Tj
+                (Hopp) Tj
+                1 0 0 1 150 150 Tm
+                (Lingon) Tj
+                1 0 0 1 100 130 Tm
+                (Miffo) Tj
+            }
+} -result 1
+
+test text-4.2 {newLine goes right} -body {
+    mytest -orient 1 -margin 50 {setFont 20 Courier} \
+            {setTextPosition 100 100} \
+            {text Hej} \
+            {newLine} \
+            {text Miffo} {
+                1 0 0 1 150 692 Tm
+                (Hej) Tj
+                1 0 0 1 150 672 Tm
+                (Miffo) Tj
+            }
+} -result 1
