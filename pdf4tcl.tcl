@@ -3,7 +3,7 @@
 
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
-# Copyright (c) 2006 by Peter Spjuth <peter.spjuth@space.se>
+# Copyright (c) 2006-2007 by Peter Spjuth <peter.spjuth@space.se>
 
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -12,7 +12,7 @@
 # Version 0.2   more graphic operators, fixed font handling
 # Version 0.3   Redesigned to use Snit. TBW
 
-package provide pdf4tcl 0.2.1
+package provide pdf4tcl 0.2.2
 
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames
@@ -179,6 +179,7 @@ snit::type pdf4tcl::pdf4tcl {
     option -margin    -default 0      -validatemethod CheckMargin \
             -configuremethod SetPageOption
 
+    # Validator for -paper
     method CheckPaper {option value} {
         set papersize [pdf4tcl::getPaperSize $value]
         if {[llength $papersize] == 0} {
@@ -186,6 +187,7 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Validator for -margin
     method CheckMargin {option value} {
         switch [llength $value] {
             1 - 2 - 4 {
@@ -201,12 +203,14 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Validator for boolean options
     method CheckBoolean {option value} {
         if {![string is boolean -strict $value]} {
             return -code error "option $option must have a boolean value."
         }
     }
 
+    # Configure method for -compress
     method SetCompress {option value} {
         variable ::pdf4tcl::g
         if {$value} {
@@ -220,6 +224,7 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Configure method for page properties
     method SetPageOption {option value} {
         set options($option) $value
         # Fill in page properies
@@ -241,8 +246,6 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(data_start) 0
         set pdf(data_len) 0
         set pdf(fonts) {}
-        set pdf(font_size) 8
-        set pdf(current_font) ""
         set pdf(font_set) false
         set pdf(in_text_object) false
         set pdf(images) {}
@@ -250,6 +253,9 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(finished) false
         set pdf(inPage) false
         set pdf(fillColor) [list 0 0 0]
+        # start with Helvetica as default font
+        set pdf(font_size) 12
+        set pdf(current_font) "Helvetica"
 
         # Page data
         # Fill in page properies
@@ -274,13 +280,10 @@ snit::type pdf4tcl::pdf4tcl {
 
         # Start on pdfout
         $self Pdfout "%PDF-1.3\n"
-
-        # start with Helvetica as default font
-        set pdf(font_size) 12
-        set pdf(current_font) "Helvetica"
     }
 
     destructor {
+        # Close any open channel
         if {[info exists pdf(ch)] && $pdf(ch) ne ""} {
             catch {$self finish}
             catch {close $pdf(ch)}
@@ -298,25 +301,23 @@ snit::type pdf4tcl::pdf4tcl {
     # Collect PDF Output
     #######################################################################
 
-    # Add data to accumulated pdf output
+    # Add raw data to accumulated pdf output
     method Pdfout {out} {
         append pdf(ob) $out
         incr pdf(out_pos) [string length $out]
     }
 
-    # Add data to accumulated pdf output
+    # Add line of words to accumulated pdf output
     method Pdfoutn {args} {
         set out [join $args " "]\n
         $self Pdfout $out
     }
 
-    # Helper to format a line consisiting of numbers and a command
+    # Helper to format a line consisiting of numbers and last a command
     method Pdfoutcmd {args} {
         set str ""
         foreach num [lrange $args 0 end-1] {
-            # Up to 3 decimals
-            append str [string trimright [string trimright [format "%.3f" $num] "0"] "."]
-            append str " "
+            append str [Nf $num] " "
         }
         append str "[lindex $args end]\n"
         $self Pdfout $str
@@ -348,6 +349,7 @@ snit::type pdf4tcl::pdf4tcl {
                 set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 3]]
             }
             default {
+                # This should not happen since validation should catch it
                 puts "ARARARARARAR '$value'"
             }
         }
@@ -373,6 +375,7 @@ snit::type pdf4tcl::pdf4tcl {
 
     # Start on a new page
     method startPage {args} {
+        # Get defaults from document
         set localopts(-orient)    $options(-orient)
         set localopts(-landscape) $options(-landscape)
         set localopts(-margin)    $options(-margin)
@@ -383,17 +386,17 @@ snit::type pdf4tcl::pdf4tcl {
             $self CheckPaper -paper [lindex $args 0]
             set localopts(-paper) [lindex $args 0]
         } elseif {[llength $args] == 2 && [string is digit [join $args ""]]} {
-            # Old style two numeric args
+            # Old style two numeric args = {width height}
             $self CheckPaper -paper $args
             set localopts(-paper) $args
         } elseif {[llength $args] == 3 && [string is digit [join $args ""]]} {
-            # Old style three numeric args
+            # Old style three numeric args = {width height orient}
             $self CheckPaper -paper [lrange $args 0 1]
             set localopts(-paper)   [lrange $args 0 1]
             set localopts(-orient)  [lindex $args 2]
         } elseif {[llength $args] % 2 != 0} {
             # Uneven, error
-            return -code error "AAAARRRGH"
+            return -code error "Uneven number of arguments to startPage"
         } else {
             # Parse options
             foreach {option value} $args {
@@ -615,7 +618,7 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(finished) true
     }
 
-    # Get PDF data
+    # Get finished PDF data
     method get {} {
         if {$pdf(inPage)} {
             $self endPage
@@ -1089,8 +1092,8 @@ snit::type pdf4tcl::pdf4tcl {
     method rotateText {angle} {
         $self beginTextObj
         set rad [expr {$angle*3.1415926/180.0}]
-        set c [Nf [expr {cos($rad)}]]
-        set s [Nf [expr {sin($rad)}]]
+        set c [expr {cos($rad)}]
+        set s [expr {sin($rad)}]
         $self Pdfoutcmd $c [expr {-$s}] $s $c $pdf(xpos) $pdf(ypos) "Tm"
     }
 
@@ -1311,6 +1314,7 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfout "$red $green $blue RG\n"
     }
 
+    # Draw a rectangle, internal version
     method DrawRect {x y w h stroke filled} {
         $self Pdfoutcmd $x $y $w $h "re"
         if {$filled && $stroke} {
@@ -1322,6 +1326,7 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Draw a rectangle
     method rectangle {x y w h args} {
         set filled 0
         set stroke 1
@@ -1462,9 +1467,10 @@ snit::type pdf4tcl::pdf4tcl {
 
     # helper function for formatting floating point numbers
     proc Nf {n} {
-        # precision: 4 digits
-        set factor 10000.0
-        return [expr {round($n*$factor)/$factor}]
+        # Up to 3 decimals
+        set num [expr {round($n * 1000.0) / 1000.0}]
+        # Remove surplus decimals
+        return [string trimright [string trimright $num "0"] "."]
     }
 }
 
