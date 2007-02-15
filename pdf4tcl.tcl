@@ -841,10 +841,10 @@ snit::type pdf4tcl::pdf4tcl {
             set pdf(ypos) $y
         } else {
             $self Trans $x $y pdf(xpos) pdf(ypos)
+            # Store for reference
+            set pdf(origxpos) $pdf(xpos)
+            set pdf(origypos) $pdf(ypos)
         }
-        # Store for reference
-        set pdf(origxpos) $pdf(xpos)
-        set pdf(origypos) $pdf(ypos)
 
         $self Pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) "Tm"
     }
@@ -868,7 +868,7 @@ snit::type pdf4tcl::pdf4tcl {
         # Update to next line
         set y [expr {$pdf(ypos) - $pdf(font_size)}]
         set x $pdf(origxpos)
-        $self setTextPosition $x $y
+        $self setTextPosition $x $y 1
     }
 
     # Draw a text string
@@ -880,6 +880,7 @@ snit::type pdf4tcl::pdf4tcl {
         set x $pdf(xpos)
         set y $pdf(ypos)
         set posSet 0
+
         foreach {arg value} $args {
             switch -- $arg {
                 "-align" {
@@ -931,6 +932,8 @@ snit::type pdf4tcl::pdf4tcl {
             }
             $self DrawRect $x $dy $strWidth $pdf(font_size) 0 1
             $self Pdfout "$pdf(fillColor) rg\n"
+            # Position needs to be set since we left the text object
+            set posSet 1
         }
         $self beginTextObj
         if {$angle != 0} {
