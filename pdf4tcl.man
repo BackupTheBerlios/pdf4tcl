@@ -1,6 +1,6 @@
 [comment {-*- tcl -*- doctools manpage}]
 [manpage_begin pdf4tcl n 0.3]
-[copyright {2006 Peter Spjuth}]
+[copyright {2007 Peter Spjuth}]
 [moddesc   {Pdf document generation}]
 [titledesc {Pdf document generation}]
 [require Tcl 8.4]
@@ -37,6 +37,7 @@ See [sectref {OBJECT CONFIGURATION}].
 [call [cmd ::pdf4tcl::getPaperSize] [arg "paper"]]
 
 This call returns the size of a named paper type, e.g. "a4".
+Paper names are case insensitive.
 The argument [arg "paper"] may also be a two element list
 with values as accepted by [cmd ::pdf4tcl::getPoints].
 The return value is a list with width and height in points.
@@ -180,6 +181,11 @@ This method returns the width of a character under the current font.
 
 Set coordinate for next text command.
 
+[call [arg objectName] [method newLine]]
+
+Moves text coordinate one line down and resets x to where the latest
+[method setTextPosition] was.
+
 [call [arg objectName] [method drawText] [arg "str"]]
 
 Draw text.
@@ -190,11 +196,24 @@ Draw text.
 
 [call [arg objectName] [method drawTextAt] [arg "x"] [arg "y"] [arg "str"] [opt [arg "option value"]...]]
 
-Draw text.
+Draw text. Deprecated. Use [method text].
 
 [call [arg objectName] [method drawTextBox] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "str"] [opt [arg "option value"]...]]
 
 Draw text.
+
+[call [arg objectName] [method beginTextObj]]
+[call [arg objectName] [method endTextObj]]
+[call [arg objectName] [method closePath]]
+[call [arg objectName] [method moveTo] [arg "x"] [arg "y"]]
+[call [arg objectName] [method putImage] [arg "id"] [arg "x"] [arg "y"] [arg "args"]]
+[call [arg objectName] [method addJpeg] [arg "filename"] [arg "id"]]
+[call [arg objectName] [method getFontMetric] [arg "metric"]]
+[call [arg objectName] [method rotateText] [arg "angle"]]
+[call [arg objectName] [method setBgColor] [arg "red"] [arg "green"] [arg "blue"]]
+[call [arg objectName] [method setFillColor] [arg "red"] [arg "green"] [arg "blue"]]
+[call [arg objectName] [method setStrokeColor] [arg "red"] [arg "green"] [arg "blue"]]
+[call [arg objectName] [method skewText] [arg "xangle"] [arg "yangle"]]
 
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
