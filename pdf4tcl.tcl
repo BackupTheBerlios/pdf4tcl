@@ -98,6 +98,7 @@ namespace eval pdf4tcl {
     proc getPaperSize {papername} {
         variable paper_sizes
 
+        set papername [string tolower $papername]
         if {[info exists paper_sizes($papername)]} {
             return $paper_sizes($papername)
         }
@@ -121,7 +122,8 @@ namespace eval pdf4tcl {
     # Supported units are "mm", "cm", and "i".
     proc getPoints {val} {
         if {[string is double -strict $val]} {
-            return $val
+            # Always return a pure double value
+            return [expr {$val * 1.0}]
         }
         if {[regexp {^\s*(\S+?)\s*([[:alpha:]]+)\s*$} $val -> num unit]} {
             if {[string is double -strict $num]} {
@@ -777,7 +779,7 @@ snit::type pdf4tcl::pdf4tcl {
 
     # Get the width of a string under the current font.
     method getStringWidth {txt} {
-        set w 0
+        set w 0.0
         foreach ch [split $txt ""] {
             set w [expr {$w + [GetCharWidth $pdf(current_font) $ch]}]
         }
@@ -795,7 +797,7 @@ snit::type pdf4tcl::pdf4tcl {
         }
 
         if {$ch eq "\n"} {
-            set res 0
+            set res 0.0
             set ::pdf4tcl::FontWidthsCh($font,$ch) $res
             return $res
         }
@@ -807,9 +809,9 @@ snit::type pdf4tcl::pdf4tcl {
             set ::pdf4tcl::FontWidthsCurrent $font
         }
 
-        if {[scan $ch %c n]!=1} {
-            return 0
-        }
+        # This can't fail since ch is always 1 char long
+        scan $ch %c n
+
         set ucs2 [format "%04.4X" $n]
 
         set glyph_name zero
@@ -829,7 +831,7 @@ snit::type pdf4tcl::pdf4tcl {
     method getCharWidth {ch} {
         set len [string length $ch]
         if {$len == 0} {
-            return 0
+            return 0.0
         } elseif {$len > 1} {
             set ch [string index $ch 0]
         }
@@ -1429,7 +1431,9 @@ snit::type pdf4tcl::pdf4tcl {
         if {$pdf(orient)} {
             set y [expr {$y-$h}]
         }
-        $self Pdfout "q\n$w 0 0 $h $x $y cm\n/$id Do\nQ\n"
+        $self Pdfoutcmd "q"
+        $self Pdfoutcmd $w 0 0 $h $x $y "cm"
+        $self Pdfout "/$id Do\nQ\n"
         return
     }
 
