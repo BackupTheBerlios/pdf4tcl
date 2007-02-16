@@ -20,16 +20,22 @@ test util-1.4 {getPaperSizeList} -body {
     lsort -dictionary [pdf4tcl::getPaperSizeList]
 } -result {11x17 a0 a1 a2 a3 a4 a5 a6 ledger legal letter}
 
+test util-1.5 {getPaperSize, case insensitive} -body {
+    lrange [pdf4tcl::getPaperSize A4] 0 end
+} -result {595 842}
+
 
 test util-2.1 {getPoints} -body {
     set res {}
-    lappend res [format %.4f [pdf4tcl::getPoints 1.3]]
+    lappend res [pdf4tcl::getPoints 1.3]
+    lappend res [pdf4tcl::getPoints 15]
+    lappend res [pdf4tcl::getPoints " 16 "]
     lappend res [format %.4f [pdf4tcl::getPoints 1.3i]]
     lappend res [format %.4f [pdf4tcl::getPoints 1.3mm]]
     lappend res [format %.4f [pdf4tcl::getPoints " 10 i "]]
     lappend res [format %.4f [pdf4tcl::getPoints 5mm]]
     lappend res [format %.4f [pdf4tcl::getPoints "5 cm"]]
-} -result {1.3000 93.6000 3.6850 720.0000 14.1732 141.7323}
+} -result {1.3 15.0 16.0 93.6000 3.6850 720.0000 14.1732 141.7323}
 
 test util-2.2 {getPoints, error} -body {
     pdf4tcl::getPoints 1.3g
@@ -42,3 +48,50 @@ test util-2.3 {getPoints, error} -body {
 test util-2.4 {getPoints, error} -body {
     pdf4tcl::getPoints 1x1mm
 } -returnCodes 1 -result "Unknown value 1x1mm"
+
+test util-3.1 {write method} -body {
+    set pdf [eval pdf4tcl::new %AUTO%]
+    $pdf startPage
+    $pdf write
+    $pdf destroy
+} -result "" -output "%PDF-1.3*" -match glob
+
+test util-4.1 {getCharWidth method} -body {
+    set pdf [eval pdf4tcl::new %AUTO%]
+    $pdf startPage
+    $pdf setFont 20 Courier
+    set res {}
+    lappend res [$pdf getCharWidth ""]
+    lappend res [$pdf getCharWidth " "]
+    lappend res [$pdf getCharWidth "\n"]
+    lappend res [$pdf getCharWidth "0"]
+    lappend res [$pdf getCharWidth "00"]
+    $pdf destroy
+    set res
+} -result {0.0 12.0 0.0 12.0 12.0}
+
+test util-5.1 {getStringWidth method} -body {
+    set pdf [eval pdf4tcl::new %AUTO%]
+    $pdf startPage
+    $pdf setFont 20 Courier
+    set res {}
+    lappend res [$pdf getStringWidth ""]
+    lappend res [$pdf getStringWidth " "]
+    lappend res [$pdf getStringWidth "w\ni"]
+    lappend res [$pdf getStringWidth "MiM"]
+    lappend res [$pdf getStringWidth "i i"]
+    $pdf destroy
+    set res
+} -result {0.0 12.0 24.0 36.0 36.0}
+
+test util-5.2 {getStringWidth method} -body {
+    set pdf [eval pdf4tcl::new %AUTO%]
+    $pdf startPage
+    $pdf setFont 20 Helvetica
+    set res {}
+    lappend res [$pdf getStringWidth "MMM"]
+    lappend res [$pdf getStringWidth "MiM"]
+    lappend res [$pdf getStringWidth "iii"]
+    $pdf destroy
+    set res
+} -result {49.98 37.76 13.32}
