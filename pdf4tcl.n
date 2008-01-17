@@ -1,0 +1,346 @@
+'\"
+'\" Generated from file 'pdf4tcl.man' by tcllib/doctools with format 'nroff'
+'\" Copyright (c) 2007 Peter Spjuth
+'\"
+'\" -*- tcl -*- doctools manpage
+.so man.macros
+.TH "pdf4tcl" n 0.3 pdf4tcl "Pdf document generation"
+.BS
+.SH NAME
+pdf4tcl \- Pdf document generation
+.SH SYNOPSIS
+package require \fBTcl  8.4\fR
+.sp
+package require \fBsnit \fR
+.sp
+package require \fBpdf4tcl  ?0.3?\fR
+.sp
+\fB::pdf4tcl::new\fR \fIobjectName\fR ?\fIoption value\fR...?
+.sp
+\fB::pdf4tcl::getPaperSize\fR \fIpaper\fR
+.sp
+\fB::pdf4tcl::getPaperSizeList\fR
+.sp
+\fB::pdf4tcl::getPoints\fR \fIval\fR
+.sp
+\fBobjectName\fR \fBmethod\fR ?\fIarg arg ...\fR?
+.sp
+\fIobjectName\fR \fBconfigure\fR
+.sp
+\fIobjectName\fR \fBconfigure\fR \fIoption\fR
+.sp
+\fIobjectName\fR \fBconfigure\fR \fB-option\fR \fIvalue\fR...
+.sp
+\fIobjectName\fR \fBcget\fR \fB-option\fR
+.sp
+\fIobjectName\fR \fBdestroy\fR
+.sp
+\fIobjectName\fR \fBstartPage\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBendPage\fR
+.sp
+\fIobjectName\fR \fBfinish\fR
+.sp
+\fIobjectName\fR \fBget\fR
+.sp
+\fIobjectName\fR \fBwrite\fR ?\fI-file filename\fR?
+.sp
+\fIobjectName\fR \fBgetDrawableArea\fR
+.sp
+\fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
+.sp
+\fIobjectName\fR \fBgetStringWidth\fR \fIstr\fR
+.sp
+\fIobjectName\fR \fBgetCharWidth\fR \fIchar\fR
+.sp
+\fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
+.sp
+\fIobjectName\fR \fBnewLine\fR
+.sp
+\fIobjectName\fR \fBdrawText\fR \fIstr\fR
+.sp
+\fIobjectName\fR \fBtext\fR \fIstr\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBdrawTextAt\fR \fIx\fR \fIy\fR \fIstr\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBbeginTextObj\fR
+.sp
+\fIobjectName\fR \fBendTextObj\fR
+.sp
+\fIobjectName\fR \fBclosePath\fR
+.sp
+\fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
+.sp
+\fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR \fIargs\fR
+.sp
+\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
+.sp
+\fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
+.sp
+\fIobjectName\fR \fBrotateText\fR \fIangle\fR
+.sp
+\fIobjectName\fR \fBsetBgColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.sp
+\fIobjectName\fR \fBsetFillColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.sp
+\fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.sp
+\fIobjectName\fR \fBskewText\fR \fIxangle\fR \fIyangle\fR
+.sp
+\fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
+.sp
+\fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
+.sp
+\fIobjectName\fR \fBqCurve\fR \fIx1\fR \fIy1\fR \fIxc\fR \fIyc\fR \fIx2\fR \fIy2\fR
+.sp
+\fIobjectName\fR \fBpolygon\fR \fIisfilled\fR ?\fIx y\fR...?
+.sp
+\fIobjectName\fR \fBcircle\fR \fIisfilled\fR \fIx\fR \fIy\fR \fIradius\fR
+.sp
+\fIobjectName\fR \fBarc\fR \fIx\fR \fIy\fR \fIradius\fR \fIphi\fR \fIextend\fR
+.sp
+\fIobjectName\fR \fBarrow\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIsize\fR ?\fIangle\fR?
+.sp
+\fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
+.sp
+.BE
+.SH DESCRIPTION
+This package provides a container class for
+generating \fIpdf\fR documents.
+.SH "PUBLIC API"
+.SS "PACKAGE COMMANDS"
+.TP
+\fB::pdf4tcl::new\fR \fIobjectName\fR ?\fIoption value\fR...?
+This command creates a new pdf4tcl object with an associated Tcl
+command whose name is \fIobjectName\fR. This \fIobject\fR command is
+explained in full detail in the sections \fBOBJECT COMMAND\fR
+and \fBOBJECT METHODS\fR. The object command will be created
+under the current namespace if the \fIobjectName\fR is not fully
+qualified, and in the specified namespace otherwise.
+If \fIobjectName\fR is %AUTO% a name will generated.
+The return value is the newly created object's name.
+.sp
+The options and their values coming after the name of the object are
+used to set the initial configuration of the object.
+See \fBOBJECT CONFIGURATION\fR.
+.TP
+\fB::pdf4tcl::getPaperSize\fR \fIpaper\fR
+This call returns the size of a named paper type, e.g. "a4".
+Paper names are case insensitive.
+The argument \fIpaper\fR may also be a two element list
+with values as accepted by \fB::pdf4tcl::getPoints\fR.
+The return value is a list with width and height in points.
+.TP
+\fB::pdf4tcl::getPaperSizeList\fR
+This call returns the list of known paper types.
+.TP
+\fB::pdf4tcl::getPoints\fR \fIval\fR
+This call translates a measurement to points (1/72 inch).
+The format of \fIval\fR is '\fInum\fR ?\fIunit\fR?' where
+\fInum\fR is a valid integer or double. \fIunit\fR may be one of
+\fBmm\fR, \fBcm\fR, or \fBi\fR. If no \fIunit\fR
+is given, the value is interpreted as points.
+.SS "OBJECT COMMAND"
+All commands created by \fB::pdf4tcl::new\fR have the following
+general form and may be used to invoke various operations on their
+pdf object.
+.TP
+\fBobjectName\fR \fBmethod\fR ?\fIarg arg ...\fR?
+The method \fBmethod\fR and its \fIarg\fR'uments determine the exact
+behavior of the command. See section \fBOBJECT METHODS\fR for
+the detailed specifications.
+.SS "OBJECT METHODS"
+.TP
+\fIobjectName\fR \fBconfigure\fR
+The method returns a list of all known options and their current
+values when called without any arguments.
+.TP
+\fIobjectName\fR \fBconfigure\fR \fIoption\fR
+The method behaves like the method \fBcget\fR when called with a
+single argument and returns the value of the option specified by said
+argument.
+.TP
+\fIobjectName\fR \fBconfigure\fR \fB-option\fR \fIvalue\fR...
+The method reconfigures the specified \fBoption\fRs of the object,
+setting them to the associated \fIvalue\fRs, when called with an even
+number of arguments, at least two.
+.sp
+The legal options are described in the section
+\fBOBJECT CONFIGURATION\fR.
+.TP
+\fIobjectName\fR \fBcget\fR \fB-option\fR
+This method expects a legal configuration option as argument and will
+return the current value of that option for the object the method was
+invoked for.
+.sp
+The legal configuration options are described in section
+\fBOBJECT CONFIGURATION\fR.
+.TP
+\fIobjectName\fR \fBdestroy\fR
+This method destroys the object it is invoked for.
+If the \fB-file\fR option was given at object creation,
+the output file will be finished and closed.
+.TP
+\fIobjectName\fR \fBstartPage\fR ?\fIoption value\fR...?
+This method starts a new page in the document. The page will have the
+default page settings for the document unless overridden by \fIoption\fR.
+See \fBPAGE CONFIGURATION\fR for page settings.
+.TP
+\fIobjectName\fR \fBendPage\fR
+This method ends a page in the document.
+.TP
+\fIobjectName\fR \fBfinish\fR
+This method ends the document.
+This will do \fBendPage\fR if needed.
+If the \fB-file\fR option was given at object creation,
+the output file will be finished and closed.
+.TP
+\fIobjectName\fR \fBget\fR
+This method returns the generated pdf.
+This will do \fBendPage\fR and \fBfinish\fR if needed.
+If the \fB-file\fR option was given at object creation, nothing is returned.
+.TP
+\fIobjectName\fR \fBwrite\fR ?\fI-file filename\fR?
+This method writes the generated pdf to the given \fIfilename\fR.
+If no \fIfilename\fR is given, it is written to stdout.
+This will do \fBendPage\fR and \fBfinish\fR if needed.
+If the \fB-file\fR option was given at object creation, an empty file
+is created.
+.TP
+\fIobjectName\fR \fBgetDrawableArea\fR
+This method returns the size of the available area on the page,
+after removing margins.  The return value is a list of width and height,
+in points.
+.TP
+\fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
+This method sets the font used by text drawing routines.
+.TP
+\fIobjectName\fR \fBgetStringWidth\fR \fIstr\fR
+This method returns the width of a string under the current font.
+.TP
+\fIobjectName\fR \fBgetCharWidth\fR \fIchar\fR
+This method returns the width of a character under the current font.
+.TP
+\fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
+Set coordinate for next text command.
+.TP
+\fIobjectName\fR \fBnewLine\fR
+Moves text coordinate one line down and resets x to where the latest
+\fBsetTextPosition\fR was.
+.TP
+\fIobjectName\fR \fBdrawText\fR \fIstr\fR
+Draw text.
+.TP
+\fIobjectName\fR \fBtext\fR \fIstr\fR ?\fIoption value\fR...?
+Draw text.
+.TP
+\fIobjectName\fR \fBdrawTextAt\fR \fIx\fR \fIy\fR \fIstr\fR ?\fIoption value\fR...?
+Draw text. Deprecated. Use \fBtext\fR.
+.TP
+\fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
+Draw text.
+.TP
+\fIobjectName\fR \fBbeginTextObj\fR
+.TP
+\fIobjectName\fR \fBendTextObj\fR
+.TP
+\fIobjectName\fR \fBclosePath\fR
+.TP
+\fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
+.TP
+\fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR \fIargs\fR
+.TP
+\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
+.TP
+\fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
+.TP
+\fIobjectName\fR \fBrotateText\fR \fIangle\fR
+.TP
+\fIobjectName\fR \fBsetBgColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.TP
+\fIobjectName\fR \fBsetFillColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.TP
+\fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.TP
+\fIobjectName\fR \fBskewText\fR \fIxangle\fR \fIyangle\fR
+.TP
+\fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
+.TP
+\fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
+.TP
+\fIobjectName\fR \fBqCurve\fR \fIx1\fR \fIy1\fR \fIxc\fR \fIyc\fR \fIx2\fR \fIy2\fR
+.TP
+\fIobjectName\fR \fBpolygon\fR \fIisfilled\fR ?\fIx y\fR...?
+.TP
+\fIobjectName\fR \fBcircle\fR \fIisfilled\fR \fIx\fR \fIy\fR \fIradius\fR
+.TP
+\fIobjectName\fR \fBarc\fR \fIx\fR \fIy\fR \fIradius\fR \fIphi\fR \fIextend\fR
+.TP
+\fIobjectName\fR \fBarrow\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIsize\fR ?\fIangle\fR?
+.TP
+\fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
+.SS "OBJECT CONFIGURATION"
+All pdf4tcl objects understand the options from \fBPAGE CONFIGURATION\fR,
+which defines default page settings when used with a pdf4tcl object.
+The objects also understand the following configuration options:
+.TP
+\fB-compress\fR \fIboolean\fR
+Pages will be zlib compressed if this option is set to true.
+This requires the presence of the zlib package.
+This option can only be set at object creation.
+.TP
+\fB-file\fR \fIfilename\fR
+Continuously write pdf to \fIfilename\fR instead of storing it
+in memory.
+This option can only be set at object creation.
+.SS "PAGE CONFIGURATION"
+.TP
+\fB-paper\fR \fIname\fR
+The argument of this option defines the paper size.
+The paper size may be a string like "a4", where valid values
+are available through \fB::pdf4tcl::getPaperSizeList\fR.
+Paper size may also be a two element list specifying width and height.
+.sp
+The default value of this option is "a4".
+.TP
+\fB-landscape\fR \fIboolean\fR
+If true, paper width and height are switched.
+.sp
+The default value of this option is false.
+.TP
+\fB-orient\fR \fIboolean\fR
+If true, the y axis of the coordinate system is inverted.
+Normally origo is in the top left corner. With \fB-orient\fR true,
+origo is in the bottom left corner.
+.sp
+The default value of this option is false.
+.TP
+\fB-margin\fR \fIvalues\fR
+The margin is a one, two or four element list of margins.
+For one element, it specifies all margins.
+Two elements specify left/right and top/bottom.
+Four elements specify left, right, top and bottom.
+.sp
+The default value of this option is zero.
+.SH EXAMPLES
+.nf
+
+  pdf4tcl::new mypdf -paper a3
+  mypdf startPage
+  mypdf setFont 12 Courier
+  mypdf drawTextAt 50 50 "Hejsan"
+  mypdf write -file mypdf.pdf
+  mypdf destroy
+
+.fi
+.SH "SEE ALSO"
+doctools
+.SH KEYWORDS
+document, pdf
+.SH COPYRIGHT
+.nf
+Copyright (c) 2007 Peter Spjuth
+
+.fi
