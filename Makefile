@@ -2,6 +2,8 @@
 #
 # $Id$
 
+VERSION = 03
+
 # TOOL paths
 NAGELFAR = nagelfar
 ESKIL    = eskil
@@ -54,3 +56,13 @@ icheck: $(MFILES)
 
 cleancc:
 	@rm -f $(LOGFILES) $(IFILES) $(MFILES)
+#----------------------------------------------------------------
+# Packaging/Releasing
+#----------------------------------------------------------------
+
+release: doc
+	@\rm -f pdf4tcl.tar.gz
+	@tar -zcvf pdf4tcl.tar.gz pdf4tcl.tcl pkgIndex.tcl metrics.tcl \
+		glyphnames.tcl pdf4tcl.man pdf4tcl.html licence.terms
+	@cp pdf4tcl.tar.gz pdf4tcl`date +%Y%m%d`.tar.gz
+	@mv pdf4tcl.tar.gz pdf4tcl$(VERSION).tar.gz
