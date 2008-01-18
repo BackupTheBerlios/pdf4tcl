@@ -3,16 +3,16 @@
 
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
-# Copyright (c) 2006-2007 by Peter Spjuth <peter.spjuth@space.se>
+# Copyright (c) 2006-2007 by Peter Spjuth <peter.spjuth@gmail.com>
 
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 # Version 0.1   base features for generating correct pdf files
 # Version 0.2   more graphic operators, fixed font handling
-# Version 0.3   Redesigned to use Snit. TBW
+# Version 0.3   Redesigned to use Snit. A lot of added features.
 
-package provide pdf4tcl 0.2.2
+package provide pdf4tcl 0.3
 
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames
