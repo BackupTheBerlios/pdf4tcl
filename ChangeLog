@@ -1,34 +1,37 @@
-2006-09-01  Peter Spjuth   <peter.spjuth@space.se>
+2008-01-19 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Release 0.3
+	
+2006-09-01  Peter Spjuth   <peter.spjuth@gmail.com>
 
-	* Added -file option, to continoulsy write ot to file instead of
+	* Added -file option, to continuoulsy write out to file instead of
 	  accumulating in memory.
 
-2006-08-28  Peter Spjuth   <peter.spjuth@space.se>
+2006-08-28  Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Removed -fill from drawTextAt, restoring the 0.2 API.
 
-2006-08-24  Peter Spjuth   <peter.spjuth@space.se>
+2006-08-24  Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Added getFontMetric method.
 	* Added text method, including fill support.
 
-2006-03-23  Peter Spjuth   <peter.spjuth@space.se>
+2006-03-23  Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Added -nostroke to rect method.
 	* Added setBgColor method.
 	* Added -fill to drawTextAt method
 
-2006-03-20  Peter Spjuth   <peter.spjuth@space.se>
+2006-03-20  Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Support e.g. "5mm" as user coordinate.
 	* Allow two-element point list as paper size.
 
-2006-03-17  Peter Spjuth   <peter.spjuth@space.se>
+2006-03-17  Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Use Snit's option handling.
 	* Support -landscape -margin etc. in both document and new page.
 
-2006-03-13  Peter Spjuth   <peter.spjuth@space.se>
+2006-03-13  Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Clean up and rearranged to Snit object.
 
