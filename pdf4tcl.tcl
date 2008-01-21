@@ -655,7 +655,6 @@ snit::type pdf4tcl::pdf4tcl {
         if {$outfile} {
             close $chan
         }
-        return
     }
 
     # Transform absolute user coordinates to page coordinates
@@ -1434,7 +1433,57 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfoutcmd "q"
         $self Pdfoutcmd $w 0 0 $h $x $y "cm"
         $self Pdfout "/$id Do\nQ\n"
-        return
+    }
+
+    method putRawImage {img_data x y args} {
+        # Determine the width and height of the image, which is
+        # a list of lists(rows).
+        set width [llength [lindex $img_data 0]]
+        set height [llength $img_data]
+
+        $self Trans $x $y x y
+        set w $width
+        set h $height
+        set wfix 0
+        set hfix 0
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-width"  {set w [pdf4tcl::getPoints $value]; set wfix 1}
+                "-height" {set h [pdf4tcl::getPoints $value]; set hfix 1}
+            }
+        }
+        if {$wfix && !$hfix} {
+            set h [expr {$height*$w/$width}]
+        }
+        if {$hfix && !$wfix} {
+            set w [expr {$width*$h/$height}]
+        }
+
+        $self endTextObj
+        if {$pdf(orient)} {
+            set y [expr {$y-$h}]
+        }
+        $self Pdfoutcmd "q"
+        $self Pdfoutcmd $w 0 0 $h $x $y "cm"
+        $self Pdfoutcmd "BI"
+        $self Pdfoutn   "/W $width"
+        $self Pdfoutn   "/H $height"
+        $self Pdfoutn   "/CS /RGB"
+        $self Pdfoutn   "/BPC 8"
+        $self Pdfout    "ID "
+
+        # Iterate on each row of the image data.
+        foreach rawRow $img_data {
+            # Remove spaces and # characters
+            regsub -all -- {((\#)|( ))} $rawRow {} row
+            # Convert data to binary format and
+            # add to data stream.
+            $self Pdfout [binary format H* $row]
+        }
+
+        $self Pdfoutcmd ">"
+        $self Pdfoutcmd "EI"
+        $self Pdfoutcmd "Q"
     }
 
     #######################################################################
