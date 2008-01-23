@@ -2,19 +2,157 @@
 <html>
 <head>
   <title>Pdf4Tcl - Generating PDF documents from Tcl</title>
-      
-  <meta http-equiv="content-type"
- content="text/html; charset=ISO-8859-1">
+  <link rel="stylesheet" href="style.css" type="text/css">
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 </head>
 <body>
 <a href="http://developer.berlios.de" title="BerliOS Developer"> <img src="http://developer.berlios.de/bslogo.php?group_id=9272" width="124px" height="32px" border="0" alt="BerliOS Developer Logo"></a>
+<p>
+<h1>pdf4tcl</h1>
 
 <p>
-<b><a href="https://developer.berlios.de/projects/pdf4tcl/">Project page</a>
-</b><p>
-<a href="http://svn.berlios.de/viewcvs/*checkout*/pdf4tcl/trunk/pdf4tcl.html">Manual</a>
+pdf4tcl is a tcl package for generating pdf files. It started as a port
+of <a href="http://www.gnuvox.com/pdf4php/">pdf4php</a> to the
+<a href="http://www.tcl.tk">tcl</a> language.
+</p>
+
 <p>
-<a href="http://truckle.in-chemnitz.de/pdf4tcl/pdf4tcl.html">Old Home</a>
+pdf4tcl does not contain any binary code, so it should run without
+modification on any system, which has a tcl interpreter. Only
+<a href="http://wiki.tcl.tk/snit">snit</a> is required, but that should
+be available on most installations.
+</p>
+
+<p>
+If pdf4tcl does not work on your system, please add a bug report at the
+<a href="https://developer.berlios.de/projects/pdf4tcl/">project page</a>
+or (preferably) make it work and send in a patch.
+</p>
+
+<h2>Features</h2>
+
+<p>
+pdf4tcl is now version 0.3, so don't expect too much. For now you can
+create pdf files with these features and objects:
+<ul>
+<li>compressed pdf, if tcl-package zip is available. tclkit has it built
+in.</li>
+<li>lines</li>
+<li>arrows</li>
+<li>rectangles</li>
+<li>circles</li>
+<li>arcs</li>
+<li>set stroke and fill colour</li>
+<li>set line style (thickness and dashes)</li>
+<li>simple text strings, left or right aligned or centered</li>
+<li>text boxes with left or right aligned, centered or fully justified
+text.</li>
+<li>rotated text</li>
+<li>text with skewed characters</li>
+<li>use adobe standard fonts, for which pdf4tcl has built in knowledge
+about the font metrics</li>
+<li>use other fonts, if you supply an .afm file. Beware - pdf4tcl 0.3
+does not yet have support for embedding fonts</li>
+<li>jpeg images</li>
+<li>pdf4tcl knows about most commonly used paper dimensions, you can
+provide your own, too.</li>
+<li>pages can be built top-down or bottom-up</li>
+</ul>
+</p>
+
+<h2>Usage</h2>
+
+<p>
+Here is a commented example, which should illustrate, how pdf4tcl can
+be used (using only 0.2 features so far):
+</p>
+
+<pre>
+# import pdf4tcl
+package require pdf4tcl
+
+# create a pdf object and equally named procedure in global namespace
+pdf4tcl::new mypdf -compress 1 -paper a4
+
+# add the first page
+mypdf startPage
+
+# draw a line, coordinates start in upper left corner of the paper,
+# unit is postscript point, which is 1/72 inch
+mypdf line 20 20 560 20
+
+# draw some text
+mypdf setFont 8 Helvetica
+mypdf drawTextAt 20 32 "sample text"
+
+# use another font and draw centered text
+mypdf setFont 12 "Helvetica-Bold"
+mypdf drawTextAt [expr {595/2.0}] 32 "Sample Heading" -align center
+
+# and some right aligned text
+mypdf setFont 8 Helvetica
+mypdf drawTextAt 575 32 "page 1" -align right
+
+# draw a rectangle with dashed red outline and lightgrey fill colour
+mypdf setLineStyle 0.5 8 4
+mypdf setStrokeColor 0.8 0 0
+mypdf setFillColor 0.9 0.9 0.9
+mypdf rectangle 20 50 300 100
+
+# set some justified text into this box
+mypdf setFillColor 0 0 0
+mypdf setStrokeColor 0 0 0
+mypdf drawTextBox 22 60 296 96 "This is just some senseless sample text,\
+	illustrating some features of pdf4tcl. This text should be justified\
+	by stretching white space between words, to make for straight left\
+	and right margins." -align justify
+
+# write pdf to a file
+mypdf write -file mypdf.pdf
+
+# cleanup memory and unset procedures and variables
+mypdf cleanup
+</pre>
+
+<p>
+The resulting pdf file is <a href="mypdf.pdf">mypdf.pdf</a>.
+</p>
+
+<h2>Installation</h2>
+
+Please download pdf4tcl from the <a href="https://developer.berlios.de/projects/pdf4tcl/">Project page</a>.
+
+Unpack the archive in a path, where tcl can find the package or set
+auto_path in your scripts accordingly.
+
+<h2>Documentation</h2>
+
+<a href="http://svn.berlios.de/viewcvs/*checkout*/pdf4tcl/trunk/pdf4tcl.html">Manual</a>
+
+<h2>Copying, Feedback and further development</h2>
+
+<p>
+Thanks to contributions of Jens P&ouml;nisch version 0.2 of pdf4tcl
+has support for additional graphical elements, like circles, curves and arcs.
+It is now possible to build a page "bottom-up" with coordinate origin
+in lower left corner of the paper. You can still use it "top-down", with
+origin in upper left corner.
+</p>
+
+<p>
+pdf4tcl version 0.2 and up is licenced like tcllib and many other tcl extensions
+using a BSD-like licence. See <a href="http://svn.berlios.de/viewcvs/*checkout*/pdf4tcl/trunk/licence.txt">licence.txt</a> for details.
+</p>
+
+<p>
+pdf4tcl version 0.1 had been released under the
+GNU Public Licence. This version is still available at the <a href="https://developer.berlios.de/projects/pdf4tcl/">Project page</a>.
+</p>
+
+<p>
+There is much room for enhancing pdf4tcl. I'd really like to get feedback,
+suggestions and patches.
+</p>
 
 </body>
 </html>
