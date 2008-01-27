@@ -12,25 +12,25 @@ test text-1.1 {text method} -body {
 
 test text-2.1 {text method, align} -body {
     mytest {setFont 10 Courier} {text Gurka -x 10 -y 10 -align left} {
-        BT 1 0 0 1 10 10 Tm (Gurka) Tj ET
+        BT 1 0 0 1 110 210 Tm (Gurka) Tj ET
     }
 } -result 1
 
 test text-2.2 {text method, align} -body {
     mytest {setFont 10 Courier} {text Gurka -x 35 -align right} {
-        BT 1 0 0 1 5 842 Tm (Gurka) Tj ET
+        BT 1 0 0 1 105 1000 Tm (Gurka) Tj ET
     }
 } -result 1
 
 test text-2.3 {text method, align} -body {
     mytest {setFont 10 Courier} {text Gurkan -x 45 -y 75 -align center} {
-        BT 1 0 0 1 27 75 Tm (Gurkan) Tj ET
+        BT 1 0 0 1 127 275 Tm (Gurkan) Tj ET
     }
 } -result 1
 
 test text-3.1 {text method, fill} -body {
     mytest {setFont 10 Courier} {setBgColor 0.2 0.3 0.4} {text Gurkan -x 10 -y 10 -fill 1} {
-        0.2 0.3 0.4 rg 10 7.5 36 10 re f 0 0 0 rg BT
+        0.2 0.3 0.4 rg 110 207.5 36 10 re f 0 0 0 rg BT
     }
 } -result 1
 
@@ -39,7 +39,7 @@ test text-3.2 {text method, fill} -body {
             {setBgColor 0.2 0.3 0.4} \
             {setFillColor 0.1 0.6 0.5} \
             {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} {
-        0.6 0.7 0.8 rg 10 5 72 20 re f 0.1 0.6 0.5 rg BT
+        0.6 0.7 0.8 rg 110 205 72 20 re f 0.1 0.6 0.5 rg BT
     }
 } -result 1
 
@@ -47,11 +47,11 @@ test text-3.3 {text method, fill, text position} -body {
     mytest {setFont 20 Courier} \
             {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} \
             {text Tomat -fill {0.1 0.1 0.1}} {
-                0.6 0.7 0.8 rg 10 5 72 20 re f 0 0 0 rg BT
-                1 0 0 1 10 10 Tm
+                0.6 0.7 0.8 rg 110 205 72 20 re f 0 0 0 rg BT
+                1 0 0 1 110 210 Tm
                 (Gurkan) Tj ET
-                0.1 0.1 0.1 rg 82 5 60 20 re f 0 0 0 rg BT
-                1 0 0 1 82 10 Tm
+                0.1 0.1 0.1 rg 182 205 60 20 re f 0 0 0 rg BT
+                1 0 0 1 182 210 Tm
                 (Tomat) Tj
             }
 } -result 1
@@ -64,12 +64,12 @@ test text-4.1 {setTextPosition, -x -y does not effect newLine} -body {
             {text Lingon -x 150 -y 150} \
             {newLine} \
             {text Miffo} {
-                1 0 0 1 100 100 Tm
+                1 0 0 1 200 300 Tm
                 (Hej) Tj
                 (Hopp) Tj
-                1 0 0 1 150 150 Tm
+                1 0 0 1 250 350 Tm
                 (Lingon) Tj
-                1 0 0 1 100 130 Tm
+                1 0 0 1 200 330 Tm
                 (Miffo) Tj
             }
 } -result 1
@@ -80,9 +80,9 @@ test text-4.2 {newLine goes right} -body {
             {text Hej} \
             {newLine} \
             {text Miffo} {
-                1 0 0 1 150 692 Tm
+                1 0 0 1 150 850 Tm
                 (Hej) Tj
-                1 0 0 1 150 672 Tm
+                1 0 0 1 150 830 Tm
                 (Miffo) Tj
             }
 } -result 1

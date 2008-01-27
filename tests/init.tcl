@@ -19,12 +19,16 @@ proc mytest {args} {
     set args [lrange $args 0 end-1]
 
     set cmds {}
-    set opts {}
+    # Default paper has a simple size
+    set opts {-orient 0 -paper {800 1000} -margin {100 0 100 200}}
     set isopt 0
+    set debug 0
     foreach arg $args {
         if {$isopt} {
             set isopt 0
             lappend opts $arg
+        } elseif {[string match "-debug" $arg]} {
+            set debug 1
         } elseif {[string match "-*" $arg]} {
             set isopt 1
             lappend opts $arg
@@ -32,7 +36,7 @@ proc mytest {args} {
             lappend cmds $arg
         }
     }
-    set pdf [eval pdf4tcl::new %AUTO% -orient 0 $opts]
+    set pdf [eval pdf4tcl::new %AUTO% $opts]
     $pdf startPage
     foreach cmd $cmds {
         eval \$pdf $cmd
@@ -40,6 +44,13 @@ proc mytest {args} {
     set res [$pdf get]
     $pdf destroy
 
+    if {$debug} {
+        set ch [open testdebug.pdf w]
+        puts $ch $res
+        close $ch
+        exec kpdf testdebug.pdf
+        file delete testdebug.pdf
+    }
     regexp {stream.*endstream} $res res
     regsub -all {\s+} $res " " res
 
