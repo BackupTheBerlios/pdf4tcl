@@ -75,6 +75,8 @@ package require \fBpdf4tcl  ?0.3?\fR
 .sp
 \fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR \fIargs\fR
 .sp
+\fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR \fIargs\fR
+.sp
 \fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
 .sp
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
@@ -251,6 +253,15 @@ Draw text.
 \fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
 .TP
 \fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR \fIargs\fR
+.TP
+\fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR \fIargs\fR
+.nf
+
+  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  set imgdata [img1 data]
+  mypdf putRawImage $imgdata 60 20 -height 40
+
+.fi
 .TP
 \fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
 .TP

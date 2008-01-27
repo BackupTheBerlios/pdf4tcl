@@ -207,6 +207,13 @@ Draw text.
 [call [arg objectName] [method closePath]]
 [call [arg objectName] [method moveTo] [arg "x"] [arg "y"]]
 [call [arg objectName] [method putImage] [arg "id"] [arg "x"] [arg "y"] [arg "args"]]
+[call [arg objectName] [method putRawImage] [arg "data"] [arg "x"] [arg "y"] [arg "args"]]
+[example {
+  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  set imgdata [img1 data]
+  mypdf putRawImage $imgdata 60 20 -height 40
+}]
+
 [call [arg objectName] [method addJpeg] [arg "filename"] [arg "id"]]
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
 [call [arg objectName] [method rotateText] [arg "angle"]]
