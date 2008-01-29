@@ -1,9 +1,12 @@
+2008-01-21 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added PutRawImage, contributed by Steve Redler.
+
 2008-01-19 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Release 0.3
 	
 2006-09-01  Peter Spjuth   <peter.spjuth@gmail.com>
 
-	* Added -file option, to continuoulsy write out to file instead of
+	* Added -file option, to continuously write out to file instead of
 	  accumulating in memory.
 
 2006-08-28  Peter Spjuth   <peter.spjuth@gmail.com>

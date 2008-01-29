@@ -163,7 +163,7 @@ namespace eval pdf4tcl {
 
 
 # Object used for generating pdf
-snit::type pdf4tcl::pdf4tcl {
+snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     variable pdf
 
     #######################################################################
@@ -274,6 +274,7 @@ snit::type pdf4tcl::pdf4tcl {
             if {[catch {open $options(-file) "w"} ch]} {
                 return -code error "Could not open file $options(-file) for writing: $ch"
             }
+            fconfigure $ch -translation binary
             set pdf(ch) $ch
         }
 
@@ -350,7 +351,7 @@ snit::type pdf4tcl::pdf4tcl {
                 set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 2]]
                 set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 3]]
             }
-            default {
+            default { ##nagelfar nocover
                 # This should not happen since validation should catch it
                 puts "ARARARARARAR '$value'"
             }
@@ -1470,7 +1471,7 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfoutn   "/H $height"
         $self Pdfoutn   "/CS /RGB"
         $self Pdfoutn   "/BPC 8"
-        $self Pdfout    "ID "
+        $self Pdfout    "ID"
 
         # Iterate on each row of the image data.
         foreach rawRow $img_data {
