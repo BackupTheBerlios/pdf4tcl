@@ -46,6 +46,7 @@ proc mytest {args} {
 
     if {$debug} {
         set ch [open testdebug.pdf w]
+        fconfigure $ch -translation binary
         puts $ch $res
         close $ch
         exec kpdf testdebug.pdf
