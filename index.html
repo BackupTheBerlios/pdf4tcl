@@ -59,6 +59,21 @@ provide your own, too.</li>
 <li>pages can be built top-down or bottom-up</li>
 </ul>
 </p>
+<h2>Changes</h2>
+
+Changes in v0.3 (2008-01-19):<br>
+<ul>
+ <li> Added -file option to continuously write to file instead of
+      accumulating in memory.</li>
+ <li> More font metric introspection.</li>
+ <li> More general handling of page properties like size and margins.</li>
+ <li> Draw text with background fill.</li>
+ <li> All user coordinates support e.g. "5mm" as input.</li>
+ <li> Redesigned to use Snit to get clearer code.
+      This caused a noticable slowdown but since
+      Snit will be more than twice as fast with 8.5 this will probably
+      be regained.</li>
+</ul>
 
 <h2>Usage</h2>
 
