@@ -69,8 +69,8 @@ package require <b>pdf4tcl ?0.3?</b><br>
 <tr valign=top ><td ><a href="#27"><i class='arg'>objectName</i> <strong>endTextObj</strong></a></td></tr>
 <tr valign=top ><td ><a href="#28"><i class='arg'>objectName</i> <strong>closePath</strong></a></td></tr>
 <tr valign=top ><td ><a href="#29"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a></td></tr>
-<tr valign=top ><td ><a href="#30"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>args</i></a></td></tr>
-<tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>args</i></a></td></tr>
+<tr valign=top ><td ><a href="#30"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 <tr valign=top ><td ><a href="#32"><i class='arg'>objectName</i> <strong>addJpeg</strong> <i class='arg'>filename</i> <i class='arg'>id</i></a></td></tr>
 <tr valign=top ><td ><a href="#33"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a></td></tr>
 <tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a></td></tr>
@@ -344,9 +344,9 @@ Draw text.
 
 <dt><a name="29"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a><dd>
 
-<dt><a name="30"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>args</i></a><dd>
+<dt><a name="30"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
 
-<dt><a name="31"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>args</i></a><dd>
+<dt><a name="31"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 <p><table><tr><td bgcolor=black>&nbsp;</td><td><pre class='sample'>
   image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif

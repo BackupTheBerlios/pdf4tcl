@@ -73,9 +73,9 @@ package require \fBpdf4tcl  ?0.3?\fR
 .sp
 \fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
 .sp
-\fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR \fIargs\fR
+\fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .sp
-\fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR \fIargs\fR
+\fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .sp
 \fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
 .sp
@@ -252,9 +252,9 @@ Draw text.
 .TP
 \fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
 .TP
-\fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR \fIargs\fR
+\fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .TP
-\fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR \fIargs\fR
+\fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .nf
 
   image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
