@@ -5,7 +5,7 @@
 VERSION = 03
 
 # TOOL paths
-NAGELFAR = nagelfar
+NAGELFAR = nagelfar -encoding iso8859-1
 ESKIL    = eskil
 
 all: doc
@@ -31,7 +31,7 @@ test: cleancc
 	tclsh tests/all.tcl
 
 check:
-	nagelfar pdf4tcl.tcl -filter '*Unknown variable*'
+	$(NAGELFAR) pdf4tcl.tcl -filter '*Unknown variable*'
 
 # Code coverage tests
 SRCFILES = pdf4tcl.tcl
