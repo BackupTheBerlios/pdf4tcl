@@ -278,11 +278,11 @@ The default value of this option is false.
 
 [opt_def -orient [arg boolean]]
 
-If true, the y axis of the coordinate system is inverted.
-Normally origo is in the bottom left corner. With [option -orient] true,
-origo is in the top left corner.
+This sets the orientation of the y axis of the coordinate system.
+With [option -orient] false, origo is in the bottom left corner.
+With [option -orient] true, origo is in the top left corner.
 [nl]
-The default value of this option is false.
+The default value of this option is true.
 
 [opt_def -margin [arg values]]
 The margin is a one, two or four element list of margins.
