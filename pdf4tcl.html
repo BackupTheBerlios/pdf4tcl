@@ -31,6 +31,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods">OBJECT METHODS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_configuration">OBJECT CONFIGURATION</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#page_configuration">PAGE CONFIGURATION</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#coordinates">COORDINATES</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#examples">EXAMPLES</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#see_also">SEE ALSO</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#keywords">KEYWORDS</a><br>
@@ -440,8 +441,8 @@ The default value of this option is false.
 <dt><strong>-orient</strong> <i class='arg'>boolean</i><dd>
 
 If true, the y axis of the coordinate system is inverted.
-Normally origo is in the top left corner. With <strong>-orient</strong> true,
-origo is in the bottom left corner.
+Normally origo is in the bottom left corner. With <strong>-orient</strong> true,
+origo is in the top left corner.
 <br><br>
 The default value of this option is false.
 
@@ -455,6 +456,19 @@ Four elements specify left, right, top and bottom.
 The default value of this option is zero.
 
 </dl>
+
+<h2><a name="coordinates">COORDINATES</a></h2>
+<p>
+
+All coordinates and distances can be expressed in the format accepted by
+<b class='cmd'>::pdf4tcl::getPoints</b>.
+When the page is configured with <strong>-orient</strong> set to false, origo is in
+the bottom left corner. With <strong>-orient</strong> true, origo is in the top left
+corner.
+Origo is displaced to account for margins, i.e. if margins are 100 points,
+the user coordinate (0,0) corresponds to (100,100) on the paper.
+Page option <strong>-orient</strong> can also affect the anchor point for things like
+images.
 
 <h2><a name="examples">EXAMPLES</a></h2>
 <p>

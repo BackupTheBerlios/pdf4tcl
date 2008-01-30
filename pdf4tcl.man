@@ -279,8 +279,8 @@ The default value of this option is false.
 [opt_def -orient [arg boolean]]
 
 If true, the y axis of the coordinate system is inverted.
-Normally origo is in the top left corner. With [option -orient] true,
-origo is in the bottom left corner.
+Normally origo is in the bottom left corner. With [option -orient] true,
+origo is in the top left corner.
 [nl]
 The default value of this option is false.
 
@@ -293,6 +293,18 @@ Four elements specify left, right, top and bottom.
 The default value of this option is zero.
 
 [list_end]
+
+[section COORDINATES]
+
+All coordinates and distances can be expressed in the format accepted by
+[cmd ::pdf4tcl::getPoints].
+When the page is configured with [option -orient] set to false, origo is in
+the bottom left corner. With [option -orient] true, origo is in the top left
+corner.
+Origo is displaced to account for margins, i.e. if margins are 100 points,
+the user coordinate (0,0) corresponds to (100,100) on the paper.
+Page option [option -orient] can also affect the anchor point for things like
+images.
 
 [section EXAMPLES]
 [example_begin]
