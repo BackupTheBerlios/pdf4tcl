@@ -282,7 +282,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(pdf) ""
 
         # Start on pdfout
-        $self Pdfout "%PDF-1.3\n"
+        $self Pdfoutn "%PDF-1.3"
     }
 
     destructor {
@@ -1467,11 +1467,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "q"
         $self Pdfoutcmd $w 0 0 $h $x $y "cm"
         $self Pdfoutcmd "BI"
-        $self Pdfoutn   "/W $width"
-        $self Pdfoutn   "/H $height"
+        $self Pdfoutn   "/W [Nf $width]"
+        $self Pdfoutn   "/H [Nf $height]"
         $self Pdfoutn   "/CS /RGB"
         $self Pdfoutn   "/BPC 8"
-        $self Pdfout    "ID "
+        $self Pdfoutcmd "ID"
 
         # Iterate on each row of the image data.
         foreach rawRow $img_data {
@@ -1482,7 +1482,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout [binary format H* $row]
         }
 
-        $self Pdfoutcmd ""
+        $self Pdfout    \n
         $self Pdfoutcmd "EI"
         $self Pdfoutcmd "Q"
     }
