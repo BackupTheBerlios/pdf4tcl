@@ -65,3 +65,17 @@ test graphics-3.2 {image} -body {
                 ID
     }
 } -result 1
+
+test graphics-4.1 {line} -body {
+    mytest {setLineStyle 10 5 7} {line 100 100 400 700} {
+         10 w \[5 7\] 0 d 200 300 m 500 900 l S
+    }
+} -result 1
+
+test graphics-4.2 {line} -body {
+    mytest -orient 1 \
+            {setLineStyle 20} \
+            {line 0 0 300 600} {
+        20 w \[\] 0 d 100 900 m 400 300 l S
+    }
+} -result 1
