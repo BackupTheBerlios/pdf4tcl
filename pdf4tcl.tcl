@@ -1471,7 +1471,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutn   "/H $height"
         $self Pdfoutn   "/CS /RGB"
         $self Pdfoutn   "/BPC 8"
-        $self Pdfout    "ID"
+        $self Pdfout    "ID "
 
         # Iterate on each row of the image data.
         foreach rawRow $img_data {
@@ -1482,7 +1482,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout [binary format H* $row]
         }
 
-        $self Pdfoutcmd ">"
+        $self Pdfoutcmd ""
         $self Pdfoutcmd "EI"
         $self Pdfoutcmd "Q"
     }
