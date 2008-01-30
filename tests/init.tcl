@@ -1,6 +1,20 @@
 # Common initialization for each test
 #
 # $Id$
+#
+# The mytest page as this default look:
+#
+# --------------------------
+# |       w=800 h=1000     |
+# | -----------------------|
+# | |(100,900)   (800,900)||
+# | |                     ||
+# | |                     ||
+# | |                     ||
+# | |(100,200)   (800,200)||
+# | -----------------------|
+# |                        |
+# --------------------------
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -49,7 +63,12 @@ proc mytest {args} {
         fconfigure $ch -translation binary
         puts $ch $res
         close $ch
-        exec kpdf testdebug.pdf
+        foreach app {acroread kpdf xpdf} {
+            if {[auto_execok $app] ne ""} {
+                exec $app testdebug.pdf
+                break
+            }
+        }
         file delete testdebug.pdf
     }
     regexp {stream.*endstream} $res res
