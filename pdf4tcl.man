@@ -53,8 +53,13 @@ This call returns the list of known paper types.
 This call translates a measurement to points (1/72 inch).
 The format of [arg "val"] is '[arg "num"] [opt [arg "unit"]]' where
 [arg "num"] is a valid integer or double. [arg "unit"] may be one of
-[option "mm"], [option "cm"], or [option "i"]. If no [arg "unit"]
-is given, the value is interpreted as points.
+[option "mm"] (millimeter),
+[option "m"] (millimeter),
+[option "cm"] (centimeter),
+[option "c"] (centimeter),
+[option "p"] (points) or
+[option "i"] (inches).
+If no [arg "unit"] is given, the value is interpreted as points.
 
 
 [list_end]

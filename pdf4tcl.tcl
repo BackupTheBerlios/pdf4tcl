@@ -119,7 +119,7 @@ namespace eval pdf4tcl {
 
     # Get points from a measurement.
     # No unit means points.
-    # Supported units are "mm", "cm", and "i".
+    # Supported units are "mm", "m", "cm", "c", "p" and "i".
     proc getPoints {val} {
         if {[string is double -strict $val]} {
             # Always return a pure double value
@@ -128,14 +128,17 @@ namespace eval pdf4tcl {
         if {[regexp {^\s*(\S+?)\s*([[:alpha:]]+)\s*$} $val -> num unit]} {
             if {[string is double -strict $num]} {
                 switch -- $unit {
-                    mm {
+                    mm - m { # Millimeters
                         return [expr {$num / 25.4 * 72.0}]
                     }
-                    cm {
+                    cm - c { # Centimeters
                         return [expr {$num / 2.54 * 72.0}]
                     }
-                    i {
+                    i { # Inches
                         return [expr {$num * 72.0}]
+                    }
+                    p { # Points
+                        return [expr {$num * 1.0}]
                     }
                 }
             }
