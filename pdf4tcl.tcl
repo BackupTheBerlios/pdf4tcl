@@ -3,7 +3,7 @@
 
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
-# Copyright (c) 2006-2007 by Peter Spjuth <peter.spjuth@gmail.com>
+# Copyright (c) 2006-2008 by Peter Spjuth <peter.spjuth@gmail.com>
 
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -582,19 +582,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         # images
         foreach {key value} $pdf(images) {
             $self StoreXref
-            foreach {img_width img_height img_depth img_length img_data} $value {break}
+            foreach {img_width img_height xobject} $value {break}
             $self Pdfout "[$self GetOid] 0 obj\n"
-            $self Pdfout "<<\n/Type /XObject\n"
-            $self Pdfout "/Subtype /Image\n"
-            $self Pdfout "/Width $img_width\n/Height $img_height\n"
-            $self Pdfout "/ColorSpace /DeviceRGB\n"
-            $self Pdfout "/BitsPerComponent $img_depth\n"
-            $self Pdfout "/Filter /DCTDecode\n"
-            $self Pdfout "/Length $img_length >>\n"
-            $self Pdfout "stream\n"
-            $self Pdfout $img_data
-            $self Pdfout "\nendstream\n"
-            $self Pdfout "endobj\n\n"
+            $self Pdfout $xobject
             $self IncrOid
         }
 
@@ -1403,16 +1393,26 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 incr pos $length
             }
         }
-        if {$imgOK} {
-            lappend pdf(images) $id [list $width $height $depth $img_length $img]
-        } else {
+        if {!$imgOK} {
             return -code error "something is wrong with jpeg data in file $filename"
         }
+        set    xobject "<<\n/Type /XObject\n"
+        append xobject "/Subtype /Image\n"
+        append xobject "/Width $width\n/Height $height\n"
+        append xobject "/ColorSpace /DeviceRGB\n"
+        append xobject "/BitsPerComponent $depth\n"
+        append xobject "/Filter /DCTDecode\n"
+        append xobject "/Length $img_length >>\n"
+        append xobject "stream\n"
+        append xobject $img
+        append xobject "\nendstream\n"
+        append xobject "endobj\n\n"
+        lappend pdf(images) $id [list $width $height $xobject]
     }
 
     method putImage {id x y args} {
         array set aimg $pdf(images)
-        foreach {width height depth length data} $aimg($id) {break}
+        foreach {width height xobject} $aimg($id) {break}
 
         $self Trans $x $y x y
         set w $width
