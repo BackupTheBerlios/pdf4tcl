@@ -27,6 +27,7 @@ namespace eval pdf4tcl {
     variable glyph_names
     variable font_afm
     variable paper_sizes
+    variable units
 
     # path to adobe afm files
     set g(ADOBE_AFM_PATH) {}
@@ -61,6 +62,16 @@ namespace eval pdf4tcl {
         legal  { 612 1008}
         letter { 612  792}
     }
+
+    # Known units. The value is their relationship to points
+    array set units [list \
+            mm [expr {72.0 / 25.4}] \
+            m  [expr {72.0 / 25.4}] \
+            cm [expr {72.0 / 2.54}] \
+            c  [expr {72.0 / 2.54}] \
+            i  72.0                 \
+            p  1.0                  \
+    ]
 
     if {[catch {package require zlib} err]} {
         set g(haveZlib) 0
@@ -121,25 +132,15 @@ namespace eval pdf4tcl {
     # No unit means points.
     # Supported units are "mm", "m", "cm", "c", "p" and "i".
     proc getPoints {val} {
+        variable units
         if {[string is double -strict $val]} {
             # Always return a pure double value
             return [expr {$val * 1.0}]
         }
         if {[regexp {^\s*(\S+?)\s*([[:alpha:]]+)\s*$} $val -> num unit]} {
             if {[string is double -strict $num]} {
-                switch -- $unit {
-                    mm - m { # Millimeters
-                        return [expr {$num / 25.4 * 72.0}]
-                    }
-                    cm - c { # Centimeters
-                        return [expr {$num / 2.54 * 72.0}]
-                    }
-                    i { # Inches
-                        return [expr {$num * 72.0}]
-                    }
-                    p { # Points
-                        return [expr {$num * 1.0}]
-                    }
+                if {[info exists units($unit)]} {
+                    return [expr {$num * $units($unit)}]
                 }
             }
         }
