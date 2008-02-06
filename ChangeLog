@@ -1,4 +1,7 @@
 2008-02-06 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added height metric to getFontMetric.
+
+2008-02-06 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added Tk's units "m", "c" and "p" to getPoints.
 
 2008-01-21 Peter Spjuth   <peter.spjuth@gmail.com>

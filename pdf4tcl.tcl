@@ -769,12 +769,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # Get metrics from current font.
-    # Supported metrics are ascend, descend, fixed, bboxy
+    # Supported metrics are ascend, descend, fixed, bboxy, height
     method getFontMetric {metric} {
         array set tmp $::pdf4tcl::font_metrics($pdf(current_font))
         switch $metric {
             bboxy   {set val [lindex $tmp(bbox) 1]}
             fixed   {return $tmp(fixed)}
+            height  {return [expr {1.0 * $pdf(font_size)}]}
             default {set val $tmp($metric)}
         }
         return [expr {$val * 0.001 * $pdf(font_size)}]
@@ -930,7 +931,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         if {[llength $fill] > 1 || $fill} {
             set bboxy [$self getFontMetric bboxy]
-            set dy [expr {$y + [$self getFontMetric bboxy]}]
+            set dy [expr {$y + $bboxy}]
             $self endTextObj
             # Temporarily shift fill color
             if {[llength $fill] > 1} {

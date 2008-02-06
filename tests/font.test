@@ -12,13 +12,15 @@ test font-1.1 {font metrics} -body {
     lappend res [$pdf getFontMetric fixed]
     lappend res [$pdf getFontMetric ascend]
     lappend res [$pdf getFontMetric descend]
+    lappend res [$pdf getFontMetric height]
 
     $pdf setFont 20
     lappend res [$pdf getFontMetric bboxy]
     lappend res [$pdf getFontMetric fixed]
     lappend res [$pdf getFontMetric ascend]
     lappend res [$pdf getFontMetric descend]
+    lappend res [$pdf getFontMetric height]
 
     $pdf destroy
     set res
-} -result {-2.5 1 6.29 -1.57 -5.0 1 12.58 -3.14}
+} -result {-2.5 1 6.29 -1.57 10.0 -5.0 1 12.58 -3.14 20.0}

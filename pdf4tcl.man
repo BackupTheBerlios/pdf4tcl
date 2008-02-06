@@ -221,6 +221,11 @@ Draw text.
 
 [call [arg objectName] [method addJpeg] [arg "filename"] [arg "id"]]
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
+
+Get information about current font. The available [arg "metric"]s are
+[option ascend], [option descend], [option fixed], [option bboxy] and
+[option height].
+
 [call [arg objectName] [method rotateText] [arg "angle"]]
 [call [arg objectName] [method setBgColor] [arg "red"] [arg "green"] [arg "blue"]]
 [call [arg objectName] [method setFillColor] [arg "red"] [arg "green"] [arg "blue"]]

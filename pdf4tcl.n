@@ -271,6 +271,9 @@ Draw text.
 \fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
 .TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
+Get information about current font. The available \fImetric\fRs are
+\fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxy\fR and
+\fBheight\fR.
 .TP
 \fIobjectName\fR \fBrotateText\fR \fIangle\fR
 .TP
