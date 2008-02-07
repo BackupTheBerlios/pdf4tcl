@@ -8,6 +8,8 @@
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
+# $Revision$ $Date$
+
 # Version 0.1   base features for generating correct pdf files
 # Version 0.2   more graphic operators, fixed font handling
 # Version 0.3   Redesigned to use Snit. A lot of added features.
@@ -243,6 +245,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #######################################################################
 
     constructor {args} {
+        variable images
+
         $self configurelist $args
 
         # Document data
@@ -254,7 +258,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(fonts) {}
         set pdf(font_set) false
         set pdf(in_text_object) false
-        set pdf(images) {}
+        array set images {}
         set pdf(compress) $options(-compress)
         set pdf(finished) false
         set pdf(inPage) false
@@ -510,6 +514,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Finish document
     method finish {} {
+        variable images
         if {$pdf(finished)} {
             return
         }
@@ -554,9 +559,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout ">>\n"
 
         # image references
-        if {[llength $pdf(images)]>0} {
+        if {[array size images]>0} {
             $self Pdfout "/XObject <<\n"
-            foreach {key value} $pdf(images) {
+            foreach key [array names images] {
                 set nr [expr {$pdf(pdf_obj)+$count}]
                 $self Pdfout "/$key $nr 0 R\n"
                 incr count
@@ -580,9 +585,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         # images
-        foreach {key value} $pdf(images) {
+        foreach key [array names images] {
             $self StoreXref
-            foreach {img_width img_height xobject} $value {break}
+            foreach {img_width img_height xobject} $images($key) {break}
             $self Pdfout "[$self GetOid] 0 obj\n"
             $self Pdfout $xobject
             $self IncrOid
@@ -1364,12 +1369,27 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Image Handling
     #######################################################################
 
-    method addJpeg {filename id} {
+    method addJpeg {filename {id {}}} {
+        variable images
 
         set imgOK false
         if {[catch {open $filename "r"} if]} {
             return -code error "Could not open file $filename"
         }
+
+        if {$id eq ""} {
+            # Find a unique name. Could be improved...
+            set last [lindex [lsort -dictionary \
+                    [array names images _image*] end]]
+            if {![regexp {\d+$} $last i]} {
+                set i 0
+            }
+            while {[array exists images(_image$i)]} {
+                incr i
+            }
+            set id _image$i
+        }
+
         fconfigure $if -translation binary
         set img [read $if]
         close $if
@@ -1410,12 +1430,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject $img
         append xobject "\nendstream\n"
         append xobject "endobj\n\n"
-        lappend pdf(images) $id [list $width $height $xobject]
+        set images($id) [list $width $height $xobject]
+        return $id
     }
 
     method putImage {id x y args} {
-        array set aimg $pdf(images)
-        foreach {width height xobject} $aimg($id) {break}
+        variable images
+        foreach {width height xobject} $images($id) {break}
 
         $self Trans $x $y x y
         set w $width

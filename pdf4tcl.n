@@ -6,9 +6,9 @@
 .so man.macros
 .TH "pdf4tcl" n 0.3 pdf4tcl "Pdf document generation"
 .BS
-.SH "NAME"
+.SH NAME
 pdf4tcl \- Pdf document generation
-.SH "SYNOPSIS"
+.SH SYNOPSIS
 package require \fBTcl  8.4\fR
 .sp
 package require \fBsnit \fR
@@ -77,7 +77,7 @@ package require \fBpdf4tcl  ?0.3?\fR
 .sp
 \fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .sp
-\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
+\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR ?\fIid\fR?
 .sp
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 .sp
@@ -108,7 +108,7 @@ package require \fBpdf4tcl  ?0.3?\fR
 \fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
 .sp
 .BE
-.SH "DESCRIPTION"
+.SH DESCRIPTION
 This package provides a container class for
 generating \fIpdf\fR documents.
 .SH "PUBLIC API"
@@ -270,7 +270,10 @@ Draw text.
 
 .fi
 .TP
-\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR \fIid\fR
+\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR ?\fIid\fR?
+Add a JPEG image to the document. If \fIid\fR is not given, it will be
+generated. The \fIid\fR is returned and can be used in subsequent calls
+to \fBputImage\fR. The \fIid\fR must be unique within the document.
 .TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 Get information about current font. The available \fImetric\fRs are
@@ -345,7 +348,7 @@ Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
 .sp
 The default value of this option is zero.
-.SH "COORDINATES"
+.SH COORDINATES
 All coordinates and distances can be expressed in the format accepted by
 \fB::pdf4tcl::getPoints\fR.
 When the page is configured with \fB-orient\fR set to false, origo is in
@@ -355,7 +358,7 @@ Origo is displaced to account for margins, i.e. if margins are 100 points,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
 Page option \fB-orient\fR can also affect the anchor point for things like
 images.
-.SH "EXAMPLES"
+.SH EXAMPLES
 .nf
 
   pdf4tcl::new mypdf -paper a3
@@ -368,9 +371,9 @@ images.
 .fi
 .SH "SEE ALSO"
 doctools
-.SH "KEYWORDS"
+.SH KEYWORDS
 document, pdf
-.SH "COPYRIGHT"
+.SH COPYRIGHT
 .nf
 Copyright (c) 2007 Peter Spjuth
 
