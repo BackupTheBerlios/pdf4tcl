@@ -55,7 +55,7 @@ package require \fBpdf4tcl  ?0.3?\fR
 .sp
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 .sp
-\fIobjectName\fR \fBnewLine\fR
+\fIobjectName\fR \fBnewLine\fR ?\fInoOfLines\fR?
 .sp
 \fIobjectName\fR \fBdrawText\fR \fIstr\fR
 .sp
@@ -233,9 +233,11 @@ This method returns the width of a character under the current font.
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 Set coordinate for next text command.
 .TP
-\fIobjectName\fR \fBnewLine\fR
-Moves text coordinate one line down and resets x to where the latest
-\fBsetTextPosition\fR was.
+\fIobjectName\fR \fBnewLine\fR ?\fInoOfLines\fR?
+Moves text coordinate down and resets x to where the latest
+\fBsetTextPosition\fR was. The number of lines to move down can
+be set by \fInoOfLines\fR. This may be any real number, including negative,
+and defaults to 1.
 .TP
 \fIobjectName\fR \fBdrawText\fR \fIstr\fR
 Draw text.

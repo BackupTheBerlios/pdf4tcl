@@ -864,9 +864,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Move text position to new line, relative to last
     # setTextPosition command.
-    method newLine {} {
+    method newLine {{noOfLines 1}} {
+        if {![string is double -strict $noOfLines]} {
+            return -code error "Number of lines must be a number"
+        }
         # Update to next line
-        set y [expr {$pdf(ypos) - $pdf(font_size)}]
+        set y [expr {$pdf(ypos) - $pdf(font_size) * $noOfLines}]
         set x $pdf(origxpos)
         $self setTextPosition $x $y 1
     }
