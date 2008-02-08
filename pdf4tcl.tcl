@@ -186,6 +186,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             -configuremethod SetCompress -readonly 1
     option -margin    -default 0      -validatemethod CheckMargin \
             -configuremethod SetPageOption
+    option -spacing   -default 1.0    -validatemethod CheckDouble \
 
     # Validator for -paper
     method CheckPaper {option value} {
@@ -215,6 +216,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method CheckBoolean {option value} {
         if {![string is boolean -strict $value]} {
             return -code error "option $option must have a boolean value."
+        }
+    }
+
+    # Validator for double options
+    method CheckDouble {option value} {
+        if {![string is double -strict $value]} {
+            return -code error "option $option must have a numeric value."
         }
     }
 
@@ -869,12 +877,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Move text position to new line, relative to last
     # setTextPosition command.
-    method newLine {{noOfLines 1}} {
-        if {![string is double -strict $noOfLines]} {
-            return -code error "Number of lines must be a number"
+    method newLine {{spacing {}}} {
+        if {$spacing eq ""} {
+            set spacing $options(-spacing)
+        } elseif {![string is double -strict $spacing]} {
+            return -code error "Spacing must be a number"
         }
         # Update to next line
-        set y [expr {$pdf(ypos) - $pdf(font_size) * $noOfLines}]
+        set y [expr {$pdf(ypos) - $pdf(font_size) * $spacing}]
         set x $pdf(origxpos)
         $self setTextPosition $x $y 1
     }

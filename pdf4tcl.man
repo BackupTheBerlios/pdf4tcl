@@ -186,12 +186,12 @@ This method returns the width of a character under the current font.
 
 Set coordinate for next text command.
 
-[call [arg objectName] [method newLine] [opt [arg noOfLines]]]
+[call [arg objectName] [method newLine] [opt [arg spacing]]]
 
 Moves text coordinate down and resets x to where the latest
 [method setTextPosition] was. The number of lines to move down can
-be set by [arg noOfLines]. This may be any real number, including negative,
-and defaults to 1.
+be set by [arg spacing]. This may be any real number, including negative,
+and defaults to the object's [option -spacing] setting.
 
 [call [arg objectName] [method drawText] [arg "str"]]
 
@@ -271,6 +271,10 @@ This option can only be set at object creation.
 Continuously write pdf to [arg filename] instead of storing it
 in memory.
 This option can only be set at object creation.
+
+[opt_def -spacing [arg value]]
+
+The default spacing between text line.  Default value is 1.
 
 [list_end]
 

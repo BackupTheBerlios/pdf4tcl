@@ -75,18 +75,18 @@ test text-4.1 {setTextPosition, -x -y does not effect newLine} -body {
 } -result 1
 
 test text-4.2 {newLine goes right} -body {
-    mytest -orient 1 -margin 50 {setFont 20 Courier} \
+    mytest -orient 1 -margin 50 -spacing 1.5 {setFont 20 Courier} \
             {setTextPosition 100 100} \
             {text Hej} \
-            {newLine 1.5} \
+            {newLine 2} \
             {text Gurka} \
             {newLine} \
             {text Miffo} {
                 1 0 0 1 150 850 Tm
                 (Hej) Tj
-                1 0 0 1 150 820 Tm
+                1 0 0 1 150 810 Tm
                 (Gurka) Tj
-                1 0 0 1 150 800 Tm
+                1 0 0 1 150 780 Tm
                 (Miffo) Tj
             }
 } -result 1

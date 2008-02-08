@@ -61,7 +61,7 @@ package require <b>pdf4tcl ?0.3?</b><br>
 <tr valign=top ><td ><a href="#18"><i class='arg'>objectName</i> <strong>getStringWidth</strong> <i class='arg'>str</i></a></td></tr>
 <tr valign=top ><td ><a href="#19"><i class='arg'>objectName</i> <strong>getCharWidth</strong> <i class='arg'>char</i></a></td></tr>
 <tr valign=top ><td ><a href="#20"><i class='arg'>objectName</i> <strong>setTextPosition</strong> <i class='arg'>x</i> <i class='arg'>y</i></a></td></tr>
-<tr valign=top ><td ><a href="#21"><i class='arg'>objectName</i> <strong>newLine</strong> ?<i class='arg'>noOfLines</i>?</a></td></tr>
+<tr valign=top ><td ><a href="#21"><i class='arg'>objectName</i> <strong>newLine</strong> ?<i class='arg'>spacing</i>?</a></td></tr>
 <tr valign=top ><td ><a href="#22"><i class='arg'>objectName</i> <strong>drawText</strong> <i class='arg'>str</i></a></td></tr>
 <tr valign=top ><td ><a href="#23"><i class='arg'>objectName</i> <strong>text</strong> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 <tr valign=top ><td ><a href="#24"><i class='arg'>objectName</i> <strong>drawTextAt</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
@@ -311,13 +311,13 @@ This method returns the width of a character under the current font.
 Set coordinate for next text command.
 
 <br><br>
-<dt><a name="21"><i class='arg'>objectName</i> <strong>newLine</strong> ?<i class='arg'>noOfLines</i>?</a><dd>
+<dt><a name="21"><i class='arg'>objectName</i> <strong>newLine</strong> ?<i class='arg'>spacing</i>?</a><dd>
 
 
 Moves text coordinate down and resets x to where the latest
 <strong>setTextPosition</strong> was. The number of lines to move down can
-be set by <i class='arg'>noOfLines</i>. This may be any real number, including negative,
-and defaults to 1.
+be set by <i class='arg'>spacing</i>. This may be any real number, including negative,
+and defaults to the object's <strong>-spacing</strong> setting.
 
 <br><br>
 <dt><a name="22"><i class='arg'>objectName</i> <strong>drawText</strong> <i class='arg'>str</i></a><dd>
@@ -432,6 +432,11 @@ This option can only be set at object creation.
 Continuously write pdf to <i class='arg'>filename</i> instead of storing it
 in memory.
 This option can only be set at object creation.
+
+<br><br>
+<dt><strong>-spacing</strong> <i class='arg'>value</i><dd>
+
+The default spacing between text line.  Default value is 1.
 
 </dl>
 
