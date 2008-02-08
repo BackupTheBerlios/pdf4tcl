@@ -871,7 +871,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "([CleanText $str]) '\n"
         # Update to next line
         set strWidth [$self getStringWidth $str]
-        set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size)}]
+        set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size) * $options(-spacing)}]
         set pdf(xpos) [expr {$pdf(origxpos) + $strWidth}]
     }
 
@@ -1025,7 +1025,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self beginTextObj
 
         # pre-calculate some values
-        set font_height $pdf(font_size)
+        set font_height [expr {$pdf(font_size) * $options(-spacing)}]
         set space_width [$self getCharWidth " "]
         set ystart $y
         if {!$pdf(orient)} { #FIXA
