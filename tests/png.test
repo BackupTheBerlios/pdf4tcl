@@ -1,0 +1,65 @@
+# Test PNG support                                                   -*-tcl-*-
+#
+# $Id: graphics.test 88 2008-01-30 09:46:00Z pspjuth $
+
+set thisDir [file dirname [file join [pwd] [info script]]]
+source [file join $thisDir init.tcl]
+
+# These tests rely on the images from
+# "PNG Suite from Willem van Schaik" available from libpng.org
+
+set ::pngdir [file join $thisDir pngsuite]
+if {![file exists [file join $::pngdir basi0g01.png]]} return
+
+proc JpegReference {file} {
+    set jpeg [file rootname $file].jpg
+
+    exec pngtopnm $file | pnmtojpeg --quality=95 > $jpeg
+    return $jpeg 
+}
+
+proc TestPng {file {pdf {}}} {
+    package require Tk
+    wm withdraw .
+    set jpeg [JpegReference $file]
+    set gif [file rootname $file].gif
+    image create photo img1 -file $gif
+    set imgdata [img1 data]
+    image delete img1
+    mytest -debug -orient 1 \
+            [list AddPng $file x] \
+            [list addJpeg $jpeg y] \
+            [list text [file tail $file] -x 0 -y 0] \
+            {putImage x 100 200 -width 200} \
+            {putImage y 400 200 -width 200} \
+            [list putRawImage $imgdata 100 500 -width 200] \
+            $pdf
+}
+    
+test png-1.1 {png} -body {
+    TestPng $::pngdir/basn0g01.png
+} -result 1
+
+test png-1.1 {png} -body {
+    TestPng $::pngdir/basn2c08.png
+} -result 1
+
+# basn0g01    -   black & white
+# basn0g02    -   2 bit (4 level) grayscale
+# basn0g04    -   4 bit (16 level) grayscale
+# basn0g08    -   8 bit (256 level) grayscale
+# basn0g16    -   16 bit (64k level) grayscale
+# basn2c08    -   3x8 bits rgb color
+# basn2c16    -   3x16 bits rgb color
+# basn3p01    -   1 bit (2 color) paletted
+# basn3p02    -   2 bit (4 color) paletted
+# basn3p04    -   4 bit (16 color) paletted
+# basn3p08    -   8 bit (256 color) paletted
+# basn4a08    -   8 bit grayscale + 8 bit alpha-channel
+# basn4a16    -   16 bit grayscale + 16 bit alpha-channel
+# basn6a08    -   3x8 bits rgb color + 8 bit alpha-channel
+# basn6a16    -   3x16 bits rgb color + 16 bit alpha-channel
+
+
+# To make sure we exit even though Tk is loaded
+exit

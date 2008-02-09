@@ -9,3 +9,4 @@ eval configure $argv -testdir [list [file dir [info script]]]
 workingDirectory [configure -testdir]
 configure -tmpdir [configure -testdir]
 runAllTests
+exit

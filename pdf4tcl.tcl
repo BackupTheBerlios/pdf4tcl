@@ -1379,6 +1379,19 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Image Handling
     #######################################################################
 
+    method GetImageId {} {
+        variable images
+        # Find a unique name. Could be improved...
+        set last [lindex [lsort -dictionary [array names images _image*]] end]
+        if {![regexp {\d+$} $last i]} {
+            set i 0
+        }
+        while {[array exists images(_image$i)]} {
+            incr i
+        }
+        return _image$i
+    }
+
     method addJpeg {filename {id {}}} {
         variable images
 
@@ -1388,16 +1401,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         if {$id eq ""} {
-            # Find a unique name. Could be improved...
-            set last [lindex [lsort -dictionary \
-                    [array names images _image*] end]]
-            if {![regexp {\d+$} $last i]} {
-                set i 0
-            }
-            while {[array exists images(_image$i)]} {
-                incr i
-            }
-            set id _image$i
+            set id [$self GetImageId]
         }
 
         fconfigure $if -translation binary
@@ -1405,7 +1409,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         close $if
         binary scan $img "H4" h
         if {$h != "ffd8"} {
-            return -code error "file does not contain JPEG data."
+            return -code error "file $filename does not contain JPEG data."
         }
         set pos 2
         set img_length [string length $img]
@@ -1438,6 +1442,113 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject "/Length $img_length >>\n"
         append xobject "stream\n"
         append xobject $img
+        append xobject "\nendstream\n"
+        append xobject "endobj\n\n"
+        set images($id) [list $width $height $xobject]
+        return $id
+    }
+
+    # Experimental Png-function, internal for now
+    method AddPng {filename {id {}}} {
+        variable images
+
+        set imgOK false
+        if {[catch {open $filename "r"} if]} {
+            return -code error "Could not open file $filename"
+        }
+
+        if {$id eq ""} {
+            set id [$self GetImageId]
+        }
+
+        fconfigure $if -translation binary
+        if {[read $if 8] != "\x89PNG\r\n\x1a\n"} {
+            close $if
+            return -code error "file does not contain PNG data"
+        }
+        set img [read $if]
+        close $if
+
+        set pos 0
+        set img_length [string length $img]
+        set img_data ""
+        set palette ""
+        while {$pos < $img_length} {
+            # Scan one chunk
+            binary scan $img "@${pos}Ia4" length type
+            incr pos 8
+            set data [string range $img $pos [expr {$pos + $length - 1}]]
+            incr pos $length
+            binary scan $img "@${pos}I" crc
+            incr pos 4
+
+            switch $type {
+                "IHDR" {
+                    set imgOK 1
+                    binary scan $data IIccccc width height depth color \
+                            compression filter interlace
+                }
+                "PLTE" {
+                    set palette $data
+                }
+                "IDAT" {
+                    append img_data $data
+                }
+            }
+        }
+
+        if {!$imgOK} {
+            return -code error "something is wrong with PNG data in file $filename"
+        }
+        if {$compression != 0} {
+            return -code error "PNG file is of an unsupported compression type"
+        }
+        if {$filter != 0} {
+            return -code error "PNG file is of an unsupported filter type"
+        }
+        if {$interlace != 0} {
+            # Would need to unpack and repack to do interlaced
+            return -code error "Interlaced PNG is not supported"
+        }
+
+        set    xobject "<<\n/Type /XObject\n"
+        append xobject "/Subtype /Image\n"
+        append xobject "/Width $width\n/Height $height\n"
+
+        switch $color {
+            0 { # Grayscale
+                append xobject "/ColorSpace /DeviceGray\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 1 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            2 { # RGB
+                append xobject "/ColorSpace /DeviceRGB\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            3 { # Palette
+                return -code error "PNG with palette is not supported"
+                append xobject "/ColorSpace /Indexed\n" ;# ?
+                append xobject "/BitsPerComponent $depth\n" ;# ?
+                append xobject "/Filter /FlateDecode\n" ;# ?
+                append xobject "/DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            4 { # Gray + alpha
+                return -code error "PNG with alpha channel is not supported"
+            }
+            6 { # RGBA
+                # TODO:
+                # Either unpack the data stream, remove the alpha and repack.
+                # Or, figure out a PDF colorspace that can understand RGBA
+                return -code error "PNG with alpha channel is not supported"
+            }
+        }
+
+        append xobject "/Length [string length $img_data] >>\n"
+        append xobject "stream\n"
+        append xobject $img_data
         append xobject "\nendstream\n"
         append xobject "endobj\n\n"
         set images($id) [list $width $height $xobject]
