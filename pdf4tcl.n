@@ -6,9 +6,9 @@
 .so man.macros
 .TH "pdf4tcl" n 0.3 pdf4tcl "Pdf document generation"
 .BS
-.SH "NAME"
+.SH NAME
 pdf4tcl \- Pdf document generation
-.SH "SYNOPSIS"
+.SH SYNOPSIS
 package require \fBTcl  8.4\fR
 .sp
 package require \fBsnit \fR
@@ -56,6 +56,10 @@ package require \fBpdf4tcl  ?0.3?\fR
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 .sp
 \fIobjectName\fR \fBnewLine\fR ?\fIspacing\fR?
+.sp
+\fIobjectName\fR \fBsetLineSpacing\fR \fIspacing\fR
+.sp
+\fIobjectName\fR \fBgetLineSpacing\fR
 .sp
 \fIobjectName\fR \fBdrawText\fR \fIstr\fR
 .sp
@@ -108,7 +112,7 @@ package require \fBpdf4tcl  ?0.3?\fR
 \fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
 .sp
 .BE
-.SH "DESCRIPTION"
+.SH DESCRIPTION
 This package provides a container class for
 generating \fIpdf\fR documents.
 .SH "PUBLIC API"
@@ -237,7 +241,13 @@ Set coordinate for next text command.
 Moves text coordinate down and resets x to where the latest
 \fBsetTextPosition\fR was. The number of lines to move down can
 be set by \fIspacing\fR. This may be any real number, including negative,
-and defaults to the object's \fB-spacing\fR setting.
+and defaults to the value set by \fBsetLineSpacing\fR.
+.TP
+\fIobjectName\fR \fBsetLineSpacing\fR \fIspacing\fR
+Set the default line spacing used be e.g. \fBnewLine\fR.
+.TP
+\fIobjectName\fR \fBgetLineSpacing\fR
+Get the current default line spacing.
 .TP
 \fIobjectName\fR \fBdrawText\fR \fIstr\fR
 Draw text.
@@ -319,9 +329,6 @@ This option can only be set at object creation.
 Continuously write pdf to \fIfilename\fR instead of storing it
 in memory.
 This option can only be set at object creation.
-.TP
-\fB-spacing\fR \fIvalue\fR
-The default spacing between text line.  Default value is 1.
 .SS "PAGE CONFIGURATION"
 .TP
 \fB-paper\fR \fIname\fR
@@ -351,7 +358,7 @@ Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
 .sp
 The default value of this option is zero.
-.SH "COORDINATES"
+.SH COORDINATES
 All coordinates and distances can be expressed in the format accepted by
 \fB::pdf4tcl::getPoints\fR.
 When the page is configured with \fB-orient\fR set to false, origo is in
@@ -361,7 +368,7 @@ Origo is displaced to account for margins, i.e. if margins are 100 points,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
 Page option \fB-orient\fR can also affect the anchor point for things like
 images.
-.SH "EXAMPLES"
+.SH EXAMPLES
 .nf
 
   pdf4tcl::new mypdf -paper a3
@@ -374,9 +381,9 @@ images.
 .fi
 .SH "SEE ALSO"
 doctools
-.SH "KEYWORDS"
+.SH KEYWORDS
 document, pdf
-.SH "COPYRIGHT"
+.SH COPYRIGHT
 .nf
 Copyright (c) 2007 Peter Spjuth
 

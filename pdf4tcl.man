@@ -191,7 +191,15 @@ Set coordinate for next text command.
 Moves text coordinate down and resets x to where the latest
 [method setTextPosition] was. The number of lines to move down can
 be set by [arg spacing]. This may be any real number, including negative,
-and defaults to the object's [option -spacing] setting.
+and defaults to the value set by [method setLineSpacing].
+
+[call [arg objectName] [method setLineSpacing] [arg spacing]]
+
+Set the default line spacing used be e.g. [method newLine].
+
+[call [arg objectName] [method getLineSpacing]]
+
+Get the current default line spacing.
 
 [call [arg objectName] [method drawText] [arg "str"]]
 
@@ -271,10 +279,6 @@ This option can only be set at object creation.
 Continuously write pdf to [arg filename] instead of storing it
 in memory.
 This option can only be set at object creation.
-
-[opt_def -spacing [arg value]]
-
-The default spacing between text line.  Default value is 1.
 
 [list_end]
 

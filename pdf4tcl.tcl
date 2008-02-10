@@ -186,7 +186,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             -configuremethod SetCompress -readonly 1
     option -margin    -default 0      -validatemethod CheckMargin \
             -configuremethod SetPageOption
-    option -spacing   -default 1.0    -validatemethod CheckDouble \
 
     # Validator for -paper
     method CheckPaper {option value} {
@@ -274,6 +273,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         # start with Helvetica as default font
         set pdf(font_size) 12
         set pdf(current_font) "Helvetica"
+        set pdf(line_spacing) 1.0
 
         # Page data
         # Fill in page properies
@@ -871,7 +871,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "([CleanText $str]) '\n"
         # Update to next line
         set strWidth [$self getStringWidth $str]
-        set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size) * $options(-spacing)}]
+        set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size) * $pdf(line_spacing)}]
         set pdf(xpos) [expr {$pdf(origxpos) + $strWidth}]
     }
 
@@ -879,7 +879,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # setTextPosition command.
     method newLine {{spacing {}}} {
         if {$spacing eq ""} {
-            set spacing $options(-spacing)
+            set spacing $pdf(line_spacing)
         } elseif {![string is double -strict $spacing]} {
             return -code error "Spacing must be a number"
         }
@@ -887,6 +887,20 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set y [expr {$pdf(ypos) - $pdf(font_size) * $spacing}]
         set x $pdf(origxpos)
         $self setTextPosition $x $y 1
+    }
+
+    # Set Line spacing factor (which is used by method newLine
+    # if no explicit spacing is given)
+    method setLineSpacing {spacing} {
+        if {![string is double -strict $spacing]} {
+            return -code error {Line spacing must be a number}
+        }
+        set pdf(line_spacing) $spacing
+    }
+
+    # Return the current line spacing factor
+    method getLineSpacing {} {
+        return $pdf(line_spacing)
     }
 
     # Draw a text string
@@ -1025,7 +1039,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self beginTextObj
 
         # pre-calculate some values
-        set font_height [expr {$pdf(font_size) * $options(-spacing)}]
+        set font_height [expr {$pdf(font_size) * $pdf(line_spacing)}]
         set space_width [$self getCharWidth " "]
         set ystart $y
         if {!$pdf(orient)} { #FIXA

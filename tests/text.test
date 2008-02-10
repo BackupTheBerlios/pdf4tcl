@@ -75,7 +75,8 @@ test text-4.1 {setTextPosition, -x -y does not effect newLine} -body {
 } -result 1
 
 test text-4.2 {newLine goes right} -body {
-    mytest -orient 1 -margin 50 -spacing 1.5 {setFont 20 Courier} \
+    mytest -orient 1 -margin 50 {setFont 20 Courier} \
+            {setLineSpacing 1.5} \
             {setTextPosition 100 100} \
             {text Hej} \
             {newLine 2} \
@@ -90,3 +91,17 @@ test text-4.2 {newLine goes right} -body {
                 (Miffo) Tj
             }
 } -result 1
+
+test text-5.1 {lineSpacing} -body {
+    pdf4tcl::new Apa
+    set res [list [Apa getLineSpacing]]
+    Apa setLineSpacing 1.5
+    lappend res [Apa getLineSpacing]
+    Apa destroy
+    set res
+} -result {1.0 1.5}
+
+test text-5.2 {lineSpacing} -body {
+    pdf4tcl::new Apa
+    Apa setLineSpacing gurka
+} -returnCodes 1 -result {Line spacing must be a number}
