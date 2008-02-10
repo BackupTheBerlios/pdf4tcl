@@ -229,12 +229,21 @@ Draw text.
   mypdf putRawImage $imgdata 60 20 -height 40
 }]
 
-[call [arg objectName] [method addJpeg] [arg "filename"] [opt [arg "id"]]]
+[call [arg objectName] [method addImage] [arg "filename"] [opt [arg "option value"]...]]
 
-Add a JPEG image to the document. If [arg "id"] is not given, it will be
-generated. The [arg "id"] is returned and can be used in subsequent calls
-to [method putImage]. The [arg "id"] must be unique within the document.
- 
+Add an image to the document. Returns an id that can be used in subsequent
+calls to [method putImage]. Supported formats are PNG and JPEG.
+[list_begin opt]
+
+[opt_def -id [arg id]]
+Explicitely select an id for the image. The [arg "id"] must be unique within the document.
+
+[opt_def -type [arg name]]
+Set the image type.  This can usually be deduced from the file name, this
+option helps when that is not possible.  This can be either "png" or "jpeg".
+
+[list_end]
+
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
 
 Get information about current font. The available [arg "metric"]s are

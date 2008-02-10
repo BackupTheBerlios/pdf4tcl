@@ -218,13 +218,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
-    # Validator for double options
-    method CheckDouble {option value} {
-        if {![string is double -strict $value]} {
-            return -code error "option $option must have a numeric value."
-        }
-    }
-
     # Configure method for -compress
     method SetCompress {option value} {
         variable ::pdf4tcl::g
@@ -1406,6 +1399,52 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return _image$i
     }
 
+    # Add an image to the document
+    method addImage {filename args} {
+        set id ""
+        set type ""
+        foreach {arg val} $args {
+            switch -- $arg {
+                -id {
+                    set id $val
+                }
+                -type {
+                    set type $val
+                }
+            }
+        }
+        if {$id eq ""} {
+            set id [$self GetImageId]
+        }
+
+        if {$type eq ""} {
+            switch -glob $filename {
+                *.png {
+                    set type png
+                }
+                *.jpg - *.jpeg {
+                    set type jpg
+                }
+                default {
+                    return -code error "Unknown image $filename"
+                }
+            }
+        }
+        switch $type {
+            png {
+                $self AddPng $filename $id
+            }
+            jpg - jpeg {
+                $self addJpeg $filename $id
+            }
+            default {
+                return -code error "Unknown image $filename"
+            }
+        }
+        return $id
+    }
+
+    # Deprecated jpeg adder, use addImage
     method addJpeg {filename {id {}}} {
         variable images
 
@@ -1462,17 +1501,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return $id
     }
 
-    # Experimental Png-function, internal for now
-    method AddPng {filename {id {}}} {
+    # Experimental Png-function
+    method AddPng {filename id} {
         variable images
 
         set imgOK false
         if {[catch {open $filename "r"} if]} {
             return -code error "Could not open file $filename"
-        }
-
-        if {$id eq ""} {
-            set id [$self GetImageId]
         }
 
         fconfigure $if -translation binary
@@ -1513,6 +1548,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         if {!$imgOK} {
             return -code error "something is wrong with PNG data in file $filename"
+        }
+        if {[string length $img_data] == 0} {
+            return -code error "file does not contain any IDAT chunks"
         }
         if {$compression != 0} {
             return -code error "PNG file is of an unsupported compression type"
@@ -1566,7 +1604,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject "\nendstream\n"
         append xobject "endobj\n\n"
         set images($id) [list $width $height $xobject]
-        return $id
     }
 
     method putImage {id x y args} {

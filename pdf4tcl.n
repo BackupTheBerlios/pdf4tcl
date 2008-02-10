@@ -81,7 +81,7 @@ package require \fBpdf4tcl  ?0.3?\fR
 .sp
 \fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .sp
-\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR ?\fIid\fR?
+\fIobjectName\fR \fBaddImage\fR \fIfilename\fR ?\fIoption value\fR...?
 .sp
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 .sp
@@ -280,10 +280,18 @@ Draw text.
 
 .fi
 .TP
-\fIobjectName\fR \fBaddJpeg\fR \fIfilename\fR ?\fIid\fR?
-Add a JPEG image to the document. If \fIid\fR is not given, it will be
-generated. The \fIid\fR is returned and can be used in subsequent calls
-to \fBputImage\fR. The \fIid\fR must be unique within the document.
+\fIobjectName\fR \fBaddImage\fR \fIfilename\fR ?\fIoption value\fR...?
+Add an image to the document. Returns an id that can be used in subsequent
+calls to \fBputImage\fR. Supported formats are PNG and JPEG.
+.RS
+.TP
+\fB-id\fR \fIid\fR
+Explicitely select an id for the image. The \fIid\fR must be unique within the document.
+.TP
+\fB-type\fR \fIname\fR
+Set the image type.  This can usually be deduced from the file name, this
+option helps when that is not possible.  This can be either "png" or "jpeg".
+.RE
 .TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 Get information about current font. The available \fImetric\fRs are

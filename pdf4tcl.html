@@ -74,7 +74,7 @@ package require <b>pdf4tcl ?0.3?</b><br>
 <tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a></td></tr>
 <tr valign=top ><td ><a href="#32"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 <tr valign=top ><td ><a href="#33"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>addJpeg</strong> <i class='arg'>filename</i> ?<i class='arg'>id</i>?</a></td></tr>
+<tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 <tr valign=top ><td ><a href="#35"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a></td></tr>
 <tr valign=top ><td ><a href="#36"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a></td></tr>
 <tr valign=top ><td ><a href="#37"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
@@ -377,14 +377,24 @@ Draw text.
 </pre></td></tr></table></p>
 
 <br><br>
-<dt><a name="34"><i class='arg'>objectName</i> <strong>addJpeg</strong> <i class='arg'>filename</i> ?<i class='arg'>id</i>?</a><dd>
+<dt><a name="34"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
-Add a JPEG image to the document. If <i class='arg'>id</i> is not given, it will be
-generated. The <i class='arg'>id</i> is returned and can be used in subsequent calls
-to <strong>putImage</strong>. The <i class='arg'>id</i> must be unique within the document.
- 
+Add an image to the document. Returns an id that can be used in subsequent
+calls to <strong>putImage</strong>. Supported formats are PNG and JPEG.
 <br><br>
+<dl>
+
+<dt><strong>-id</strong> <i class='arg'>id</i><dd>
+Explicitely select an id for the image. The <i class='arg'>id</i> must be unique within the document.
+
+<br><br>
+<dt><strong>-type</strong> <i class='arg'>name</i><dd>
+Set the image type.  This can usually be deduced from the file name, this
+option helps when that is not possible.  This can be either &quot;png&quot; or &quot;jpeg&quot;.
+
+</dl>
+
 <dt><a name="35"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a><dd>
 
 
