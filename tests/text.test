@@ -10,6 +10,12 @@ test text-1.1 {text method} -body {
     }
 } -result 1
 
+test text-1.2 {text method} -body {
+    mytest {text "Hej hopp" -miffo gurka} {
+        BT (Hej hopp) Tj ET
+    }
+} -returnCodes 1 -result "unknown option -miffo"
+
 test text-2.1 {text method, align} -body {
     mytest {setFont 10 Courier} {text Gurka -x 10 -y 10 -align left} {
         BT 1 0 0 1 110 210 Tm (Gurka) Tj ET
@@ -97,11 +103,20 @@ test text-5.1 {lineSpacing} -body {
     set res [list [Apa getLineSpacing]]
     Apa setLineSpacing 1.5
     lappend res [Apa getLineSpacing]
+} -cleanup {
     Apa destroy
-    set res
 } -result {1.0 1.5}
 
 test text-5.2 {lineSpacing} -body {
     pdf4tcl::new Apa
     Apa setLineSpacing gurka
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Line spacing must be a number}
+
+test text-5.3 {lineSpacing} -body {
+    pdf4tcl::new Apa
+    Apa newLine gurka
+} -cleanup {
+    Apa destroy
 } -returnCodes 1 -result {Line spacing must be a number}

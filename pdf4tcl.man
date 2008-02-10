@@ -244,6 +244,14 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 
 [list_end]
 
+[call [arg objectName] [method addRawImage] [arg "data"] [opt [arg "option value"]...]]
+[example {
+  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  set imgdata [img1 data]
+  set id [mypdf addRawImage $imgdata]
+  mypdf putImage $id 20 60 -width 100
+}]
+
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
 
 Get information about current font. The available [arg "metric"]s are

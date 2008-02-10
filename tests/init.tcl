@@ -61,7 +61,7 @@ proc mytest {args} {
     if {$debug} {
         set ch [open testdebug.pdf w]
         fconfigure $ch -translation binary
-        puts $ch $res
+        puts -nonewline $ch $res
         close $ch
         foreach app {kghostview acroread kpdf xpdf} {
             if {[auto_execok $app] ne ""} {
@@ -69,7 +69,7 @@ proc mytest {args} {
                 break
             }
         }
-        file delete testdebug.pdf
+        #file delete testdebug.pdf
     }
     regexp {stream.*endstream} $res res
     regsub -all {\s+} $res " " res

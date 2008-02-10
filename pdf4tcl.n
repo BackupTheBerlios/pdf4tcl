@@ -83,6 +83,8 @@ package require \fBpdf4tcl  ?0.3?\fR
 .sp
 \fIobjectName\fR \fBaddImage\fR \fIfilename\fR ?\fIoption value\fR...?
 .sp
+\fIobjectName\fR \fBaddRawImage\fR \fIdata\fR ?\fIoption value\fR...?
+.sp
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 .sp
 \fIobjectName\fR \fBrotateText\fR \fIangle\fR
@@ -292,6 +294,16 @@ Explicitely select an id for the image. The \fIid\fR must be unique within the d
 Set the image type.  This can usually be deduced from the file name, this
 option helps when that is not possible.  This can be either "png" or "jpeg".
 .RE
+.TP
+\fIobjectName\fR \fBaddRawImage\fR \fIdata\fR ?\fIoption value\fR...?
+.nf
+
+  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  set imgdata [img1 data]
+  set id [mypdf addRawImage $imgdata]
+  mypdf putImage $id 20 60 -width 100
+
+.fi
 .TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 Get information about current font. The available \fImetric\fRs are

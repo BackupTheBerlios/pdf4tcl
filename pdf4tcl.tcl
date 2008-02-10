@@ -874,7 +874,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {$spacing eq ""} {
             set spacing $pdf(line_spacing)
         } elseif {![string is double -strict $spacing]} {
-            return -code error "Spacing must be a number"
+            return -code error "Line spacing must be a number"
         }
         # Update to next line
         set y [expr {$pdf(ypos) - $pdf(font_size) * $spacing}]
@@ -886,7 +886,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # if no explicit spacing is given)
     method setLineSpacing {spacing} {
         if {![string is double -strict $spacing]} {
-            return -code error {Line spacing must be a number}
+            return -code error "Line spacing must be a number"
         }
         set pdf(line_spacing) $spacing
     }
@@ -1393,7 +1393,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {![regexp {\d+$} $last i]} {
             set i 0
         }
-        while {[array exists images(_image$i)]} {
+        while {[info exists images(_image$i)]} {
             incr i
         }
         return _image$i
@@ -1426,7 +1426,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set type jpg
                 }
                 default {
-                    return -code error "Unknown image $filename"
+                    return -code error "Unknown image type $filename"
                 }
             }
         }
@@ -1438,23 +1438,19 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self addJpeg $filename $id
             }
             default {
-                return -code error "Unknown image $filename"
+                return -code error "Unknown image type $type"
             }
         }
         return $id
     }
 
     # Deprecated jpeg adder, use addImage
-    method addJpeg {filename {id {}}} {
+    method addJpeg {filename id} {
         variable images
 
         set imgOK false
         if {[catch {open $filename "r"} if]} {
             return -code error "Could not open file $filename"
-        }
-
-        if {$id eq ""} {
-            set id [$self GetImageId]
         }
 
         fconfigure $if -translation binary
@@ -1635,6 +1631,48 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "q"
         $self Pdfoutcmd $w 0 0 $h $x $y "cm"
         $self Pdfout "/$id Do\nQ\n"
+    }
+
+    method addRawImage {img_data args} {
+        variable images
+        # Determine the width and height of the image, which is
+        # a list of lists(rows).
+        set width [llength [lindex $img_data 0]]
+        set height [llength $img_data]
+
+        set id ""
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-id"     {set id $value}
+            }
+        }
+        if {$id eq ""} {
+            set id [$self GetImageId]
+        }
+
+        set    xobject "<<\n/Type /XObject\n"
+        append xobject "/Subtype /Image\n"
+        append xobject "/Width $width\n/Height $height\n"
+        append xobject "/ColorSpace /DeviceRGB\n"
+        append xobject "/BitsPerComponent 8>>\n"
+        append xobject "stream\n"
+
+        # Iterate on each row of the image data.
+        set img ""
+        foreach rawRow $img_data {
+            # Remove spaces and # characters
+            regsub -all -- {((\#)|( ))} $rawRow {} row
+            # Convert data to binary format and
+            # add to data stream.
+            append img [binary format H* $row]
+        }
+
+        append xobject $img
+        append xobject "\nendstream\n"
+        append xobject "endobj\n\n"
+
+        set images($id) [list $width $height $xobject]
+        return $id
     }
 
     method putRawImage {img_data x y args} {
