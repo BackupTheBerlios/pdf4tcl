@@ -63,7 +63,7 @@ proc mytest {args} {
         fconfigure $ch -translation binary
         puts -nonewline $ch $res
         close $ch
-        foreach app {kghostview acroread kpdf xpdf} {
+        foreach app {acroread kpdf xpdf kghostview} {
             if {[auto_execok $app] ne ""} {
                 exec $app testdebug.pdf
                 break

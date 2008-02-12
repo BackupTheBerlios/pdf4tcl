@@ -1559,6 +1559,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             return -code error "Interlaced PNG is not supported"
         }
 
+        if {$palette ne ""} {
+            # Transform the palette into a PDF Indexed color space
+            binary scan $palette H* PaletteHex
+            set PaletteLen [expr {[string length $palette] / 3 - 1}]
+            set paletteX "\[ /Indexed /DeviceRGB "
+            append paletteX $PaletteLen " < "
+            append paletteX $PaletteHex
+            append paletteX " > \]"
+        }
+
         set    xobject "<<\n/Type /XObject\n"
         append xobject "/Subtype /Image\n"
         append xobject "/Width $width\n/Height $height\n"
@@ -1577,11 +1587,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 append xobject "/DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent $depth /Columns $width>>\n"
             }
             3 { # Palette
-                return -code error "PNG with palette is not supported"
-                append xobject "/ColorSpace /Indexed\n" ;# ?
-                append xobject "/BitsPerComponent $depth\n" ;# ?
-                append xobject "/Filter /FlateDecode\n" ;# ?
-                append xobject "/DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent $depth /Columns $width>>\n"
+                append xobject "/ColorSpace $paletteX\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 1 /BitsPerComponent $depth /Columns $width>>\n"
             }
             4 { # Gray + alpha
                 return -code error "PNG with alpha channel is not supported"
