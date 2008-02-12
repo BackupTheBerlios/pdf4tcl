@@ -11,7 +11,7 @@
    -->
 
 <body>
-<h1> pdf4tcl(n) 0.3 pdf4tcl &quot;Pdf document generation&quot;</h1>
+<h1> pdf4tcl(n) 0.3.x pdf4tcl &quot;Pdf document generation&quot;</h1>
 <h2><a name="name">NAME</a></h2>
 <p>
 <p> pdf4tcl - Pdf document generation
@@ -29,6 +29,10 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#package_commands">PACKAGE COMMANDS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_command">OBJECT COMMAND</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods">OBJECT METHODS</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_text">OBJECT METHODS, TEXT</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_images">OBJECT METHODS, IMAGES</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_colors">OBJECT METHODS, COLORS</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_graphics">OBJECT METHODS, GRAPHICS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_configuration">OBJECT CONFIGURATION</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#page_configuration">PAGE CONFIGURATION</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#coordinates">COORDINATES</a><br>
@@ -40,7 +44,7 @@
 <p>
 package require <b>Tcl 8.4</b><br>
 package require <b>snit</b><br>
-package require <b>pdf4tcl ?0.3?</b><br>
+package require <b>pdf4tcl ?0.3.x?</b><br>
 <br><table border=1 width=100% cellspacing=0 cellpadding=0><tr            bgcolor=lightyellow><td bgcolor=lightyellow><table 0 width=100% cellspacing=0 cellpadding=0><tr valign=top ><td ><a href="#1"><b class='cmd'>::pdf4tcl::new</b> <i class='arg'>objectName</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 <tr valign=top ><td ><a href="#2"><b class='cmd'>::pdf4tcl::getPaperSize</b> <i class='arg'>paper</i></a></td></tr>
 <tr valign=top ><td ><a href="#3"><b class='cmd'>::pdf4tcl::getPaperSizeList</b> </a></td></tr>
@@ -70,18 +74,18 @@ package require <b>pdf4tcl ?0.3?</b><br>
 <tr valign=top ><td ><a href="#27"><i class='arg'>objectName</i> <strong>drawTextBox</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 <tr valign=top ><td ><a href="#28"><i class='arg'>objectName</i> <strong>beginTextObj</strong></a></td></tr>
 <tr valign=top ><td ><a href="#29"><i class='arg'>objectName</i> <strong>endTextObj</strong></a></td></tr>
-<tr valign=top ><td ><a href="#30"><i class='arg'>objectName</i> <strong>closePath</strong></a></td></tr>
-<tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a></td></tr>
-<tr valign=top ><td ><a href="#32"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#33"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#35"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#36"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a></td></tr>
-<tr valign=top ><td ><a href="#37"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a></td></tr>
-<tr valign=top ><td ><a href="#38"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
-<tr valign=top ><td ><a href="#39"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
-<tr valign=top ><td ><a href="#40"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
-<tr valign=top ><td ><a href="#41"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a></td></tr>
+<tr valign=top ><td ><a href="#30"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a></td></tr>
+<tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a></td></tr>
+<tr valign=top ><td ><a href="#32"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a></td></tr>
+<tr valign=top ><td ><a href="#33"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#35"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#36"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#37"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
+<tr valign=top ><td ><a href="#38"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
+<tr valign=top ><td ><a href="#39"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
+<tr valign=top ><td ><a href="#40"><i class='arg'>objectName</i> <strong>closePath</strong></a></td></tr>
+<tr valign=top ><td ><a href="#41"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a></td></tr>
 <tr valign=top ><td ><a href="#42"><i class='arg'>objectName</i> <strong>setLineStyle</strong> <i class='arg'>width</i> <i class='arg'>args</i></a></td></tr>
 <tr valign=top ><td ><a href="#43"><i class='arg'>objectName</i> <strong>line</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a></td></tr>
 <tr valign=top ><td ><a href="#44"><i class='arg'>objectName</i> <strong>qCurve</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>xc</i> <i class='arg'>yc</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a></td></tr>
@@ -288,8 +292,11 @@ This method returns the size of the available area on the page,
 after removing margins.  The return value is a list of width and height,
 in points.
 
+</dl>
+<h3><a name="object_methods,_text">OBJECT METHODS, TEXT</a></h3>
+<p>
+<dl>
 
-<br><br>
 <dt><a name="17"><i class='arg'>objectName</i> <strong>setFont</strong> <i class='arg'>size</i> ?<i class='arg'>fontname</i>?</a><dd>
 
 
@@ -363,22 +370,61 @@ Draw text.
 
 <dt><a name="29"><i class='arg'>objectName</i> <strong>endTextObj</strong></a><dd>
 
-<dt><a name="30"><i class='arg'>objectName</i> <strong>closePath</strong></a><dd>
+<dt><a name="30"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a><dd>
 
-<dt><a name="31"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a><dd>
 
-<dt><a name="32"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
+Get information about current font. The available <i class='arg'>metric</i>s are
+<strong>ascend</strong>, <strong>descend</strong>, <strong>fixed</strong>, <strong>bboxy</strong> and
+<strong>height</strong>.
 
-<dt><a name="33"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
+<br><br>
+<dt><a name="31"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a><dd>
+
+<dt><a name="32"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a><dd>
+
+
+</dl>
+<h3><a name="object_methods,_images">OBJECT METHODS, IMAGES</a></h3>
+<p>
+
+A limited set of image formats are directly understood by pdf4tcl, currently JPEG and some PNG formats.  To use
+unsupported formats, use Tk and the Img package to load and dump images to raw format which can be fed to
+<strong>putRawImage</strong> and <strong>addRawImage</strong>.
+
+<dl>
+
+<dt><a name="33"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
+
+
+Put an image on the current page. The image must have beend added previously by <strong>addImage</strong> or
+<strong>addRawImage</strong>. The <i class='arg'>id</i> is the one returned from the add command.
+
+<br><br>
+<dl>
+
+<dt><strong>-width</strong> <i class='arg'>width</i><dd>
+Set the width of the image.  Default width is one point per pixel.  If <i class='arg'>height</i> is set but not <i class='arg'>width</i>,
+the width is selected to preserve the aspect ratio of the image.
+
+<br><br>
+<dt><strong>-height</strong> <i class='arg'>height</i><dd>
+Set the height of the image.  Default height is one point per pixel.  If <i class='arg'>width</i> is set but not <i class='arg'>height</i>,
+the height is selected to preserve the aspect ratio of the image.
+
+</dl>
+
+<dt><a name="34"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
+
+Put an image on the current page. Works like <strong>putImage</strong> except that the raw image data is given directly.
 
 <p><table><tr><td bgcolor=black>&nbsp;</td><td><pre class='sample'>
-  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  image create photo img1 -file image.gif
   set imgdata [img1 data]
   mypdf putRawImage $imgdata 60 20 -height 40
 </pre></td></tr></table></p>
 
 <br><br>
-<dt><a name="34"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="35"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
 Add an image to the document. Returns an id that can be used in subsequent
@@ -393,36 +439,37 @@ Explicitely select an id for the image. The <i class='arg'>id</i> must be unique
 <dt><strong>-type</strong> <i class='arg'>name</i><dd>
 Set the image type.  This can usually be deduced from the file name, this
 option helps when that is not possible.  This can be either &quot;png&quot; or &quot;jpeg&quot;.
-
 </dl>
 
-<dt><a name="35"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="36"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 <p><table><tr><td bgcolor=black>&nbsp;</td><td><pre class='sample'>
-  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  image create photo img1 -file image.gif
   set imgdata [img1 data]
   set id [mypdf addRawImage $imgdata]
   mypdf putImage $id 20 60 -width 100
 </pre></td></tr></table></p>
 
-<br><br>
-<dt><a name="36"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a><dd>
+</dl>
+<h3><a name="object_methods,_colors">OBJECT METHODS, COLORS</a></h3>
+<p>
+<dl>
+
+<dt><a name="37"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
+
+<dt><a name="38"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
+
+<dt><a name="39"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
 
 
-Get information about current font. The available <i class='arg'>metric</i>s are
-<strong>ascend</strong>, <strong>descend</strong>, <strong>fixed</strong>, <strong>bboxy</strong> and
-<strong>height</strong>.
+</dl>
+<h3><a name="object_methods,_graphics">OBJECT METHODS, GRAPHICS</a></h3>
+<p>
+<dl>
 
-<br><br>
-<dt><a name="37"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a><dd>
+<dt><a name="40"><i class='arg'>objectName</i> <strong>closePath</strong></a><dd>
 
-<dt><a name="38"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
-
-<dt><a name="39"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
-
-<dt><a name="40"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
-
-<dt><a name="41"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a><dd>
+<dt><a name="41"><i class='arg'>objectName</i> <strong>moveTo</strong> <i class='arg'>x</i> <i class='arg'>y</i></a><dd>
 
 
 <dt><a name="42"><i class='arg'>objectName</i> <strong>setLineStyle</strong> <i class='arg'>width</i> <i class='arg'>args</i></a><dd>

@@ -1,11 +1,11 @@
 [comment {-*- tcl -*- doctools manpage}]
-[manpage_begin pdf4tcl n 0.3]
+[manpage_begin pdf4tcl n 0.3.x]
 [copyright {2007 Peter Spjuth}]
 [moddesc   {Pdf document generation}]
 [titledesc {Pdf document generation}]
 [require Tcl 8.4]
 [require snit]
-[require pdf4tcl [opt 0.3]]
+[require pdf4tcl [opt 0.3.x]]
 [description]
 
 This package provides a container class for
@@ -169,6 +169,9 @@ This method returns the size of the available area on the page,
 after removing margins.  The return value is a list of width and height,
 in points.
 
+[list_end]
+[subsection {OBJECT METHODS, TEXT}]
+[list_begin definitions]
 
 [call [arg objectName] [method setFont] [arg "size"] [opt [arg "fontname"]]]
 
@@ -219,12 +222,46 @@ Draw text.
 
 [call [arg objectName] [method beginTextObj]]
 [call [arg objectName] [method endTextObj]]
-[call [arg objectName] [method closePath]]
-[call [arg objectName] [method moveTo] [arg "x"] [arg "y"]]
+[call [arg objectName] [method getFontMetric] [arg "metric"]]
+
+Get information about current font. The available [arg "metric"]s are
+[option ascend], [option descend], [option fixed], [option bboxy] and
+[option height].
+
+[call [arg objectName] [method rotateText] [arg "angle"]]
+[call [arg objectName] [method skewText] [arg "xangle"] [arg "yangle"]]
+
+[list_end]
+[subsection {OBJECT METHODS, IMAGES}]
+
+A limited set of image formats are directly understood by pdf4tcl, currently JPEG and some PNG formats.  To use
+unsupported formats, use Tk and the Img package to load and dump images to raw format which can be fed to
+[method putRawImage] and [method addRawImage].
+
+[list_begin definitions]
+
 [call [arg objectName] [method putImage] [arg "id"] [arg "x"] [arg "y"]  [opt [arg "option value"]...]]
+
+Put an image on the current page. The image must have beend added previously by [method addImage] or
+[method addRawImage]. The [arg "id"] is the one returned from the add command.
+
+[list_begin opt]
+
+[opt_def -width [arg width]]
+Set the width of the image.  Default width is one point per pixel.  If [arg height] is set but not [arg width],
+the width is selected to preserve the aspect ratio of the image.
+
+[opt_def -height [arg height]]
+Set the height of the image.  Default height is one point per pixel.  If [arg width] is set but not [arg height],
+the height is selected to preserve the aspect ratio of the image.
+
+[list_end]
+
 [call [arg objectName] [method putRawImage] [arg "data"] [arg "x"] [arg "y"]  [opt [arg "option value"]...]]
+Put an image on the current page. Works like [method putImage] except that the raw image data is given directly.
+
 [example {
-  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  image create photo img1 -file image.gif
   set imgdata [img1 data]
   mypdf putRawImage $imgdata 60 20 -height 40
 }]
@@ -241,28 +278,30 @@ Explicitely select an id for the image. The [arg "id"] must be unique within the
 [opt_def -type [arg name]]
 Set the image type.  This can usually be deduced from the file name, this
 option helps when that is not possible.  This can be either "png" or "jpeg".
-
 [list_end]
 
 [call [arg objectName] [method addRawImage] [arg "data"] [opt [arg "option value"]...]]
 [example {
-  image create photo img1 -gamma 1.0 -height 0 -width 0 -file image.gif
+  image create photo img1 -file image.gif
   set imgdata [img1 data]
   set id [mypdf addRawImage $imgdata]
   mypdf putImage $id 20 60 -width 100
 }]
 
-[call [arg objectName] [method getFontMetric] [arg "metric"]]
+[list_end]
+[subsection {OBJECT METHODS, COLORS}]
+[list_begin definitions]
 
-Get information about current font. The available [arg "metric"]s are
-[option ascend], [option descend], [option fixed], [option bboxy] and
-[option height].
-
-[call [arg objectName] [method rotateText] [arg "angle"]]
 [call [arg objectName] [method setBgColor] [arg "red"] [arg "green"] [arg "blue"]]
 [call [arg objectName] [method setFillColor] [arg "red"] [arg "green"] [arg "blue"]]
 [call [arg objectName] [method setStrokeColor] [arg "red"] [arg "green"] [arg "blue"]]
-[call [arg objectName] [method skewText] [arg "xangle"] [arg "yangle"]]
+
+[list_end]
+[subsection {OBJECT METHODS, GRAPHICS}]
+[list_begin definitions]
+
+[call [arg objectName] [method closePath]]
+[call [arg objectName] [method moveTo] [arg "x"] [arg "y"]]
 
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
