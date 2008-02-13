@@ -446,7 +446,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # dimensions
         set oid [$self GetOid]
-        $self StoreXref
         $self Pdfout "$oid 0 obj\n"
         $self Pdfout "<</Type /Page\n"
         $self Pdfout "/Parent 2 0 R\n"
@@ -457,17 +456,17 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "endobj\n\n"
 
         # start of contents
-        set oid [$self IncrOid]
-        $self StoreXref
+        set oid [$self GetOid]
         $self Pdfout "$oid 0 obj\n"
-        $self Pdfout "<<\n/Length [$self NextOid] 0 R\n"
+        # Allocate an object for the page length
+        set pdf(pagelengthoid) [$self GetOid 1]
+        $self Pdfout "<<\n/Length $pdf(pagelengthoid) 0 R\n"
         if {$pdf(compress)} {
             $self Pdfout "/Filter \[/FlateDecode\]\n"
         }
         $self Pdfout ">>\nstream\n"
         set pdf(data_start) $pdf(out_pos)
         set pdf(in_text_object) false
-        $self IncrOid
 
         # no font set on new pages
         set pdf(font_set) false
@@ -504,12 +503,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(out_pos) [expr {$pdf(data_start)+$data_len}]
         $self Pdfout "\nendstream\n"
         $self Pdfout "endobj\n\n"
-        $self StoreXref
-        $self Pdfout "[$self GetOid] 0 obj\n"
+        $self StoreXref $pdf(pagelengthoid)
+        $self Pdfout "$pdf(pagelengthoid) 0 obj\n"
         incr data_len
         $self Pdfout "$data_len\n"
         $self Pdfout "endobj\n\n"
-        $self IncrOid
         set pdf(inPage) false
     }
 
@@ -573,7 +571,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # fonts
         foreach fontname $pdf(fonts) {
-            $self StoreXref
             $self Pdfout "[$self GetOid] 0 obj\n"
             $self Pdfout "<<\n/Type /Font\n"
             $self Pdfout "/Subtype /Type1\n"
@@ -582,31 +579,27 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout "/BaseFont /$fontname\n"
             $self Pdfout ">>\n"
             $self Pdfout "endobj\n\n"
-            $self IncrOid
         }
 
         # images
         foreach key [array names images] {
-            $self StoreXref
             foreach {img_width img_height xobject} $images($key) {break}
             $self Pdfout "[$self GetOid] 0 obj\n"
             $self Pdfout $xobject
-            $self IncrOid
         }
 
         # cross reference
         set xref_pos $pdf(out_pos)
         $self Pdfout "xref\n"
-        $self StoreXref
-        $self Pdfout "0 [$self GetOid]\n"
+        $self Pdfout "0 [$self NextOid]\n"
         $self Pdfout "0000000000 65535 f \n"
-        for {set a 1} {$a<[$self GetOid]} {incr a} {
+        for {set a 1} {$a<[$self NextOid]} {incr a} {
             set xref $pdf(xref,$a)
             $self Pdfout [format "%010ld 00000 n \n" $xref]
         }
         $self Pdfout "trailer\n"
         $self Pdfout "<<\n"
-        $self Pdfout "/Size [$self GetOid]\n"
+        $self Pdfout "/Size [$self NextOid]\n"
         $self Pdfout "/Root 1 0 R\n"
         $self Pdfout ">>\n"
         $self Pdfout "\nstartxref\n"
@@ -1744,26 +1737,26 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return [string map {( \\( ) \\) \\ \\\\} $in]
     }
 
-    # helper function: return current object id
-    method GetOid {} {
-        return $pdf(pdf_obj)
+    # helper function: consume and return an object id
+    method GetOid {{noxref 0}} {
+        if {!$noxref} {
+            $self StoreXref
+        }
+        set res $pdf(pdf_obj)
+        incr pdf(pdf_obj)
+        return $res
     }
 
     # helper function: return next object id (without incrementing)
     method NextOid {} {
-        set oid [$self GetOid]
-        return [expr {$oid+1}]
-    }
-
-    # helper function: increment object id and return new value
-    method IncrOid {} {
-        incr pdf(pdf_obj)
         return $pdf(pdf_obj)
     }
 
-    # helper function: set xref of current oid to current out_pos
-    method StoreXref {} {
-        set oid $pdf(pdf_obj)
+    # helper function: set xref of (current) oid to current out_pos
+    method StoreXref {{oid {}}} {
+        if {$oid eq ""} {
+            set oid $pdf(pdf_obj)
+        }
         set pdf(xref,$oid) $pdf(out_pos)
     }
 
