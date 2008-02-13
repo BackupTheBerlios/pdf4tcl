@@ -239,7 +239,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self configurelist $args
 
         # Document data
-        set pdf(pages) 0
+        set pdf(pages) {}
         set pdf(pdf_obj) 4 ;# Objects 1-3 are reserved for use in "finish"
         set pdf(out_pos) 0
         set pdf(data_start) 0
@@ -281,7 +281,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(pdf) ""
 
         # Start on pdfout
-        $self Pdfoutn "%PDF-1.3"
+        $self Pdfout "%PDF-1.4\n"
+        # Add some chars >= 0x80 as recommended by the PDF standard
+        # to make it easy to detect that this is not an ASCII file.
+        $self Pdfout "%\xE5\xE4\xF6\n"
     }
 
     destructor {
@@ -449,10 +452,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(orient) $localopts(-orient)
 
         set pdf(inPage) 1
-        incr pdf(pages)
 
         # dimensions
         set oid [$self GetOid]
+        lappend pdf(pages) $oid
         $self Pdfout "$oid 0 obj\n"
         $self Pdfout "<</Type /Page\n"
         $self Pdfout "/Parent 2 0 R\n"
@@ -536,6 +539,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "1 0 obj\n"
         $self Pdfout "<<\n"
         $self Pdfout "/Type /Catalog\n"
+        # Possibly add a /Version here for 1.4 and up
         $self Pdfout "/Pages 2 0 R\n"
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
@@ -544,11 +548,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self StoreXref 2
         $self Pdfout "2 0 obj\n"
         $self Pdfout "<<\n/Type /Pages\n"
-        $self Pdfout "/Count $pdf(pages)\n"
+        $self Pdfout "/Count [llength $pdf(pages)]\n"
         $self Pdfout "/Kids \["
-        for {set a 0} {$a<$pdf(pages)} {incr a} {
-            set b [expr {4 + $a*3}]
-            $self Pdfout "$b 0 R "
+        foreach oid $pdf(pages) {
+            $self Pdfout "$oid 0 R "
         }
         $self Pdfout "\]\n"
         $self Pdfout ">>\n"
