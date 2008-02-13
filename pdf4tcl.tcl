@@ -157,17 +157,6 @@ namespace eval pdf4tcl {
     Init
 }
 
-# PDF-Struktur:
-# 1 = Root
-#     2 = Pages
-#     3 = Resources
-#     4 = First page
-#             .
-#             .
-#             .
-#     X = Fonts
-
-
 # Object used for generating pdf
 snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     variable pdf
@@ -251,7 +240,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # Document data
         set pdf(pages) 0
-        set pdf(pdf_obj) 4
+        set pdf(pdf_obj) 4 ;# Objects 1-3 are reserved for use in "finish"
         set pdf(out_pos) 0
         set pdf(data_start) 0
         set pdf(data_len) 0
@@ -259,6 +248,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(font_set) false
         set pdf(in_text_object) false
         array set images {}
+        set pdf(objects) {}
         set pdf(compress) $options(-compress)
         set pdf(finished) false
         set pdf(inPage) false
@@ -333,6 +323,23 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         append str "[lindex $args end]\n"
         $self Pdfout $str
+    }
+
+    # Move data from pdf(ob) cache to final destination.
+    # Return number of bytes added
+    method Flush {{compress 0}} {
+        set data $pdf(ob)
+        set pdf(ob) ""
+        if {$compress} {
+            set data [zlib compress $data]
+        }
+        set len [string length $data]
+        if {$pdf(ch) eq ""} {
+            append pdf(pdf) $data
+        } else {
+            puts -nonewline $pdf(ch) $data
+        }
+        return $len
     }
 
     #######################################################################
@@ -472,12 +479,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(font_set) false
 
         # capture output
-        if {$pdf(ch) eq ""} {
-            append pdf(pdf) $pdf(ob)
-        } else {
-            puts -nonewline $pdf(ch) $pdf(ob)
-        }
-        set pdf(ob) ""
+        $self Flush
     }
 
     # Finish a page
@@ -489,26 +491,34 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout "\nET\n"
         }
         # get buffer
-        set data $pdf(ob)
-        set pdf(ob) ""
-        if {$pdf(compress) >0} {
-            set data [zlib compress $data]
-        }
-        if {$pdf(ch) eq ""} {
-            append pdf(pdf) $data
-        } else {
-            puts -nonewline $pdf(ch) $data
-        }
-        set data_len [string length $data]
+        set data_len [$self Flush $pdf(compress)]
         set pdf(out_pos) [expr {$pdf(data_start)+$data_len}]
         $self Pdfout "\nendstream\n"
         $self Pdfout "endobj\n\n"
+
+        # Create Length object
         $self StoreXref $pdf(pagelengthoid)
         $self Pdfout "$pdf(pagelengthoid) 0 obj\n"
         incr data_len
         $self Pdfout "$data_len\n"
         $self Pdfout "endobj\n\n"
         set pdf(inPage) false
+
+        # Dump stored objects
+        foreach {oid body} $pdf(objects) {
+            $self StoreXref $oid
+            $self Pdfout $body
+        }
+        set pdf(objects) {}
+        $self Flush
+    }
+
+    # Create an object to be added to the stream at a suitable time.
+    # Returns the Object Id.
+    method AddObject {body} {
+        set oid [$self GetOid 1]
+        lappend pdf(objects) $oid "$oid 0 obj\n$body\nendobj\n"
+        return $oid
     }
 
     # Finish document
@@ -521,7 +531,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {$pdf(inPage)} {
             $self endPage
         }
-        set pdf(xref,1) $pdf(out_pos)
+        # Object 1 is the Root of the document
+        $self StoreXref 1
         $self Pdfout "1 0 obj\n"
         $self Pdfout "<<\n"
         $self Pdfout "/Type /Catalog\n"
@@ -529,7 +540,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
 
-        set pdf(xref,2) $pdf(out_pos)
+        # Pages Object
+        $self StoreXref 2
         $self Pdfout "2 0 obj\n"
         $self Pdfout "<<\n/Type /Pages\n"
         $self Pdfout "/Count $pdf(pages)\n"
@@ -542,7 +554,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
 
-        set pdf(xref,3) $pdf(out_pos)
+        # Resources Object
+        $self StoreXref 3
         $self Pdfout "3 0 obj\n"
         $self Pdfout "<<\n"
         $self Pdfout "/ProcSet\[/PDF /Text /ImageC\]\n"
@@ -569,7 +582,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         $self Pdfout ">>\nendobj\n\n"
 
-        # fonts
+        # Font Objects
         foreach fontname $pdf(fonts) {
             $self Pdfout "[$self GetOid] 0 obj\n"
             $self Pdfout "<<\n/Type /Font\n"
@@ -581,14 +594,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout "endobj\n\n"
         }
 
-        # images
+        # Image Objects
         foreach key [array names images] {
             foreach {img_width img_height xobject} $images($key) {break}
             $self Pdfout "[$self GetOid] 0 obj\n"
             $self Pdfout $xobject
         }
 
-        # cross reference
+        # Cross reference table
         set xref_pos $pdf(out_pos)
         $self Pdfout "xref\n"
         $self Pdfout "0 [$self NextOid]\n"
@@ -597,6 +610,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set xref $pdf(xref,$a)
             $self Pdfout [format "%010ld 00000 n \n" $xref]
         }
+
+        # Document trailer
         $self Pdfout "trailer\n"
         $self Pdfout "<<\n"
         $self Pdfout "/Size [$self NextOid]\n"
@@ -605,12 +620,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "\nstartxref\n"
         $self Pdfout "$xref_pos\n"
         $self Pdfout "%%EOF\n"
-        if {$pdf(ch) eq ""} {
-            append pdf(pdf) $pdf(ob)
-        } else {
-            puts -nonewline $pdf(ch) $pdf(ob)
-        }
-        set pdf(ob) ""
+        $self Flush
         set pdf(finished) true
     }
 
