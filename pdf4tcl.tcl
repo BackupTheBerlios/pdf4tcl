@@ -1552,7 +1552,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             return -code error "something is wrong with PNG data in file $filename"
         }
         if {[string length $img_data] == 0} {
-            return -code error "file does not contain any IDAT chunks"
+            return -code error "PNG file does not contain any IDAT chunks"
         }
         if {$compression != 0} {
             return -code error "PNG file is of an unsupported compression type"
@@ -1599,13 +1599,18 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 append xobject "/DecodeParms << /Predictor 15 /Colors 1 /BitsPerComponent $depth /Columns $width>>\n"
             }
             4 { # Gray + alpha
-                return -code error "PNG with alpha channel is not supported"
+                $self PngInitGrayAlpha
+                append xobject "/ColorSpace $pdf(png_ga) 0 R\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 2 /BitsPerComponent $depth /Columns $width>>\n"
             }
             6 { # RGBA
-                # TODO:
-                # Either unpack the data stream, remove the alpha and repack.
-                # Or, figure out a PDF colorspace that can understand RGBA
-                return -code error "PNG with alpha channel is not supported"
+                $self PngInitRgba
+                append xobject "/ColorSpace $pdf(png_rgba) 0 R\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 4 /BitsPerComponent $depth /Columns $width>>\n"
             }
         }
 
@@ -1615,6 +1620,48 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject "\nendstream\n"
         append xobject "endobj\n\n"
         set images($id) [list $width $height $xobject]
+    }
+
+    # Create the Color Space needed to display RGBA as RGB
+    method PngInitRgba {} {
+        if {[info exists pdf(png_rgba)]} return
+        set    body "<< /FunctionType 4\n"
+        append body {/Domain [ 0.0  1.0  0.0  1.0 0.0  1.0 0.0  1.0 ]} \n
+        append body {/Range [ 0.0  1.0 0.0  1.0 0.0  1.0 ]} \n
+        append body {/Length 5} \n
+        append body {>>} \n
+        append body {stream} \n
+        append body {{pop}} \n
+        append body {endstream}
+        set oid [$self AddObject $body]
+
+        set body    "\[ /DeviceN\n"
+        append body "   \[ /Red /Green /Blue /Alpha \]\n"
+        append body "    /DeviceRGB\n"
+        append body "    $oid 0 R   % Tint transformation function\n"
+        append body "\]"
+        set pdf(png_rgba) [$self AddObject $body]
+    }
+
+    # Create the Color Space needed to display Gray+Alpha as Gray
+    method PngInitGrayAlpha {} {
+        if {[info exists pdf(png_ga)]} return
+        set    body "<< /FunctionType 4\n"
+        append body {/Domain [ 0.0  1.0  0.0  1.0 ]} \n
+        append body {/Range [ 0.0  1.0 ]} \n
+        append body {/Length 5} \n
+        append body {>>} \n
+        append body {stream} \n
+        append body {{pop}} \n
+        append body {endstream}
+        set oid [$self AddObject $body]
+
+        set body    "\[ /DeviceN\n"
+        append body "   \[ /_Gray_ /_Alpha_ \]\n"
+        append body "    /DeviceGray\n"
+        append body "    $oid 0 R   % Tint transformation function\n"
+        append body "\]"
+        set pdf(png_ga) [$self AddObject $body]
     }
 
     method putImage {id x y args} {

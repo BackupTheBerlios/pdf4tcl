@@ -84,14 +84,15 @@ proc TestPngFail {args} {
 test png-1.1 {png} -body {
     TestPng basn0g01.png basn0g02.png basn0g04.png basn0g08.png basn0g16.png \
             basn2c08.png basn2c16.png \
-            basn3p01.png basn3p02.png basn3p04.png basn3p08.png
+            basn3p01.png basn3p02.png basn3p04.png basn3p08.png \
+            basn4a08.png basn4a16.png \
+            basn6a08.png basn6a16.png
 } -result 1
 
 test png-1.2 {png, unsupported colour modes} -body {
     TestPngFail \
              \
-            basn4a08.png basn4a16.png \
-            basn6a08.png basn6a16.png
+
 } -result {}
 
 test png-1.3 {png, interlaced unsupported} -body {
