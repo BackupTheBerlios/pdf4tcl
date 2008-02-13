@@ -1,11 +1,25 @@
+2008-02-13 Peter Spjuth   <peter.spjuth@gmail.com>
+
+	* Added PNG support.
+	* Added addRawImage.
+	* Added addImage as generic image method. addJpeg is now deprecated.
+
+2008-02-10 Peter Spjuth   <peter.spjuth@gmail.com>
+
+	* Added setLineSpacing and getLineSpacing.
+	  Use them in newLine. Contributed by "chd".
+
 2008-02-06 Peter Spjuth   <peter.spjuth@gmail.com>
+
 	* Added height metric to getFontMetric.
 
 2008-02-06 Peter Spjuth   <peter.spjuth@gmail.com>
+
 	* Added Tk's units "m", "c" and "p" to getPoints.
 
 2008-01-21 Peter Spjuth   <peter.spjuth@gmail.com>
-	* Added PutRawImage, contributed by Steve Redler.
+
+	* Added putRawImage, contributed by Steve Redler.
 
 2008-01-19 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Release 0.3
