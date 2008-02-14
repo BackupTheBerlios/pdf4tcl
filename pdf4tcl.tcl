@@ -1503,7 +1503,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return $id
     }
 
-    # Experimental Png-function
+    # PNG support
+    #
+    # This implementation uses tricks in PDF to avoid unpacking the
+    # compressed data stream.  Currently this means that interlaced
+    # images are not supported.
+    # Decompressing (using zlib) would be feasible I guess, but the
+    # de-filtering and de-interlacing steps would be rather costly.
+    # Anyone needing such png images can always load them themselves
+    # and provide them as raw images.
+
     method AddPng {filename id} {
         variable images
 
@@ -1664,6 +1673,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(png_ga) [$self AddObject $body]
     }
 
+    # Place an image at the page
     method putImage {id x y args} {
         variable images
         foreach {width height xobject} $images($id) {break}
@@ -1695,6 +1705,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "/$id Do\nQ\n"
     }
 
+    # Add a raw image to the document, to be placed later
     method addRawImage {img_data args} {
         variable images
         # Determine the width and height of the image, which is
@@ -1737,6 +1748,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return $id
     }
 
+    # Place a raw image at the page
     method putRawImage {img_data x y args} {
         # Determine the width and height of the image, which is
         # a list of lists(rows).
