@@ -235,6 +235,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     constructor {args} {
         variable images
+        variable fonts
 
         $self configurelist $args
 
@@ -244,7 +245,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(out_pos) 0
         set pdf(data_start) 0
         set pdf(data_len) 0
-        set pdf(fonts) {}
+        array set fonts {}
         set pdf(font_set) false
         set pdf(in_text_object) false
         array set images {}
@@ -527,6 +528,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Finish document
     method finish {} {
         variable images
+        variable fonts
+
         if {$pdf(finished)} {
             return
         }
@@ -562,19 +565,19 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "3 0 obj\n"
         $self Pdfout "<<\n"
         $self Pdfout "/ProcSet\[/PDF /Text /ImageC\]\n"
-        $self Pdfout "/Font <<\n"
 
         # font references
-        set count 0
-        foreach fontname $pdf(fonts) {
-            set nr [expr {$pdf(pdf_obj)+$count}]
-            $self Pdfout "/$fontname $nr 0 R\n"
-            incr count
+        if {[array size fonts] > 0} {
+            $self Pdfout "/Font <<\n"
+            foreach fontname [array names fonts] {
+                set oid $fonts($fontname)
+                $self Pdfout "/$fontname $oid 0 R\n"
+            }
+            $self Pdfout ">>\n"
         }
-        $self Pdfout ">>\n"
 
         # image references
-        if {[array size images]>0} {
+        if {[array size images] > 0} {
             $self Pdfout "/XObject <<\n"
             foreach key [array names images] {
                 set oid [lindex $images($key) 2]
@@ -583,18 +586,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout ">>\n"
         }
         $self Pdfout ">>\nendobj\n\n"
-
-        # Font Objects
-        foreach fontname $pdf(fonts) {
-            $self Pdfout "[$self GetOid] 0 obj\n"
-            $self Pdfout "<<\n/Type /Font\n"
-            $self Pdfout "/Subtype /Type1\n"
-            $self Pdfout "/Encoding /WinAnsiEncoding\n"
-            $self Pdfout "/Name /$fontname\n"
-            $self Pdfout "/BaseFont /$fontname\n"
-            $self Pdfout ">>\n"
-            $self Pdfout "endobj\n\n"
-        }
 
         # Cross reference table
         set xref_pos $pdf(out_pos)
@@ -700,6 +691,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Set current font
     method setFont {size {fontname ""}} {
         variable ::pdf4tcl::font_widths
+        variable fonts
 
         if {$fontname eq ""} {
             set fontname $pdf(current_font)
@@ -716,8 +708,17 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutn "/$fontname $size" "Tf"
         $self Pdfoutcmd 0 "Tr"
         $self Pdfoutcmd $size "TL"
-        if {[lsearch $pdf(fonts) $fontname]==-1} {
-            lappend pdf(fonts) $fontname
+
+        # Make sure a font object exists
+        if {![info exists fonts($fontname)]} {
+            set body    "<<\n/Type /Font\n"
+            append body "/Subtype /Type1\n"
+            append body "/Encoding /WinAnsiEncoding\n"
+            append body "/Name /$fontname\n"
+            append body "/BaseFont /$fontname\n"
+            append body ">>"
+            set oid [$self AddObject $body]
+            set fonts($fontname) $oid
         }
         set pdf(current_font) $fontname
 
