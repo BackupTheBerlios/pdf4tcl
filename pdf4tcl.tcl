@@ -577,9 +577,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {[array size images]>0} {
             $self Pdfout "/XObject <<\n"
             foreach key [array names images] {
-                set nr [expr {$pdf(pdf_obj)+$count}]
-                $self Pdfout "/$key $nr 0 R\n"
-                incr count
+                set oid [lindex $images($key) 2]
+                $self Pdfout "/$key $oid 0 R\n"
             }
             $self Pdfout ">>\n"
         }
@@ -595,13 +594,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout "/BaseFont /$fontname\n"
             $self Pdfout ">>\n"
             $self Pdfout "endobj\n\n"
-        }
-
-        # Image Objects
-        foreach key [array names images] {
-            foreach {img_width img_height xobject} $images($key) {break}
-            $self Pdfout "[$self GetOid] 0 obj\n"
-            $self Pdfout $xobject
         }
 
         # Cross reference table
@@ -1392,19 +1384,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Image Handling
     #######################################################################
 
-    method GetImageId {} {
-        variable images
-        # Find a unique name. Could be improved...
-        set last [lindex [lsort -dictionary [array names images _image*]] end]
-        if {![regexp {\d+$} $last i]} {
-            set i 0
-        }
-        while {[info exists images(_image$i)]} {
-            incr i
-        }
-        return _image$i
-    }
-
     # Add an image to the document
     method addImage {filename args} {
         set id ""
@@ -1418,9 +1397,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set type $val
                 }
             }
-        }
-        if {$id eq ""} {
-            set id [$self GetImageId]
         }
 
         if {$type eq ""} {
@@ -1438,10 +1414,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         switch $type {
             png {
-                $self AddPng $filename $id
+                set id [$self AddPng $filename $id]
             }
             jpg - jpeg {
-                $self addJpeg $filename $id
+                set id [$self addJpeg $filename $id]
             }
             default {
                 return -code error "Unknown image type $type"
@@ -1497,9 +1473,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject "/Length $img_length >>\n"
         append xobject "stream\n"
         append xobject $img
-        append xobject "\nendstream\n"
-        append xobject "endobj\n\n"
-        set images($id) [list $width $height $xobject]
+        append xobject "\nendstream"
+
+        set oid [$self AddObject $xobject]
+
+        if {$id eq ""} {
+            set id image$oid
+        }
+        set images($id) [list $width $height $oid]
         return $id
     }
 
@@ -1626,9 +1607,15 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject "/Length [string length $img_data] >>\n"
         append xobject "stream\n"
         append xobject $img_data
-        append xobject "\nendstream\n"
-        append xobject "endobj\n\n"
-        set images($id) [list $width $height $xobject]
+        append xobject "\nendstream"
+
+        set oid [$self AddObject $xobject]
+
+        if {$id eq ""} {
+            set id image$oid
+        }
+        set images($id) [list $width $height $oid]
+        return $id
     }
 
     # Create the Color Space needed to display RGBA as RGB
@@ -1676,7 +1663,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Place an image at the page
     method putImage {id x y args} {
         variable images
-        foreach {width height xobject} $images($id) {break}
+        foreach {width height oid} $images($id) {break}
 
         $self Trans $x $y x y
         set w $width
@@ -1719,9 +1706,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 "-id"     {set id $value}
             }
         }
-        if {$id eq ""} {
-            set id [$self GetImageId]
-        }
 
         set    xobject "<<\n/Type /XObject\n"
         append xobject "/Subtype /Image\n"
@@ -1741,10 +1725,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         append xobject $img
-        append xobject "\nendstream\n"
-        append xobject "endobj\n\n"
+        append xobject "\nendstream"
 
-        set images($id) [list $width $height $xobject]
+        set oid [$self AddObject $xobject]
+
+        if {$id eq ""} {
+            set id image$oid
+        }
+        set images($id) [list $width $height $oid]
         return $id
     }
 

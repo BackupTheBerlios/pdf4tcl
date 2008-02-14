@@ -11,9 +11,9 @@ if {![file exists tcl.jpg]} {
 }
 
 test image-1.1 {misc image handling} -body {
-    # Test automatic image id generation
-    mytest {addRawImage {#ff8000}} {addRawImage {#646566}} {
-        /_image0 * /_image1
+    # Check that image data ends up in document
+    mytest {addRawImage {#444546}} {addRawImage {#646566}} {
+        DEF * def
     }
 } -result 1
 
