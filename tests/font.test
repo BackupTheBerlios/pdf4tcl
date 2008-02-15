@@ -24,3 +24,9 @@ test font-1.1 {font metrics} -body {
     $pdf destroy
     set res
 } -result {-2.5 1 6.29 -1.57 10.0 -5.0 1 12.58 -3.14 20.0}
+
+test font-2.1 {font size, units works} -body {
+    mytest {setFont 10 Courier} {setFont 20mm Courier} {
+        /Courier 10 Tf * /Courier 56.693 Tf
+    }
+} -result 1

@@ -53,14 +53,14 @@ test util-2.4 {getPoints, error} -body {
 } -returnCodes 1 -result "Unknown value 1x1mm"
 
 test util-3.1 {write method} -body {
-    set pdf [eval pdf4tcl::new %AUTO%]
+    set pdf [pdf4tcl::new %AUTO%]
     $pdf startPage
     $pdf write
     $pdf destroy
 } -result "" -output "%PDF-1.4*" -match glob
 
 test util-4.1 {getCharWidth method} -body {
-    set pdf [eval pdf4tcl::new %AUTO%]
+    set pdf [pdf4tcl::new %AUTO%]
     $pdf startPage
     $pdf setFont 20 Courier
     set res {}
@@ -74,7 +74,7 @@ test util-4.1 {getCharWidth method} -body {
 } -result {0.0 12.0 0.0 12.0 12.0}
 
 test util-5.1 {getStringWidth method} -body {
-    set pdf [eval pdf4tcl::new %AUTO%]
+    set pdf [pdf4tcl::new %AUTO%]
     $pdf startPage
     $pdf setFont 20 Courier
     set res {}
@@ -88,7 +88,7 @@ test util-5.1 {getStringWidth method} -body {
 } -result {0.0 12.0 24.0 36.0 36.0}
 
 test util-5.2 {getStringWidth method} -body {
-    set pdf [eval pdf4tcl::new %AUTO%]
+    set pdf [pdf4tcl::new %AUTO%]
     $pdf startPage
     $pdf setFont 20 Helvetica
     set res {}
@@ -98,3 +98,19 @@ test util-5.2 {getStringWidth method} -body {
     $pdf destroy
     set res
 } -result {49.98 37.76 13.32}
+
+test util-5.3 {getStringWidth method, with unit} -body {
+    set pdf [pdf4tcl::new %AUTO% -unit i]
+    $pdf startPage
+    $pdf setFont 20p Helvetica
+    set res {}
+    lappend res [$pdf getStringWidth "MMM"]
+    lappend res [$pdf getStringWidth "MiM"]
+    lappend res [$pdf getStringWidth "iii"]
+    $pdf destroy
+    set res2 {}
+    foreach val $res {
+        lappend res2 [format %.3f $val]
+    }
+    set res2
+} -result {0.694 0.524 0.185}
