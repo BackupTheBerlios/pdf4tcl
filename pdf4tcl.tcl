@@ -252,7 +252,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable images
         variable fonts
 
+        # The unit translation factor is needed before parsing arguments
         set pdf(unit) 1.0
+
         $self configurelist $args
 
         # Document data
@@ -299,6 +301,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # Start on pdfout
         $self Pdfout "%PDF-1.4\n"
+        set pdf(version) 1.4
         # Add some chars >= 0x80 as recommended by the PDF standard
         # to make it easy to detect that this is not an ASCII file.
         $self Pdfout "%\xE5\xE4\xF6\n"
@@ -401,6 +404,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
         return -code error "Unknown value $val"
+    }
+
+    # If any feature requires version > 1.4 they should call this
+    method RequireVersion {version} {
+        if {$version > $pdf(version)} {
+            set pdf(version) $version
+        }
     }
 
     #######################################################################
@@ -566,6 +576,15 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(inPage) false
 
         # Dump stored objects
+        $self FlushObjects
+    }
+
+    method FlushObjects {} {
+        if {$pdf(inPage)} {
+            return -code error "FlushObjects may not be called when in a page"
+        }
+
+        # Dump stored objects
         foreach {oid body} $pdf(objects) {
             $self StoreXref $oid
             $self Pdfout $body
@@ -599,12 +618,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "1 0 obj\n"
         $self Pdfout "<<\n"
         $self Pdfout "/Type /Catalog\n"
-        # Possibly add a /Version here for 1.4 and up
+        if {$pdf(version) > 1.4} {
+            $self Pdfout "/Version $pdf(version)\n"
+        }
         $self Pdfout "/Pages 2 0 R\n"
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
 
-        # Pages Object
+        # Object 2 lists the pages
         $self StoreXref 2
         $self Pdfout "2 0 obj\n"
         $self Pdfout "<<\n/Type /Pages\n"
@@ -617,7 +638,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
 
-        # Resources Object
+        # Object 3 is the Resources Object
         $self StoreXref 3
         $self Pdfout "3 0 obj\n"
         $self Pdfout "<<\n"
@@ -1641,6 +1662,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set    xobject "<<\n/Type /XObject\n"
         append xobject "/Subtype /Image\n"
         append xobject "/Width $width\n/Height $height\n"
+
+        if {$depth > 8} {
+            $self RequireVersion 1.5
+        }
 
         switch $color {
             0 { # Grayscale
