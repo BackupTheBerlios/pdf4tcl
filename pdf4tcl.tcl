@@ -52,17 +52,17 @@ namespace eval pdf4tcl {
 
     # known papersizes
     array set paper_sizes {
-        a0     {2380 3368}
-        a1     {1684 2380}
-        a2     {1190 1684}
-        a3     { 842 1190}
-        a4     { 595  842}
-        a5     { 421  595}
-        a6     { 297  421}
-        11x17  { 792 1224}
-        ledger {1224  792}
-        legal  { 612 1008}
-        letter { 612  792}
+        a0     {2380p 3368p}
+        a1     {1684p 2380p}
+        a2     {1190p 1684p}
+        a3     { 842p 1190p}
+        a4     { 595p  842p}
+        a5     { 421p  595p}
+        a6     { 297p  421p}
+        11x17  { 792p 1224p}
+        ledger {1224p  792p}
+        legal  { 612p 1008p}
+        letter { 612p  792p}
     }
 
     # Known units. The value is their relationship to points
@@ -113,7 +113,7 @@ namespace eval pdf4tcl {
 
         set papername [string tolower $papername]
         if {[info exists paper_sizes($papername)]} {
-            return $paper_sizes($papername)
+            set papername $paper_sizes($papername)
         }
         if {[catch {set len [llength $papername]}] || $len != 2} {
             return {}
@@ -171,6 +171,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     option -landscape -default 0      -validatemethod CheckBoolean \
             -configuremethod SetPageOption
     option -orient    -default 1      -validatemethod CheckBoolean
+    option -unit      -default p      -validatemethod CheckUnit \
+            -configuremethod SetUnit -readonly 1
     option -compress  -default 0      -validatemethod CheckBoolean \
             -configuremethod SetCompress -readonly 1
     option -margin    -default 0      -validatemethod CheckMargin \
@@ -181,6 +183,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set papersize [pdf4tcl::getPaperSize $value]
         if {[llength $papersize] == 0} {
             return -code error "papersize $value is unknown"
+        }
+    }
+
+    # Validator for -unit
+    method CheckUnit {option value} {
+        if {![info exists ::pdf4tcl::units($value)]} {
+            return -code error "unit $value is unknown"
         }
     }
 
@@ -229,6 +238,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self SetPageMargin $options(-margin)
     }
 
+    # Configure method for -unit
+    method SetUnit {option value} {
+        set options($option) $value
+        set pdf(unit) $::pdf4tcl::units($value)
+    }
+
     #######################################################################
     # Constructor
     #######################################################################
@@ -237,6 +252,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable images
         variable fonts
 
+        set pdf(unit) 1.0
         $self configurelist $args
 
         # Document data
@@ -347,6 +363,47 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     #######################################################################
+    # ?? Handling
+    #######################################################################
+
+    # Utility to look up paper size by name
+    # A two element list of width and height is also allowed.
+    method GetPaperSize {papername} {
+        variable ::pdf4tcl::paper_sizes
+
+        set papername [string tolower $papername]
+        if {[info exists paper_sizes($papername)]} {
+            set papername $paper_sizes($papername)
+        }
+        if {[catch {set len [llength $papername]}] || $len != 2} {
+            return {}
+        }
+        foreach {w h} $papername break
+        set w [$self GetPoints $w]
+        set h [$self GetPoints $h]
+        return [list $w $h]
+    }
+
+    # Get points from a measurement.
+    # No unit means: use current unit setting
+    # Supported units are "mm", "m", "cm", "c", "p" and "i".
+    method GetPoints {val} {
+        variable ::pdf4tcl::units
+        if {[string is double -strict $val]} {
+            # Always return a pure double value
+            return [expr {$val * $pdf(unit)}]
+        }
+        if {[regexp {^\s*(\S+?)\s*([[:alpha:]]+)\s*$} $val -> num unit]} {
+            if {[string is double -strict $num]} {
+                if {[info exists units($unit)]} {
+                    return [expr {$num * $units($unit)}]
+                }
+            }
+        }
+        return -code error "Unknown value $val"
+    }
+
+    #######################################################################
     # Page Handling
     #######################################################################
 
@@ -354,22 +411,22 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method SetPageMargin {value} {
         switch -- [llength $value] {
             1 {
-                set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
-                set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 0]]
-                set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 0]]
-                set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 0]]
+                set pdf(marginleft)   [$self GetPoints [lindex $value 0]]
+                set pdf(marginright)  [$self GetPoints [lindex $value 0]]
+                set pdf(margintop)    [$self GetPoints [lindex $value 0]]
+                set pdf(marginbottom) [$self GetPoints [lindex $value 0]]
             }
             2 {
-                set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
-                set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 0]]
-                set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 1]]
-                set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 1]]
+                set pdf(marginleft)   [$self GetPoints [lindex $value 0]]
+                set pdf(marginright)  [$self GetPoints [lindex $value 0]]
+                set pdf(margintop)    [$self GetPoints [lindex $value 1]]
+                set pdf(marginbottom) [$self GetPoints [lindex $value 1]]
             }
             4 {
-                set pdf(marginleft)   [pdf4tcl::getPoints [lindex $value 0]]
-                set pdf(marginright)  [pdf4tcl::getPoints [lindex $value 1]]
-                set pdf(margintop)    [pdf4tcl::getPoints [lindex $value 2]]
-                set pdf(marginbottom) [pdf4tcl::getPoints [lindex $value 3]]
+                set pdf(marginleft)   [$self GetPoints [lindex $value 0]]
+                set pdf(marginright)  [$self GetPoints [lindex $value 1]]
+                set pdf(margintop)    [$self GetPoints [lindex $value 2]]
+                set pdf(marginbottom) [$self GetPoints [lindex $value 3]]
             }
             default { ##nagelfar nocover
                 # This should not happen since validation should catch it
@@ -380,7 +437,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Fill in page data from options
     method SetPageSize {paper landscape} {
-        set papersize [pdf4tcl::getPaperSize $paper]
+        set papersize [$self GetPaperSize $paper]
         set width  [lindex $papersize 0]
         set height [lindex $papersize 1]
 
@@ -652,8 +709,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method Trans {x y txName tyName} {
         upvar 1 $txName tx $tyName ty
 
-        set px [pdf4tcl::getPoints $x]
-        set py [pdf4tcl::getPoints $y]
+        set px [$self GetPoints $x]
+        set py [$self GetPoints $y]
 
         set tx [expr {$px + $pdf(marginleft)}]
         if {$pdf(orient)} {
@@ -669,8 +726,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method TransR {x y txName tyName} {
         upvar 1 $txName tx $tyName ty
 
-        set tx [pdf4tcl::getPoints $x]
-        set ty [pdf4tcl::getPoints $y]
+        set tx [$self GetPoints $x]
+        set ty [$self GetPoints $y]
 
         if {$pdf(orient)} {
             set ty [expr {- $ty}]
@@ -681,6 +738,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method getDrawableArea {} {
         set w [expr {$pdf(width)  - $pdf(marginleft) - $pdf(marginright)}]
         set h [expr {$pdf(height) - $pdf(margintop)  - $pdf(marginbottom)}]
+        # Translate to current unit
+        set w [expr {$w / $pdf(unit)}]
+        set h [expr {$h / $pdf(unit)}]
         return [list $w $h]
     }
 
@@ -704,8 +764,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set font_widths($fontname) $tmp
             }
         }
+        set size [$self GetPoints $size]
         set pdf(font_size) $size
-        $self Pdfoutn "/$fontname $size" "Tf"
+        $self Pdfoutn "/$fontname [Nf $size]" "Tf"
         $self Pdfoutcmd 0 "Tr"
         $self Pdfoutcmd $size "TL"
 
@@ -766,22 +827,29 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Get metrics from current font.
     # Supported metrics are ascend, descend, fixed, bboxy, height
-    method getFontMetric {metric} {
+    method getFontMetric {metric {internal 0}} {
         array set tmp $::pdf4tcl::font_metrics($pdf(current_font))
         switch $metric {
-            bboxy   {set val [lindex $tmp(bbox) 1]}
+            bboxy   {set val [expr {[lindex $tmp(bbox) 1] * 0.001}]}
             fixed   {return $tmp(fixed)}
-            height  {return [expr {1.0 * $pdf(font_size)}]}
-            default {set val $tmp($metric)}
+            height  {set val 1.0}
+            default {set val [expr {$tmp($metric) * 0.001}]}
         }
-        return [expr {$val * 0.001 * $pdf(font_size)}]
+        # Translate to current unit
+        if {!$internal} {
+            set val [expr {$val/ $pdf(unit)}]
+        }
+        return [expr {$val * $pdf(font_size)}]
     }
 
     # Get the width of a string under the current font.
-    method getStringWidth {txt} {
+    method getStringWidth {txt {internal 0}} {
         set w 0.0
         foreach ch [split $txt ""] {
             set w [expr {$w + [GetCharWidth $pdf(current_font) $ch]}]
+        }
+        if {!$internal} {
+            set w [expr {$w / $pdf(unit)}]
         }
         return [expr {$w * $pdf(font_size)}]
     }
@@ -828,14 +896,18 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # Get the width of a character under the current font.
-    method getCharWidth {ch} {
+    method getCharWidth {ch {internal 0}} {
         set len [string length $ch]
         if {$len == 0} {
             return 0.0
         } elseif {$len > 1} {
             set ch [string index $ch 0]
         }
-        return [expr {[GetCharWidth $pdf(current_font) $ch] * $pdf(font_size)}]
+        set width [expr {[GetCharWidth $pdf(current_font) $ch] * $pdf(font_size)}]
+        if {!$internal} {
+            set width [expr {$width / $pdf(unit)}]
+        }
+        return $width
     }
 
     # Set coordinate for next text command.
@@ -862,7 +934,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         $self Pdfout "([CleanText $str]) '\n"
         # Update to next line
-        set strWidth [$self getStringWidth $str]
+        set strWidth [$self getStringWidth $str 1]
         set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size) * $pdf(line_spacing)}]
         set pdf(xpos) [expr {$pdf(origxpos) + $strWidth}]
     }
@@ -935,7 +1007,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self setFont $pdf(font_size)
         }
 
-        set strWidth [$self getStringWidth $str]
+        set strWidth [$self getStringWidth $str 1]
         if {$align == "right"} {
             set x [expr {$x - $strWidth}]
             set posSet 1
@@ -945,7 +1017,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set posSet 1
         }
         if {[llength $fill] > 1 || $fill} {
-            set bboxy [$self getFontMetric bboxy]
+            set bboxy [$self getFontMetric bboxy 1]
             set dy [expr {$y + $bboxy}]
             $self endTextObj
             # Temporarily shift fill color
@@ -997,7 +1069,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         $self Trans $x $y x y
-        set strWidth [$self getStringWidth $str]
+        set strWidth [$self getStringWidth $str 1]
         if {$align == "right"} {
             set x [expr {$x - $strWidth}]
         } elseif {$align == "center"} {
@@ -1032,7 +1104,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # pre-calculate some values
         set font_height [expr {$pdf(font_size) * $pdf(line_spacing)}]
-        set space_width [$self getCharWidth " "]
+        set space_width [$self getCharWidth " " 1]
         set ystart $y
         if {!$pdf(orient)} { #FIXA
             set y [expr {$y+$height-3*$font_height/2}]
@@ -1052,7 +1124,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             if {[regexp "\[ \t\r\n-\]" $ch]} {
                 set lastbp $pos
             }
-            set w [$self getCharWidth $ch]
+            set w [$self getCharWidth $ch 1]
             if {($cwidth+$w)>$width || $pos>=$len || $ch=="\n"} {
                 if {$pos>=$len} {
                     set done true
@@ -1067,13 +1139,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                         set words [split $sent " "]
                         if {[llength $words]>1 && (!$done) && $ch!="\n"} {
                             # determine additional width per space
-                            set sw [$self getStringWidth $sent]
+                            set sw [$self getStringWidth $sent 1]
                             set add [expr {($width-$sw)/([llength $words]-1)}]
                             # display words
                             set xx $x
                             for {set i 0} {$i<[llength $words]} {incr i} {
                                 $self drawTextAt $xx $y [lindex $words $i]
-                                set xx [expr {$xx+[$self getStringWidth [lindex $words $i]]+$space_width+$add}]
+                                set xx [expr {$xx+[$self getStringWidth [lindex $words $i] 1]+$space_width+$add}]
                             }
                         } else {
                             $self drawTextAt $x $y $sent
@@ -1209,7 +1281,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set op "s"
         }
         $self Trans $x $y x y
-        set r [pdf4tcl::getPoints $r]
+        set r [$self GetPoints $r]
 
         set sq [expr {4.0*(sqrt(2.0)-1.0)/3.0}]
         set x0(0) [expr {$x+$r}]
@@ -1284,7 +1356,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {abs($extend) < 0.01} return
 
         $self Trans $x0 $y0 x0 y0
-        set r [pdf4tcl::getPoints $r]
+        set r [$self GetPoints $r]
 
         set count 1
         while {abs($extend) > 90} {
@@ -1312,7 +1384,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method arrow {x1 y1 x2 y2 sz {angle 20}} {
         $self Trans $x1 $y1 x1 y1
         $self Trans $x2 $y2 x2 y2
-        set sz [pdf4tcl::getPoints $sz]
+        set sz [$self GetPoints $sz]
 
         $self line $x1 $y1 $x2 $y2 1
         set rad [expr {$angle*3.1415926/180.0}]
@@ -1673,8 +1745,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set hfix 0
         foreach {arg value} $args {
             switch -- $arg {
-                "-width"  {set w [pdf4tcl::getPoints $value]; set wfix 1}
-                "-height" {set h [pdf4tcl::getPoints $value]; set hfix 1}
+                "-width"  {set w [$self GetPoints $value]; set wfix 1}
+                "-height" {set h [$self GetPoints $value]; set hfix 1}
             }
         }
         if {$wfix && !$hfix} {
@@ -1751,8 +1823,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set hfix 0
         foreach {arg value} $args {
             switch -- $arg {
-                "-width"  {set w [pdf4tcl::getPoints $value]; set wfix 1}
-                "-height" {set h [pdf4tcl::getPoints $value]; set hfix 1}
+                "-width"  {set w [$self GetPoints $value]; set wfix 1}
+                "-height" {set h [$self GetPoints $value]; set hfix 1}
             }
         }
         if {$wfix && !$hfix} {

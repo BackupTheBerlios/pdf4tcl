@@ -43,8 +43,7 @@ p1 polygon 1 100 600 300 600 250 650 150 650
 p1 setStrokeColor 0 0.5 0
 p1 polygon 0 300 650 500 650 450 600 350 600
 #
-foreach {w h} [pdf4tcl::getPaperSize a4] break
-p1 startPage $w $h 0
+p1 startPage -orient 0
 p1 line 100 140 300 160
 p1 setStrokeColor 1 0 0
 p1 arrow 100 150 300 170 10 15

@@ -6,11 +6,11 @@ source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 
 test util-1.1 {getPaperSize} -body {
     lrange [pdf4tcl::getPaperSize a4] 0 end
-} -result {595 842}
+} -result {595.0 842.0}
 
 test util-1.2 {getPaperSize} -body {
     lrange [pdf4tcl::getPaperSize letter] 0 end
-} -result {612 792}
+} -result {612.0 792.0}
 
 test util-1.3 {getPaperSize} -body {
     lrange [pdf4tcl::getPaperSize _miffo_] 0 end
@@ -22,7 +22,7 @@ test util-1.4 {getPaperSizeList} -body {
 
 test util-1.5 {getPaperSize, case insensitive} -body {
     lrange [pdf4tcl::getPaperSize A4] 0 end
-} -result {595 842}
+} -result {595.0 842.0}
 
 
 test util-2.1 {getPoints} -body {
