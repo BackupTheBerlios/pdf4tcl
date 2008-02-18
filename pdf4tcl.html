@@ -25,6 +25,8 @@
 <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#table_of_contents">TABLE OF CONTENTS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#synopsis">SYNOPSIS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#description">DESCRIPTION</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#coordinates">COORDINATES</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#units">UNITS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#public_api">PUBLIC API</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#package_commands">PACKAGE COMMANDS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_command">OBJECT COMMAND</a><br>
@@ -35,7 +37,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_graphics">OBJECT METHODS, GRAPHICS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_configuration">OBJECT CONFIGURATION</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#page_configuration">PAGE CONFIGURATION</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#coordinates">COORDINATES</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#examples">EXAMPLES</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#see_also">SEE ALSO</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#keywords">KEYWORDS</a><br>
@@ -101,8 +102,37 @@ package require <b>pdf4tcl ?0.3.x?</b><br>
 This package provides a container class for
 generating <em>pdf</em> documents.
 
+<h2><a name="coordinates">COORDINATES</a></h2>
+<p>
+
+All coordinates and distances can be expressed with or without a unit. See
+<a href="#units">UNITS</a> for valid units.
+When the page is configured with <strong>-orient</strong> set to false, origo is in
+the bottom left corner. With <strong>-orient</strong> true, origo is in the top left
+corner.
+Origo is displaced to account for margins, i.e. if margins are 100,
+the user coordinate (0,0) corresponds to (100,100) on the paper.
+Page option <strong>-orient</strong> can also affect the anchor point for things like
+images.
+
+<h2><a name="units">UNITS</a></h2>
+<p>
+Any coordinates and distances can be expressed with or without an explicit
+unit.  If no unit is given, the default unit for the document is used.
+A unit may be one of
+<strong>mm</strong> (millimeter),
+<strong>m</strong> (millimeter),
+<strong>cm</strong> (centimeter),
+<strong>c</strong> (centimeter),
+<strong>p</strong> (points) or
+<strong>i</strong> (inches).
+
+Commands returning coordinates or distances always return a double value
+in the document's default unit.
+
 <h2><a name="public_api">PUBLIC API</a></h2>
 <p>
+
 <h3><a name="package_commands">PACKAGE COMMANDS</a></h3>
 <p>
 
@@ -151,15 +181,9 @@ This call returns the list of known paper types.
 
 This call translates a measurement to points (1/72 inch).
 The format of <i class='arg'>val</i> is '<i class='arg'>num</i> ?<i class='arg'>unit</i>?' where
-<i class='arg'>num</i> is a valid integer or double. <i class='arg'>unit</i> may be one of
-<strong>mm</strong> (millimeter),
-<strong>m</strong> (millimeter),
-<strong>cm</strong> (centimeter),
-<strong>c</strong> (centimeter),
-<strong>p</strong> (points) or
-<strong>i</strong> (inches).
-If no <i class='arg'>unit</i> is given, the value is interpreted as points.
-
+<i class='arg'>num</i> is a valid integer or double. See <b>UNIT</b> for valid
+<i class='arg'>unit</i>s.  If no <i class='arg'>unit</i> is given, the value is interpreted
+as points.
 
 </dl>
 
@@ -290,7 +314,7 @@ is created.
 
 This method returns the size of the available area on the page,
 after removing margins.  The return value is a list of width and height,
-in points.
+in the document's default unit.
 
 </dl>
 <h3><a name="object_methods,_text">OBJECT METHODS, TEXT</a></h3>
@@ -515,6 +539,15 @@ Continuously write pdf to <i class='arg'>filename</i> instead of storing it
 in memory.
 This option can only be set at object creation.
 
+<br><br>
+<dt><strong>-unit</strong> <i class='arg'>defaultunit</i><dd>
+
+Defines default unit for coordinates and distances.  Any value given without
+a unit is interpreted using this unit.  
+See <b>UNIT</b> for valid units.
+Default value is &quot;p&quot; as in points.
+This option can only be set at object creation.
+
 </dl>
 
 <h3><a name="page_configuration">PAGE CONFIGURATION</a></h3>
@@ -557,19 +590,6 @@ Four elements specify left, right, top and bottom.
 The default value of this option is zero.
 
 </dl>
-
-<h2><a name="coordinates">COORDINATES</a></h2>
-<p>
-
-All coordinates and distances can be expressed in the format accepted by
-<b class='cmd'>::pdf4tcl::getPoints</b>.
-When the page is configured with <strong>-orient</strong> set to false, origo is in
-the bottom left corner. With <strong>-orient</strong> true, origo is in the top left
-corner.
-Origo is displaced to account for margins, i.e. if margins are 100 points,
-the user coordinate (0,0) corresponds to (100,100) on the paper.
-Page option <strong>-orient</strong> can also affect the anchor point for things like
-images.
 
 <h2><a name="examples">EXAMPLES</a></h2>
 <p>

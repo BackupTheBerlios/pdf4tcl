@@ -117,6 +117,28 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .SH "DESCRIPTION"
 This package provides a container class for
 generating \fIpdf\fR documents.
+.SH "COORDINATES"
+All coordinates and distances can be expressed with or without a unit. See
+\fBUNITS\fR for valid units.
+When the page is configured with \fB-orient\fR set to false, origo is in
+the bottom left corner. With \fB-orient\fR true, origo is in the top left
+corner.
+Origo is displaced to account for margins, i.e. if margins are 100,
+the user coordinate (0,0) corresponds to (100,100) on the paper.
+Page option \fB-orient\fR can also affect the anchor point for things like
+images.
+.SH "UNITS"
+Any coordinates and distances can be expressed with or without an explicit
+unit.  If no unit is given, the default unit for the document is used.
+A unit may be one of
+\fBmm\fR (millimeter),
+\fBm\fR (millimeter),
+\fBcm\fR (centimeter),
+\fBc\fR (centimeter),
+\fBp\fR (points) or
+\fBi\fR (inches).
+Commands returning coordinates or distances always return a double value
+in the document's default unit.
 .SH "PUBLIC API"
 .SS "PACKAGE COMMANDS"
 .TP
@@ -147,14 +169,9 @@ This call returns the list of known paper types.
 \fB::pdf4tcl::getPoints\fR \fIval\fR
 This call translates a measurement to points (1/72 inch).
 The format of \fIval\fR is '\fInum\fR ?\fIunit\fR?' where
-\fInum\fR is a valid integer or double. \fIunit\fR may be one of
-\fBmm\fR (millimeter),
-\fBm\fR (millimeter),
-\fBcm\fR (centimeter),
-\fBc\fR (centimeter),
-\fBp\fR (points) or
-\fBi\fR (inches).
-If no \fIunit\fR is given, the value is interpreted as points.
+\fInum\fR is a valid integer or double. See \fBUNIT\fR for valid
+\fIunit\fRs.  If no \fIunit\fR is given, the value is interpreted
+as points.
 .SS "OBJECT COMMAND"
 All commands created by \fB::pdf4tcl::new\fR have the following
 general form and may be used to invoke various operations on their
@@ -225,7 +242,7 @@ is created.
 \fIobjectName\fR \fBgetDrawableArea\fR
 This method returns the size of the available area on the page,
 after removing margins.  The return value is a list of width and height,
-in points.
+in the document's default unit.
 .SS "OBJECT METHODS, TEXT"
 .TP
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
@@ -369,6 +386,13 @@ This option can only be set at object creation.
 Continuously write pdf to \fIfilename\fR instead of storing it
 in memory.
 This option can only be set at object creation.
+.TP
+\fB-unit\fR \fIdefaultunit\fR
+Defines default unit for coordinates and distances.  Any value given without
+a unit is interpreted using this unit.
+See \fBUNIT\fR for valid units.
+Default value is "p" as in points.
+This option can only be set at object creation.
 .SS "PAGE CONFIGURATION"
 .TP
 \fB-paper\fR \fIname\fR
@@ -398,16 +422,6 @@ Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
 .sp
 The default value of this option is zero.
-.SH "COORDINATES"
-All coordinates and distances can be expressed in the format accepted by
-\fB::pdf4tcl::getPoints\fR.
-When the page is configured with \fB-orient\fR set to false, origo is in
-the bottom left corner. With \fB-orient\fR true, origo is in the top left
-corner.
-Origo is displaced to account for margins, i.e. if margins are 100 points,
-the user coordinate (0,0) corresponds to (100,100) on the paper.
-Page option \fB-orient\fR can also affect the anchor point for things like
-images.
 .SH "EXAMPLES"
 .nf
 
