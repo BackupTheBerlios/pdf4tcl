@@ -1,5 +1,12 @@
 2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
 
+	* Renamed BeginTextObj and EndTextObj to make them internal.
+	  The user should not need to bother with such details.
+	* Removed moveTo and closePath methods since they had no apparent use.
+	  *** POTENTIAL INCOMPATIBILITY ***
+
+2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
+
 	* Redesigned API for circle and polygon to be more sensible
 	  and consistent. *** INCOMPATIBLE CHANGE ***
 

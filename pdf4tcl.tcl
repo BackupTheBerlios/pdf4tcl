@@ -933,7 +933,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Set coordinate for next text command.
     method setTextPosition {x y {internal 0}} {
-        $self beginTextObj
+        $self BeginTextObj
         if {$internal} {
             set pdf(xpos) $x
             set pdf(ypos) $y
@@ -957,7 +957,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Draw text at current position, with a newline before
     method drawText {str} {
-        $self beginTextObj
+        $self BeginTextObj
         if {! $pdf(font_set)} {
             $self setFont $pdf(font_size) $pdf(current_font)
         }
@@ -1048,7 +1048,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {[llength $fill] > 1 || $fill} {
             set bboxy [$self getFontMetric bboxy 1]
             set dy [expr {$y + $bboxy}]
-            $self endTextObj
+            $self EndTextObj
             # Temporarily shift fill color
             $self Pdfoutcmd "q"
             if {[llength $fill] > 1} {
@@ -1061,7 +1061,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             # Position needs to be set since we left the text object
             set posSet 1
         }
-        $self beginTextObj
+        $self BeginTextObj
         if {$angle != 0} {
             set pdf(xpos) $x
             set pdf(ypos) $y
@@ -1106,7 +1106,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
             set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
         }
-        $self beginTextObj
+        $self BeginTextObj
         if {$angle != 0} {
             set pdf(xpos) $x
             set pdf(ypos) $y
@@ -1130,7 +1130,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
 
-        $self beginTextObj
+        $self BeginTextObj
 
         # pre-calculate some values
         set font_height [expr {$pdf(font_size) * $pdf(line_spacing)}]
@@ -1213,7 +1213,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method rotateText {angle} {
-        $self beginTextObj
+        $self BeginTextObj
         set rad [expr {$angle*3.1415926/180.0}]
         set c [expr {cos($rad)}]
         set s [expr {sin($rad)}]
@@ -1229,7 +1229,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # start text object, if not already in text
-    method beginTextObj {} {
+    method BeginTextObj {} {
         if {! $pdf(in_text_object)} {
             $self Pdfout "BT\n"
             set pdf(in_text_object) true
@@ -1237,7 +1237,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # end text object, if in text, else do nothing
-    method endTextObj {} {
+    method EndTextObj {} {
         if {$pdf(in_text_object)} {
             $self Pdfout "ET\n"
             set pdf(in_text_object) false
@@ -1251,13 +1251,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     ###<jpo 2004-11-08: replaced "on off" by "args"
     ###                 to enable resetting dashed lines
     method setLineStyle {width args} {
-        $self endTextObj
+        $self EndTextObj
         $self Pdfoutcmd $width "w"
         $self Pdfout "\[$args\] 0 d\n"
     }
 
     method line {x1 y1 x2 y2 {internal 0}} {
-        $self endTextObj
+        $self EndTextObj
         if {!$internal} {
             $self Trans $x1 $y1 x1 y1
             $self Trans $x2 $y2 x2 y2
@@ -1269,7 +1269,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     ###>2004-11-03 jpo
     method qCurve {x1 y1 xc yc x2 y2} {
-        $self endTextObj
+        $self EndTextObj
         $self Trans $x1 $y1 x1 y1
         $self Trans $xc $yc xc yc
         $self Trans $x2 $y2 x2 y2
@@ -1287,7 +1287,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Draw a polygon
     method polygon {args} {
-        $self endTextObj
+        $self EndTextObj
 
         set filled 0
         set stroke 1
@@ -1342,7 +1342,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
 
-        $self endTextObj
+        $self EndTextObj
         $self Trans $x $y x y
         set r [$self GetPoints $r]
 
@@ -1421,7 +1421,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self circle $x0 $y0 $r
             return
         }
-        $self endTextObj
+        $self EndTextObj
         if {abs($extend) < 0.01} return
 
         $self Trans $x0 $y0 x0 y0
@@ -1505,21 +1505,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
         }
-        $self endTextObj
+        $self EndTextObj
         $self Trans $x $y x y
         $self TransR $w $h w h
 
         $self DrawRect $x $y $w $h $stroke $filled
-    }
-
-    method moveTo {x1 y1} {
-        $self endTextObj
-        $self Trans $x1 $y1 x1 y1
-        $self Pdfoutcmd $x1 $y1 "m"
-    }
-
-    method closePath {} {
-        $self Pdfout "b\n"
     }
 
     #######################################################################
@@ -1829,7 +1819,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set w [expr {$width*$h/$height}]
         }
 
-        $self endTextObj
+        $self EndTextObj
         if {$pdf(orient)} {
             set y [expr {$y-$h}]
         }
@@ -1907,7 +1897,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set w [expr {$width*$h/$height}]
         }
 
-        $self endTextObj
+        $self EndTextObj
         if {$pdf(orient)} {
             set y [expr {$y-$h}]
         }

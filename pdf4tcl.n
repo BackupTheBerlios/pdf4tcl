@@ -71,10 +71,6 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .sp
 \fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
 .sp
-\fIobjectName\fR \fBbeginTextObj\fR
-.sp
-\fIobjectName\fR \fBendTextObj\fR
-.sp
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 .sp
 \fIobjectName\fR \fBrotateText\fR \fIangle\fR
@@ -94,10 +90,6 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 \fIobjectName\fR \fBsetFillColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 .sp
 \fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
-.sp
-\fIobjectName\fR \fBclosePath\fR
-.sp
-\fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
 .sp
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
 .sp
@@ -286,10 +278,6 @@ Draw text. Deprecated. Use \fBtext\fR.
 \fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
 Draw text.
 .TP
-\fIobjectName\fR \fBbeginTextObj\fR
-.TP
-\fIobjectName\fR \fBendTextObj\fR
-.TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 Get information about current font. The available \fImetric\fRs are
 \fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxy\fR and
@@ -357,10 +345,6 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 .TP
 \fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 .SS "OBJECT METHODS, GRAPHICS"
-.TP
-\fIobjectName\fR \fBclosePath\fR
-.TP
-\fIobjectName\fR \fBmoveTo\fR \fIx\fR \fIy\fR
 .TP
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
 .TP

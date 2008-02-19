@@ -245,8 +245,6 @@ Draw text. Deprecated. Use [method text].
 
 Draw text.
 
-[call [arg objectName] [method beginTextObj]]
-[call [arg objectName] [method endTextObj]]
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
 
 Get information about current font. The available [arg "metric"]s are
@@ -324,9 +322,6 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 [list_end]
 [subsection {OBJECT METHODS, GRAPHICS}]
 [list_begin definitions]
-
-[call [arg objectName] [method closePath]]
-[call [arg objectName] [method moveTo] [arg "x"] [arg "y"]]
 
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
