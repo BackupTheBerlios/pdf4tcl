@@ -1,3 +1,11 @@
+2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
+
+	* Added moveTextPosition method.
+
+2008-02-15 Peter Spjuth   <peter.spjuth@gmail.com>
+
+	* Added document option -unit.
+
 2008-02-13 Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Added PNG support.

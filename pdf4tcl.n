@@ -55,6 +55,8 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .sp
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 .sp
+\fIobjectName\fR \fBmoveTextPosition\fR \fIx\fR \fIy\fR
+.sp
 \fIobjectName\fR \fBnewLine\fR ?\fIspacing\fR?
 .sp
 \fIobjectName\fR \fBsetLineSpacing\fR \fIspacing\fR
@@ -256,6 +258,9 @@ This method returns the width of a character under the current font.
 .TP
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 Set coordinate for next text command.
+.TP
+\fIobjectName\fR \fBmoveTextPosition\fR \fIx\fR \fIy\fR
+Move coordinate for next text command.
 .TP
 \fIobjectName\fR \fBnewLine\fR ?\fIspacing\fR?
 Moves text coordinate down and resets x to where the latest

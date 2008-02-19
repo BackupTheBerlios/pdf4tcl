@@ -210,6 +210,10 @@ This method returns the width of a character under the current font.
 
 Set coordinate for next text command.
 
+[call [arg objectName] [method moveTextPosition] [arg "x"] [arg "y"]]
+
+Move coordinate for next text command.
+
 [call [arg objectName] [method newLine] [opt [arg spacing]]]
 
 Moves text coordinate down and resets x to where the latest

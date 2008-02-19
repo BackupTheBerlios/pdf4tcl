@@ -947,6 +947,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) "Tm"
     }
 
+    # Move coordinate for next text command.
+    method moveTextPosition {x y} {
+        $self TransR $x $y x y
+        set y [expr {$pdf(ypos) + $y}]
+        set x [expr {$pdf(xpos) + $x}]
+        $self setTextPosition $x $y 1
+    }
+
     # Draw text at current position, with a newline before
     method drawText {str} {
         $self beginTextObj
@@ -1042,13 +1050,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set dy [expr {$y + $bboxy}]
             $self endTextObj
             # Temporarily shift fill color
+            $self Pdfoutcmd "q"
             if {[llength $fill] > 1} {
                 $self Pdfout "$fill rg\n"
             } else {
                 $self Pdfout "$pdf(bgColor) rg\n"
             }
             $self DrawRect $x $dy $strWidth $pdf(font_size) 0 1
-            $self Pdfout "$pdf(fillColor) rg\n"
+            $self Pdfoutcmd "Q"
             # Position needs to be set since we left the text object
             set posSet 1
         }

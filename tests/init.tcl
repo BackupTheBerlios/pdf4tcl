@@ -52,6 +52,19 @@ proc mytest {args} {
     }
     set pdf [eval pdf4tcl::new %AUTO% $opts]
     $pdf startPage
+    if {$debug} {
+        # Draw a grid to see better in debug mode
+        foreach {w h} [$pdf getDrawableArea] break
+        $pdf setStrokeColor 0.5 0.5 0.5
+        $pdf setLineStyle 0.1 0.1 2
+        $pdf polygon 0 0 0 $w 0 $w $h 0 $h
+        for {set t 100} {$t < $w} {incr t 100} {
+            $pdf line $t 0 $t $h
+        }
+        for {set t 100} {$t < $h} {incr t 100} {
+            $pdf line 0 $t $w $t
+        }
+    }
     foreach cmd $cmds {
         eval \$pdf $cmd
     }
