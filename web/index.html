@@ -98,15 +98,15 @@ mypdf line 20 20 560 20
 
 # draw some text
 mypdf setFont 8 Helvetica
-mypdf drawTextAt 20 32 "sample text"
+mypdf text "sample text" -x 20 -y 32
 
 # use another font and draw centered text
 mypdf setFont 12 "Helvetica-Bold"
-mypdf drawTextAt [expr {595/2.0}] 32 "Sample Heading" -align center
+mypdf text "Sample Heading" -align center -x [expr {595/2.0}] -y 32 
 
 # and some right aligned text
 mypdf setFont 8 Helvetica
-mypdf drawTextAt 575 32 "page 1" -align right
+mypdf text "page 1" -align right -x 575 -y 32
 
 # draw a rectangle with dashed red outline and lightgrey fill colour
 mypdf setLineStyle 0.5 8 4
