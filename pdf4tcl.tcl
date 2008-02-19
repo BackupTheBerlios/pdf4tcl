@@ -1214,12 +1214,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                             set sw [$self getStringWidth $sent 1]
                             set add [expr {($width-$sw)/([llength $words]-1)}]
                             # display words
-                            # FIXA: Use the Tw operator for word spacing
-                            set xx $x
-                            for {set i 0} {$i<[llength $words]} {incr i} {
-                                $self DrawTextAt $xx $y [lindex $words $i]
-                                set xx [expr {$xx+[$self getStringWidth [lindex $words $i] 1]+$space_width+$add}]
-                            }
+                            $self Pdfoutcmd $add "Tw"
+                            $self DrawTextAt $x $y $sent
+                            $self Pdfoutcmd 0 "Tw"
                         } else {
                             $self DrawTextAt $x $y $sent
                         }
