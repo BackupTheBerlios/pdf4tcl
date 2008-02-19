@@ -105,9 +105,9 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .sp
 \fIobjectName\fR \fBqCurve\fR \fIx1\fR \fIy1\fR \fIxc\fR \fIyc\fR \fIx2\fR \fIy2\fR
 .sp
-\fIobjectName\fR \fBpolygon\fR \fIisfilled\fR ?\fIx y\fR...?
+\fIobjectName\fR \fBpolygon\fR ?\fIx y\fR...? ?\fIoption value\fR...?
 .sp
-\fIobjectName\fR \fBcircle\fR \fIisfilled\fR \fIx\fR \fIy\fR \fIradius\fR
+\fIobjectName\fR \fBcircle\fR \fIx\fR \fIy\fR \fIradius\fR ?\fIoption value\fR...?
 .sp
 \fIobjectName\fR \fBarc\fR \fIx\fR \fIy\fR \fIradius\fR \fIphi\fR \fIextend\fR
 .sp
@@ -368,9 +368,9 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 .TP
 \fIobjectName\fR \fBqCurve\fR \fIx1\fR \fIy1\fR \fIxc\fR \fIyc\fR \fIx2\fR \fIy2\fR
 .TP
-\fIobjectName\fR \fBpolygon\fR \fIisfilled\fR ?\fIx y\fR...?
+\fIobjectName\fR \fBpolygon\fR ?\fIx y\fR...? ?\fIoption value\fR...?
 .TP
-\fIobjectName\fR \fBcircle\fR \fIisfilled\fR \fIx\fR \fIy\fR \fIradius\fR
+\fIobjectName\fR \fBcircle\fR \fIx\fR \fIy\fR \fIradius\fR ?\fIoption value\fR...?
 .TP
 \fIobjectName\fR \fBarc\fR \fIx\fR \fIy\fR \fIradius\fR \fIphi\fR \fIextend\fR
 .TP

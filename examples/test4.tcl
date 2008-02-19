@@ -23,7 +23,7 @@ p1 setFont 12 "Courier-Bold"
 for {set w 0} {$w<360} {incr w 15} {
  	p1 drawTextAt 200 400 "   rotierter Text" -angle $w
 }
-p1 circle 0 200 400 130
+p1 circle 200 400 130
 p1 setFillColor 1 1 1
 p1 setLineStyle 0.1 5 2
 p1 rectangle 348 288 224 104 -filled 1
@@ -39,9 +39,9 @@ p1 putImage 1 20 20 -height 75
 p1 setFillColor 1.0 0 0
 p1 setStrokeColor 0 0 1
 p1 setLineStyle 0.2 1 0
-p1 polygon 1 100 600 300 600 250 650 150 650
+p1 polygon 100 600 300 600 250 650 150 650 -filled 1
 p1 setStrokeColor 0 0.5 0
-p1 polygon 0 300 650 500 650 450 600 350 600
+p1 polygon 300 650 500 650 450 600 350 600
 #
 p1 startPage -orient 0
 p1 line 100 140 300 160
@@ -61,7 +61,7 @@ p1 setFont 12 "Courier-Bold"
 for {set w 0} {$w<360} {incr w 15} {
  	p1 drawTextAt 200 400 "   rotierter Text" -angle $w
 }
-p1 circle 0 200 400 130
+p1 circle 200 400 130
 p1 setFillColor 1 1 1
 p1 setLineStyle 0.1 5 2
 p1 rectangle 348 288 224 104 -filled 1
@@ -76,9 +76,9 @@ p1 putImage 1 20 20 -height 75
 p1 setFillColor 1.0 0 0
 p1 setStrokeColor 0 0 1
 p1 setLineStyle 0.2 1 0
-p1 polygon 1 100 600 300 600 250 650 150 650
+p1 polygon 100 600 300 600 250 650 150 650 -filled 1
 p1 setStrokeColor 0 0.5 0
-p1 polygon 0 300 650 500 650 450 600 350 600
+p1 polygon 300 650 500 650 450 600 350 600
 
 p1 write -file test4.pdf
 p1 cleanup

@@ -5,7 +5,7 @@
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 
 test graphics-1.1 {circle} -body {
-    mytest {circle 0  10  10  5} {
+    mytest {circle 10  10  5} {
         115 210 m
         115 212.761 112.761 215 110 215 c
         107.239 215 105 212.761 105 210 c
@@ -16,7 +16,7 @@ test graphics-1.1 {circle} -body {
 } -result 1
 
 test graphics-1.2 {circle} -body {
-    mytest {circle 1  10  10  5} {
+    mytest {circle 10  10  5 -filled 1} {
         115 210 m
         115 212.761 112.761 215 110 215 c
         107.239 215 105 212.761 105 210 c

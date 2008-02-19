@@ -1,5 +1,10 @@
 2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
 
+	* Redesigned API for circle and polygon to be more sensible
+	  and consistent. *** INCOMPATIBLE CHANGE ***
+
+2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
+
 	* Added moveTextPosition method.
 
 2008-02-15 Peter Spjuth   <peter.spjuth@gmail.com>

@@ -1285,31 +1285,64 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
     ###<jpo
 
-    ###>2004-11-07 jpo
-    # polygon name isFilled x0 y0 x1 y1 ...
-    method polygon {isFilled args} {
+    # Draw a polygon
+    method polygon {args} {
         $self endTextObj
-        if {$isFilled} {set op "b"} else {set op "s"}
+
+        set filled 0
+        set stroke 1
         set start 1
         foreach {x y} $args {
-            $self Trans $x $y x y
-            if {$start} {
-                $self Pdfoutcmd $x $y "m"
-                set start 0
+            if {[string match {-[a-z]*} $x]} {
+                switch -- $x {
+                    "-filled" {
+                        set filled $y
+                    }
+                    "-stroke" {
+                        set stroke $y
+                    }
+                    default {
+                        return -code error "unknown option $x"
+                    }
+                }
             } else {
-                $self Pdfoutcmd $x $y "l"
+                $self Trans $x $y x y
+                if {$start} {
+                    $self Pdfoutcmd $x $y "m"
+                    set start 0
+                } else {
+                    $self Pdfoutcmd $x $y "l"
+                }
             }
         }
-        $self Pdfoutcmd $op
+        if {$filled && $stroke} {
+            $self Pdfoutcmd "b"
+        } elseif {$filled && !$stroke} {
+            $self Pdfoutcmd "f"
+        } else {
+            $self Pdfoutcmd "s"
+        }
     }
 
-    method circle {isFilled x y r} {
-        $self endTextObj
-        if {$isFilled} {
-            set op "b"
-        } else {
-            set op "s"
+    method circle {x y r args} {
+        set filled 0
+        set stroke 1
+
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-filled" {
+                    set filled $value
+                }
+                "-stroke" {
+                    set stroke $value
+                }
+                default {
+                    return -code error "unknown option $arg"
+                }
+            }
         }
+
+        $self endTextObj
         $self Trans $x $y x y
         set r [$self GetPoints $r]
 
@@ -1349,7 +1382,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                             $x3($i) \
                             $y3($i) "c"
         }
-        $self Pdfoutcmd " $op"
+        if {$filled && $stroke} {
+            $self Pdfoutcmd "b"
+        } elseif {$filled && !$stroke} {
+            $self Pdfoutcmd "f"
+        } else {
+            $self Pdfoutcmd " s"
+        }
     }
 
     # scale with r, rotate by phi, and move by (dx, dy)
@@ -1379,7 +1418,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     method arc {x0 y0 r phi extend} {
         if {abs($extend) >= 360.0} {
-            $self circle 0 $x0 $y0 $r
+            $self circle $x0 $y0 $r
             return
         }
         $self endTextObj
@@ -1456,10 +1495,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         foreach {arg value} $args {
             switch -- $arg {
                 "-filled" {
-                    set filled 1
+                    set filled $value
                 }
-                "-nostroke" {
-                    set stroke 0
+                "-stroke" {
+                    set stroke $value
                 }
                 default {
                     return -code error "unknown option $arg"

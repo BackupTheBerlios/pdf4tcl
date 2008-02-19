@@ -331,8 +331,8 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
 [call [arg objectName] [method qCurve] [arg "x1"] [arg "y1"] [arg "xc"] [arg "yc"] [arg "x2"] [arg "y2"]]
-[call [arg objectName] [method polygon] [arg "isfilled"] [opt [arg "x y"]...]]
-[call [arg objectName] [method circle] [arg "isfilled"] [arg "x"] [arg "y"] [arg "radius"]]
+[call [arg objectName] [method polygon] [opt [arg "x y"]...] [opt [arg "option value"]...]]
+[call [arg objectName] [method circle] [arg "x"] [arg "y"] [arg "radius"] [opt [arg "option value"]...]]
 [call [arg objectName] [method arc] [arg "x"] [arg "y"] [arg "radius"] [arg "phi"] [arg "extend"]]
 [call [arg objectName] [method arrow] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "size"] [opt [arg "angle"]]]
 
