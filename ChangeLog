@@ -1,5 +1,11 @@
 2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
 
+	* Reworked drawTextBox to work correctly in all orientations.
+	  This changes the implementation to keep the text within the box
+	  which makes more sense. *** POTENTIAL INCOMPATIBILITY ***
+
+2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
+
 	* Renamed BeginTextObj and EndTextObj to make them internal.
 	  The user should not need to bother with such details.
 	* Removed moveTo and closePath methods since they had no apparent use.

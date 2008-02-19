@@ -1117,7 +1117,25 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "([CleanText $str]) Tj\n"
     }
 
+    # Draw a text string at a given position.
+    method DrawTextAt {x y str {align left}} {
+        if {! $pdf(font_set)} {
+            $self setFont $pdf(font_size)
+        }
+
+        set strWidth [$self getStringWidth $str 1]
+        if {$align == "right"} {
+            set x [expr {$x - $strWidth}]
+        } elseif {$align == "center"} {
+            set x [expr {$x - $strWidth / 2}]
+        }
+        $self BeginTextObj
+        $self setTextPosition $x $y 1
+        $self Pdfout "([CleanText $str]) Tj\n"
+    }
+
     method drawTextBox {x y width height txt args} {
+        set align left
         foreach {arg value} $args {
             switch -- $arg {
                 "-align" {
@@ -1130,15 +1148,31 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
 
+        $self Trans  $x $y x y
+        $self TransR $width $height width height
+
+        if {!$pdf(orient)} {
+            # Always have anchor position upper left
+            set y [expr {$y + $height}]
+        } else {
+            # Restore a positive height
+            set height [expr {- $height}]
+        }
+
         $self BeginTextObj
+        if {! $pdf(font_set)} {
+            $self setFont $pdf(font_size)
+        }
 
         # pre-calculate some values
         set font_height [expr {$pdf(font_size) * $pdf(line_spacing)}]
         set space_width [$self getCharWidth " " 1]
+
+        # Displace y to put the first line within the box
+        set bboxy [$self getFontMetric bboxy 1]
         set ystart $y
-        if {!$pdf(orient)} { #FIXA
-            set y [expr {$y+$height-3*$font_height/2}]
-        }
+        set y [expr {$y - $pdf(font_size) - $bboxy}]
+
         set len [string length $txt]
 
         # run through chars until we exceed width or reach end
@@ -1160,7 +1194,15 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set done true
                 } else {
                     # backtrack to last breakpoint
-                    set pos $lastbp
+                    if {$lastbp != $start} {
+                        set pos $lastbp
+                    } else {
+                        # Word longer than line.
+                        # Back up one char if possible
+                        if {$pos > $start} {
+                            incr pos -1
+                        }
+                    }
                 }
                 set sent [string trim [string range $txt $start $pos]]
                 switch -- $align {
@@ -1172,38 +1214,38 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                             set sw [$self getStringWidth $sent 1]
                             set add [expr {($width-$sw)/([llength $words]-1)}]
                             # display words
+                            # FIXA: Use the Tw operator for word spacing
                             set xx $x
                             for {set i 0} {$i<[llength $words]} {incr i} {
-                                $self drawTextAt $xx $y [lindex $words $i]
+                                $self DrawTextAt $xx $y [lindex $words $i]
                                 set xx [expr {$xx+[$self getStringWidth [lindex $words $i] 1]+$space_width+$add}]
                             }
                         } else {
-                            $self drawTextAt $x $y $sent
+                            $self DrawTextAt $x $y $sent
                         }
                     }
                     "right" {
-                        $self drawTextAt [expr {$x+$width}] $y $sent -align right
+                        $self DrawTextAt [expr {$x+$width}] $y $sent right
                     }
                     "center" {
-                        $self drawTextAt [expr {$x+$width/2.0}] $y $sent -align center
+                        $self DrawTextAt [expr {$x+$width/2.0}] $y $sent center
                     }
                     default {
-                        $self drawTextAt $x $y $sent
+                        $self DrawTextAt $x $y $sent
                     }
                 }
-                if {$pdf(orient)} { #FIXA
-                    set y [expr {$y+$font_height}]
-                } else {
-                    set y [expr {$y-$font_height}]
-                }
-                # too big?
-                if {($y+$font_height-$ystart)>=$height} {
-                    return [string range $txt $pos end]
-                }
+                # Move y down to next line
+                set y [expr {$y-$font_height}]
+
                 set start $pos
                 incr start
                 set cwidth 0
-                set lastbp 0
+                set lastbp $start
+
+                # Will another line fit?
+                if {($ystart - ($y + $bboxy)) > $height} {
+                    return [string range $txt $start end]
+                }
             } else {
                 set cwidth [expr {$cwidth+$w}]
             }

@@ -231,7 +231,7 @@ Get the current default line spacing.
 
 [call [arg objectName] [method drawText] [arg "str"]]
 
-Draw text.
+Draw text. Deprecated. Use [method text].
 
 [call [arg objectName] [method text] [arg "str"] [opt [arg "option value"]...]]
 

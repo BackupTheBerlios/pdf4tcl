@@ -267,7 +267,7 @@ Set the default line spacing used be e.g. \fBnewLine\fR.
 Get the current default line spacing.
 .TP
 \fIobjectName\fR \fBdrawText\fR \fIstr\fR
-Draw text.
+Draw text. Deprecated. Use \fBtext\fR.
 .TP
 \fIobjectName\fR \fBtext\fR \fIstr\fR ?\fIoption value\fR...?
 Draw text.

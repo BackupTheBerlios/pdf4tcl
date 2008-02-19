@@ -146,3 +146,51 @@ test text-6.2 {moveTextPosition, -orient 1} -body {
                 (Miffo) Tj
             }
 } -result 1
+
+test text-7.1 {drawTextBox} -body {
+    mytest {setFont 20 Courier} \
+            {rectangle 100 100 150 250} \
+            {drawTextBox 100 100 150 250 "Hej\nHopp\nBlaBlaBlaBlaBla"} {
+                200 535 Tm (Hej) * (Hopp) * (BlaBlaBlaBla) * (Bla) Tj ET
+            }
+} -result 1
+
+test text-7.2 {drawTextBox, -orient 1} -body {
+    mytest -orient 1 {setFont 20 Courier} \
+            {rectangle 100 100 150 250} \
+            {drawTextBox 100 100 150 250 "Hej\nHopp\nBlaBlaBlaBlaBla"} {
+                200 785 Tm (Hej) * (Hopp) * (BlaBlaBlaBla) * (Bla) Tj ET
+            }
+} -result 1
+
+test text-7.3 {drawTextBox, overflow} -body {
+    mytest -orient 1 {setFont 20 Courier} \
+            {rectangle 100 100 150 59} \
+            {drawTextBox 100 100 150 59 "Hej\nHopp\nBlaBlaBlaBlaBla"} {
+                200 785 Tm (Hej) * (Hopp) Tj ET
+            }
+} -result 1
+
+test text-7.4 {drawTextBox, overflow} -body {
+    mytest -orient 1 {setFont 20 Courier} \
+            {rectangle 100 100 150 60} \
+            {drawTextBox 100 100 150 60 "Hej\nHopp\nBlaBlaBlaBlaBla"} {
+                200 785 Tm (Hej) * (Hopp) * (BlaBlaBlaBla) Tj ET
+            }
+} -result 1
+
+test text-7.5 {drawTextBox, overflow} -body {
+    mytest -orient 1 {setFont 20 Courier} \
+            {rectangle 100 100 150 61} \
+            {drawTextBox 100 100 150 61 "Hej\nHopp\nBlaBlaBlaBlaBla"} {
+                200 785 Tm (Hej) * (Hopp) * (BlaBlaBlaBla) Tj ET
+            }
+} -result 1
+
+test text-7.6 {drawTextBox, overflow} -body {
+    pdf4tcl::new Apa
+    Apa setFont 20 Courier
+    Apa drawTextBox 100 100 150 60 "Hej\nHopp\nBlaBlaBlaBlaBla"
+} -cleanup {
+    Apa destroy
+} -result {Bla}
