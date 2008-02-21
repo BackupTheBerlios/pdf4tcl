@@ -1964,6 +1964,44 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     #######################################################################
+    # Canvas Handling
+    #######################################################################
+
+    method canvas {w args} {
+        set sticky "nw"
+        set x 0
+        set y 0
+        set width ""
+        set height ""
+        set bbox ""
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-width"  {set width [$self GetPoints $value]}
+                "-height" {set height [$self GetPoints $value]}
+                "-sticky" {set sticky $value}
+                "-y"      {$self Trans 0 $value _ y}
+                "-x"      {$self Trans $value 0 x _}
+                "-bbox"   {set bbox $value}
+                default {
+                    return -code error \
+                            "unknown option $arg"
+                }
+            }
+        }
+        if {$bbox eq ""} {
+            set bbox [$w bbox all]
+        }
+        if {$width eq ""} {
+            set width [expr {$pdf(width) - $pdf(marginleft) - \
+                    $pdf(marginright) - $x}]
+        }
+        if {$height eq ""} {
+            set height [expr {$pdf(height) - $pdf(margintop) - \
+                    $pdf(marginbottom) - $y}]
+        }
+    }
+
+    #######################################################################
     # Helper fuctions
     #######################################################################
 
