@@ -1460,20 +1460,20 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self DrawOval $x $y $rx $ry $stroke $filled
     }
 
-    # scale with r, rotate by phi, and move by (dx, dy)
-    proc transform {r phi dx dy points} {
-        set cos_phi [expr {$r*cos($phi)}]
-        set sin_phi [expr {$r*sin($phi)}]
+    # rotate by phi, scale with rx/ry and move by (dx, dy)
+    proc Transform {rx ry phi dx dy points} {
+        set cos_phi [expr {cos($phi)}]
+        set sin_phi [expr {sin($phi)}]
         set res [list]
         foreach {x y} $points {
-            set xn [expr {$x*$cos_phi - $y*$sin_phi + $dx}]
-            set yn [expr {$x*$sin_phi + $y*$cos_phi + $dy}]
+            set xn [expr {$rx * ($x*$cos_phi - $y*$sin_phi) + $dx}]
+            set yn [expr {$ry * ($x*$sin_phi + $y*$cos_phi) + $dy}]
             lappend res $xn $yn
         }
         return $res
     }
 
-    proc simplearc {phi2} {
+    proc Simplearc {phi2} {
         set x0 [expr {cos($phi2)}]
         set y0 [expr {-sin($phi2)}]
         set x3 $x0
@@ -1485,16 +1485,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return [list $x0 $y0 $x1 $y1 $x2 $y2 $x3 $y3]
     }
 
-    method arc {x0 y0 r phi extend} {
+    method DrawArc {x0 y0 rx ry phi extend stroke filled} {
         if {abs($extend) >= 360.0} {
-            $self circle $x0 $y0 $r
+            $self DrawOval $x0 $y0 $rx $ry $stroke $filled
             return
         }
-        $self EndTextObj
         if {abs($extend) < 0.01} return
-
-        $self Trans $x0 $y0 x0 y0
-        set r [$self GetPoints $r]
+        $self EndTextObj
 
         set count 1
         while {abs($extend) > 90} {
@@ -1504,20 +1501,38 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set phi [expr {$phi/180.0*3.1416}]
         set extend [expr {$extend/180.0*3.1416}]
         set phi2 [expr {0.5*$extend}]
-        set x [expr {$x0+$r*cos($phi)}]
-        set y [expr {$y0+$r*sin($phi)}]
+        set x [expr {$x0+$rx*cos($phi)}]
+        set y [expr {$y0+$ry*sin($phi)}]
         $self Pdfoutcmd $x $y "m"
-        set points [simplearc $phi2]
+        set points [Simplearc $phi2]
         set phi [expr {$phi+$phi2}]
         for {set i 0} {$i < $count} {incr i} {
             foreach {x y x1 y1 x2 y2 x3 y3} \
-                    [transform $r $phi $x0 $y0 $points] break
+                    [Transform $rx $ry $phi $x0 $y0 $points] break
             set phi [expr {$phi+$extend}]
             $self Pdfoutcmd $x1 $y1 $x2 $y2 $x3 $y3 "c"
         }
-        $self Pdfout " S\n"
+        if {$filled && $stroke} {
+            $self Pdfoutcmd "B"
+        } elseif {$filled && !$stroke} {
+            $self Pdfoutcmd "f"
+        } else {
+            $self Pdfoutcmd " S"
+        }
     }
-    ###<jpo
+
+    method arc {x0 y0 r phi extend} {
+        if {abs($extend) >= 360.0} {
+            $self circle $x0 $y0 $r
+            return
+        }
+        if {abs($extend) < 0.01} return
+
+        $self Trans $x0 $y0 x0 y0
+        set r [$self GetPoints $r]
+
+        $self DrawArc $x0 $y0 $r $r $phi $extend 1 0
+    }
 
     method arrow {x1 y1 x2 y2 sz {angle 20}} {
         $self Trans $x1 $y1 x1 y1
@@ -2125,6 +2140,24 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
                     $self DrawOval $x $y $rx $ry $stroke $filled
                 }
+                arc {
+                    # Currently stipple is not implemented,
+                    # neither -style
+                    foreach {x1 y1 x2 y2} $coords break
+                    set x  [expr {($x2 + $x1) / 2.0}]
+                    set y  [expr {($y2 + $y1) / 2.0}]
+                    set rx [expr {($x2 - $x1) / 2.0}]
+                    set ry [expr {($y2 - $y1) / 2.0}]
+
+                    $self CanvasStdOpts opts
+                    set stroke [expr {$opts(-outline) ne ""}]
+                    set filled [expr {$opts(-fill) ne ""}]
+
+                    set phi $opts(-start)
+                    set extend $opts(-extent)
+
+                    $self DrawArc $x $y $rx $ry $phi $extend $stroke $filled
+                }
                 polygon {
                     # Currently stipple is not implemented neither is
                     # -smooth -splinesteps
@@ -2146,7 +2179,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                         $self Pdfoutcmd "s"
                     }
                 }
-                arc {}
                 bitmap {}
                 image {}
                 text {}
