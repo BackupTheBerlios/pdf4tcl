@@ -2030,10 +2030,20 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "\[\] 0 d\n"
         $self Pdfoutcmd 0 0 0 "rg"
         $self Pdfoutcmd 0 0 0 "RG"
+        $self Pdfoutcmd 0 "J" ;# Butt cap style
+        $self Pdfoutcmd 1 "j" ;# Round join style
 
         $self Pdfoutcmd $xscale 0 0 $yscale $xoffset $yoffset "cm"
 
-        set enclosed [$path find enclosed $bbx1 $bby1 $bbx2 $bby2]
+        # Clip region
+        $self Pdfoutcmd $bbx1 $bby1 "m"
+        $self Pdfoutcmd $bbx1 $bby2 "l"
+        $self Pdfoutcmd $bbx2 $bby2 "l"
+        $self Pdfoutcmd $bbx2 $bby1 "l"
+        #$self Pdfoutcmd $bbx1 $bby1 $bbw $bbh "re"
+        $self Pdfoutcmd "W n"
+
+        #set enclosed [$path find enclosed $bbx1 $bby1 $bbx2 $bby2]
         set overlapping [$path find overlapping $bbx1 $bby1 $bbx2 $bby2]
         foreach id $overlapping {
             set coords [$path coords $id]
@@ -2045,6 +2055,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfoutcmd "q"
             switch [$path type $id] {
                 rectangle {
+                    # Currently stipple is not implemented
                     foreach {x1 y1 x2 y2} $coords break
                     set w [expr {$x2 - $x1}]
                     set h [expr {$y2 - $y1}]
@@ -2056,6 +2067,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self DrawRect $x1 $y1 $w $h $stroke $filled
                 }
                 line {
+                    # Currently stipple is not implemented neither is
+                    # -arrow -arrowshape -smooth -splinesteps
+
                     # For a line, -fill means the stroke colour
                     set opts(-outline) $opts(-fill)
                     $self CanvasStdOpts opts
@@ -2071,7 +2085,27 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 bitmap {}
                 image {}
                 oval {}
-                polygon {}
+                polygon {
+                    # Currently stipple is not implemented neither is
+                    # -smooth -splinesteps
+
+                    $self CanvasStdOpts opts
+                    set stroke [expr {$opts(-outline) ne ""}]
+                    set filled [expr {$opts(-fill) ne ""}]
+
+                    set cmd "m"
+                    foreach {x1 y1} $coords {
+                        $self Pdfoutcmd $x1 $y1 $cmd
+                        set cmd "l"
+                    }
+                    if {$filled && $stroke} {
+                        $self Pdfoutcmd "b"
+                    } elseif {$filled && !$stroke} {
+                        $self Pdfoutcmd "f"
+                    } else {
+                        $self Pdfoutcmd "s"
+                    }
+                }
                 text {}
                 window {}
             }
@@ -2097,6 +2131,26 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {[info exists opts(-dash)] && $opts(-dash) ne ""} {
             # FIXA: Support "..." and such
             $self Pdfout "\[$opts(-dash)\] $opts(-dashoffset) d\n"
+        }
+        if {[info exists opts(-capstyle)] && $opts(-capstyle) ne "butt"} {
+            switch $opts(-capstyle) {
+                projecting {
+                    $self Pdfoutcmd 2 "J"
+                }
+                round {
+                    $self Pdfoutcmd 1 "J"
+                }
+            }
+        }
+        if {[info exists opts(-joinstyle)] && $opts(-joinstyle) ne "round"} {
+            switch $opts(-joinstyle) {
+                bevel {
+                    $self Pdfoutcmd 2 "j"
+                }
+                miter {
+                    $self Pdfoutcmd 0 "j"
+                }
+            }
         }
     }
 
