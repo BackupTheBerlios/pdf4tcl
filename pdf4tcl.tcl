@@ -1363,6 +1363,54 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
+    method DrawOval {x y rx ry stroke filled} {
+        $self EndTextObj
+
+        set sq [expr {4.0*(sqrt(2.0)-1.0)/3.0}]
+        set x0(0) [expr {$x+$rx}]
+        set y0(0) $y
+        set x1(0) [expr {$x+$rx}]
+        set y1(0) [expr {$y+$ry*$sq}]
+        set x2(0) [expr {$x+$rx*$sq}]
+        set y2(0) [expr {$y+$ry}]
+        set x3(0) $x
+        set y3(0) [expr {$y+$ry}]
+        set x1(1) [expr {$x-$rx*$sq}]
+        set y1(1) [expr {$y+$ry}]
+        set x2(1) [expr {$x-$rx}]
+        set y2(1) [expr {$y+$ry*$sq}]
+        set x3(1) [expr {$x-$rx}]
+        set y3(1) $y
+        set x1(2) [expr {$x-$rx}]
+        set y1(2) [expr {$y-$ry*$sq}]
+        set x2(2) [expr {$x-$rx*$sq}]
+        set y2(2) [expr {$y-$ry}]
+        set x3(2) $x
+        set y3(2) [expr {$y-$ry}]
+        set x1(3) [expr {$x+$rx*$sq}]
+        set y1(3) [expr {$y-$ry}]
+        set x2(3) [expr {$x+$rx}]
+        set y2(3) [expr {$y-$ry*$sq}]
+        set x3(3) [expr {$x+$rx}]
+        set y3(3) $y
+        $self Pdfoutcmd $x0(0) $y0(0) "m"
+        for {set i 0} {$i < 4} {incr i} {
+            $self Pdfoutcmd $x1($i) \
+                            $y1($i) \
+                            $x2($i) \
+                            $y2($i) \
+                            $x3($i) \
+                            $y3($i) "c"
+        }
+        if {$filled && $stroke} {
+            $self Pdfoutcmd "b"
+        } elseif {$filled && !$stroke} {
+            $self Pdfoutcmd "f"
+        } else {
+            $self Pdfoutcmd " s"
+        }
+    }
+
     method circle {x y r args} {
         set filled 0
         set stroke 1
@@ -1381,53 +1429,35 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
 
-        $self EndTextObj
         $self Trans $x $y x y
         set r [$self GetPoints $r]
 
-        set sq [expr {4.0*(sqrt(2.0)-1.0)/3.0}]
-        set x0(0) [expr {$x+$r}]
-        set y0(0) $y
-        set x1(0) [expr {$x+$r}]
-        set y1(0) [expr {$y+$r*$sq}]
-        set x2(0) [expr {$x+$r*$sq}]
-        set y2(0) [expr {$y+$r}]
-        set x3(0) $x
-        set y3(0) [expr {$y+$r}]
-        set x1(1) [expr {$x-$r*$sq}]
-        set y1(1) [expr {$y+$r}]
-        set x2(1) [expr {$x-$r}]
-        set y2(1) [expr {$y+$r*$sq}]
-        set x3(1) [expr {$x-$r}]
-        set y3(1) $y
-        set x1(2) [expr {$x-$r}]
-        set y1(2) [expr {$y-$r*$sq}]
-        set x2(2) [expr {$x-$r*$sq}]
-        set y2(2) [expr {$y-$r}]
-        set x3(2) $x
-        set y3(2) [expr {$y-$r}]
-        set x1(3) [expr {$x+$r*$sq}]
-        set y1(3) [expr {$y-$r}]
-        set x2(3) [expr {$x+$r}]
-        set y2(3) [expr {$y-$r*$sq}]
-        set x3(3) [expr {$x+$r}]
-        set y3(3) $y
-        $self Pdfoutcmd $x0(0) $y0(0) "m"
-        for {set i 0} {$i < 4} {incr i} {
-            $self Pdfoutcmd $x1($i) \
-                            $y1($i) \
-                            $x2($i) \
-                            $y2($i) \
-                            $x3($i) \
-                            $y3($i) "c"
+        $self DrawOval $x $y $r $r $stroke $filled
+    }
+
+    method oval {x y rx ry args} {
+        set filled 0
+        set stroke 1
+
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-filled" {
+                    set filled $value
+                }
+                "-stroke" {
+                    set stroke $value
+                }
+                default {
+                    return -code error "unknown option $arg"
+                }
+            }
         }
-        if {$filled && $stroke} {
-            $self Pdfoutcmd "b"
-        } elseif {$filled && !$stroke} {
-            $self Pdfoutcmd "f"
-        } else {
-            $self Pdfoutcmd " s"
-        }
+
+        $self Trans $x $y x y
+        set rx [$self GetPoints $rx]
+        set ry [$self GetPoints $ry]
+
+        $self DrawOval $x $y $rx $ry $stroke $filled
     }
 
     # scale with r, rotate by phi, and move by (dx, dy)
