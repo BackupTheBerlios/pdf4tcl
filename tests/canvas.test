@@ -1,0 +1,22 @@
+# Test canvas commands                                               -*-tcl-*-
+#
+# $Id: graphics.test 122 2008-02-19 12:58:14Z pspjuth $
+
+source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
+
+package require Tk
+wm withdraw .
+
+test canvas-1.1 {circle} -body {
+    canvas .c
+    .c create line 10 10 80 80
+    .c create rectangle 20 20 50 60 -fill red -outline blue
+    mytest {canvas .c} {
+        0 0 0   RG 0   0 0 rg 1 w 10 10 m 80 80 l S
+        *
+        0 0 256 RG 256 0 0 rg 1 w 20 20 30 40 re B
+    }
+} -result 1
+
+# To make sure we exit even though Tk is loaded
+exit

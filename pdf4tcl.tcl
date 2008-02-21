@@ -1967,13 +1967,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Canvas Handling
     #######################################################################
 
-    method canvas {w args} {
+    method canvas {path args} {
         set sticky "nw"
-        set x 0
-        set y 0
+        $self Trans 0 0 x y
         set width ""
         set height ""
-        set bbox ""
+        set bbox [$path bbox all]
         foreach {arg value} $args {
             switch -- $arg {
                 "-width"  {set width [$self GetPoints $value]}
@@ -1989,15 +1988,150 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
         if {$bbox eq ""} {
-            set bbox [$w bbox all]
+            # Nothing to display
+            return
         }
         if {$width eq ""} {
-            set width [expr {$pdf(width) - $pdf(marginleft) - \
+            set width [expr {$pdf(width) - \
                     $pdf(marginright) - $x}]
         }
         if {$height eq ""} {
-            set height [expr {$pdf(height) - $pdf(margintop) - \
-                    $pdf(marginbottom) - $y}]
+            if {$pdf(orient)} {
+                set height [expr {$y - $pdf(marginbottom)}]
+            } else {
+                set height [expr {$pdf(height) - $pdf(margintop) - $y}]
+            }
+        }
+        if {[llength $bbox] != 4} {
+            return -code error "-bbox must be a four element list"
+        }
+        foreach {bbx1 bby1 bbx2 bby2} $bbox break
+        set bbw [expr {$bbx2 - $bbx1}]
+        set bbh [expr {$bby2 - $bby1}]
+        # Now calculate offset and scale between canvas coords
+        # and pdf coords.
+        # FIXA: assuming sticky news thus not preserving aspect
+        set xscale  [expr {$width / $bbw}]
+        set yscale  [expr {-($height / $bbh)}]
+
+        set xoffset [expr {$x - $bbx1 * $xscale}]
+        if {$pdf(orient)} {
+            set yoffset $y
+        } else {
+            set yoffset [expr {$y + $height}]
+        }
+        set yoffset [expr {$yoffset - $bby1 * $yscale}]
+
+        $self EndTextObj
+        $self Pdfoutcmd "q"
+
+        # Set up clean graphics modes
+        $self Pdfoutcmd 1.0 "w"
+        $self Pdfout "\[\] 0 d\n"
+        $self Pdfoutcmd 0 0 0 "rg"
+        $self Pdfoutcmd 0 0 0 "RG"
+
+        $self Pdfoutcmd $xscale 0 0 $yscale $xoffset $yoffset "cm"
+
+        set enclosed [$path find enclosed $bbx1 $bby1 $bbx2 $bby2]
+        set overlapping [$path find overlapping $bbx1 $bby1 $bbx2 $bby2]
+        foreach id $overlapping {
+            set coords [$path coords $id]
+            CanvasGetOpts $path $id opts
+            if {[info exists opts(-state)] && $opts(-state) eq "hidden"} {
+                continue
+            }
+            # Save graphics state for each item
+            $self Pdfoutcmd "q"
+            switch [$path type $id] {
+                rectangle {
+                    foreach {x1 y1 x2 y2} $coords break
+                    set w [expr {$x2 - $x1}]
+                    set h [expr {$y2 - $y1}]
+
+                    $self CanvasStdOpts opts
+                    set stroke [expr {$opts(-outline) ne ""}]
+                    set filled [expr {$opts(-fill) ne ""}]
+
+                    $self DrawRect $x1 $y1 $w $h $stroke $filled
+                }
+                line {
+                    # For a line, -fill means the stroke colour
+                    set opts(-outline) $opts(-fill)
+                    $self CanvasStdOpts opts
+
+                    set cmd "m"
+                    foreach {x1 y1} $coords {
+                        $self Pdfoutcmd $x1 $y1 $cmd
+                        set cmd "l"
+                    }
+                    $self Pdfoutcmd "S"
+                }
+                arc {}
+                bitmap {}
+                image {}
+                oval {}
+                polygon {}
+                text {}
+                window {}
+            }
+            # Restore graphics state after the item
+            $self Pdfoutcmd "Q"
+        }
+        # Restore graphics state after the canvas
+        $self Pdfoutcmd "Q"
+    }
+
+    method CanvasStdOpts {optsName} {
+        upvar 1 $optsName opts
+
+        if {[info exists opts(-outline)] && $opts(-outline) ne ""} {
+            $self CanvasStrokeColor $opts(-outline)
+        }
+        if {[info exists opts(-fill)] && $opts(-fill) ne ""} {
+            $self CanvasFillColor $opts(-fill)
+        }
+        if {[info exists opts(-width)]} {
+            $self Pdfoutcmd $opts(-width) "w"
+        }
+        if {[info exists opts(-dash)] && $opts(-dash) ne ""} {
+            # FIXA: Support "..." and such
+            $self Pdfout "\[$opts(-dash)\] $opts(-dashoffset) d\n"
+        }
+    }
+
+    method CanvasFillColor {color} {
+        foreach {red green blue} [winfo rgb . $color] break
+        set red   [expr {($red   & 0xFF00) / 255.0}]
+        set green [expr {($green & 0xFF00) / 255.0}]
+        set blue  [expr {($blue  & 0xFF00) / 255.0}]
+        $self Pdfoutcmd $red $green $blue "rg"
+    }
+
+    method CanvasStrokeColor {color} {
+        foreach {red green blue} [winfo rgb . $color] break
+        set red   [expr {($red   & 0xFF00) / 255.0}]
+        set green [expr {($green & 0xFF00) / 255.0}]
+        set blue  [expr {($blue  & 0xFF00) / 255.0}]
+        $self Pdfoutcmd $red $green $blue "RG"
+    }
+
+    # Helper to extract configuration from a canvas item
+    proc CanvasGetOpts {path id arrName} {
+        upvar 1 $arrName arr
+        array unset arr
+        foreach item [$path itemconfigure $id] {
+            set arr([lindex $item 0]) [lindex $item 4]
+        }
+        if {![info exists arr(-state)]} return
+        if {$arr(-state) eq "" || $arr(-state) eq "normal"} return
+        # Translate options depending on state
+        foreach item [array names arr] {
+            if {[regexp -- "^-${state}(.*)\$" $item -> orig]} {
+                if {[info exists arr(-$orig)]} {
+                    set arr(-$orig) $arr($item)
+                }
+            }
         }
     }
 
