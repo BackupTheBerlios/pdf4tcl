@@ -2111,10 +2111,20 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     }
                     $self Pdfoutcmd "S"
                 }
-                arc {}
-                bitmap {}
-                image {}
-                oval {}
+                oval {
+                    # Currently stipple is not implemented
+                    foreach {x1 y1 x2 y2} $coords break
+                    set x  [expr {($x2 + $x1) / 2.0}]
+                    set y  [expr {($y2 + $y1) / 2.0}]
+                    set rx [expr {($x2 - $x1) / 2.0}]
+                    set ry [expr {($y2 - $y1) / 2.0}]
+
+                    $self CanvasStdOpts opts
+                    set stroke [expr {$opts(-outline) ne ""}]
+                    set filled [expr {$opts(-fill) ne ""}]
+
+                    $self DrawOval $x $y $rx $ry $stroke $filled
+                }
                 polygon {
                     # Currently stipple is not implemented neither is
                     # -smooth -splinesteps
@@ -2136,6 +2146,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                         $self Pdfoutcmd "s"
                     }
                 }
+                arc {}
+                bitmap {}
+                image {}
                 text {}
                 window {}
             }
@@ -2186,17 +2199,17 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     method CanvasFillColor {color} {
         foreach {red green blue} [winfo rgb . $color] break
-        set red   [expr {($red   & 0xFF00) / 255.0}]
-        set green [expr {($green & 0xFF00) / 255.0}]
-        set blue  [expr {($blue  & 0xFF00) / 255.0}]
+        set red   [expr {($red   & 0xFF00) / 65280.0}]
+        set green [expr {($green & 0xFF00) / 65280.0}]
+        set blue  [expr {($blue  & 0xFF00) / 65280.0}]
         $self Pdfoutcmd $red $green $blue "rg"
     }
 
     method CanvasStrokeColor {color} {
         foreach {red green blue} [winfo rgb . $color] break
-        set red   [expr {($red   & 0xFF00) / 255.0}]
-        set green [expr {($green & 0xFF00) / 255.0}]
-        set blue  [expr {($blue  & 0xFF00) / 255.0}]
+        set red   [expr {($red   & 0xFF00) / 65280.0}]
+        set green [expr {($green & 0xFF00) / 65280.0}]
+        set blue  [expr {($blue  & 0xFF00) / 65280.0}]
         $self Pdfoutcmd $red $green $blue "RG"
     }
 

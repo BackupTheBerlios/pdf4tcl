@@ -12,9 +12,19 @@ test canvas-1.1 {circle} -body {
     .c create line 10 10 80 80
     .c create rectangle 20 20 50 60 -fill red -outline blue
     mytest {canvas .c} {
-        0 0 0   RG 0   0 0 rg 1 w 10 10 m 80 80 l S
+        0 0 0 RG 0 0 0 rg 1 w 10 10 m 80 80 l S
         *
-        0 0 256 RG 256 0 0 rg 1 w 20 20 30 40 re B
+        0 0 1 RG 1 0 0 rg 1 w 20 20 30 40 re B
+    }
+} -result 1
+
+test canvas-2.1 {demo} -body {
+    # Find the demo for canvas
+    source $::tk_library/demos/widget
+    source $::tk_library/demos/items.tcl
+    #exec wish $::tk_library/demos/widget &
+    mytest {canvas .items.frame.c} {
+        *
     }
 } -result 1
 
