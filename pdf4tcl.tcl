@@ -2159,22 +2159,28 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "Q"
     }
 
+    # Setup the graphics state from standard options
     method CanvasStdOpts {optsName} {
         upvar 1 $optsName opts
 
+        # Outline controls stroke color
         if {[info exists opts(-outline)] && $opts(-outline) ne ""} {
             $self CanvasStrokeColor $opts(-outline)
         }
+        # Fill controls fill color
         if {[info exists opts(-fill)] && $opts(-fill) ne ""} {
             $self CanvasFillColor $opts(-fill)
         }
+        # Line width
         if {[info exists opts(-width)]} {
             $self Pdfoutcmd $opts(-width) "w"
         }
+        # Dash pattern and offset
         if {[info exists opts(-dash)] && $opts(-dash) ne ""} {
             # FIXA: Support "..." and such
             $self Pdfout "\[$opts(-dash)\] $opts(-dashoffset) d\n"
         }
+        # Cap style
         if {[info exists opts(-capstyle)] && $opts(-capstyle) ne "butt"} {
             switch $opts(-capstyle) {
                 projecting {
@@ -2185,6 +2191,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
         }
+        # Join style
         if {[info exists opts(-joinstyle)] && $opts(-joinstyle) ne "round"} {
             switch $opts(-joinstyle) {
                 bevel {
@@ -2197,6 +2204,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
+    # Set the fill color from a Tk color
     method CanvasFillColor {color} {
         foreach {red green blue} [winfo rgb . $color] break
         set red   [expr {($red   & 0xFF00) / 65280.0}]
@@ -2205,6 +2213,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd $red $green $blue "rg"
     }
 
+    # Set the stroke color from a Tk color
     method CanvasStrokeColor {color} {
         foreach {red green blue} [winfo rgb . $color] break
         set red   [expr {($red   & 0xFF00) / 65280.0}]
@@ -2220,8 +2229,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         foreach item [$path itemconfigure $id] {
             set arr([lindex $item 0]) [lindex $item 4]
         }
-        if {![info exists arr(-state)]} return
-        if {$arr(-state) eq "" || $arr(-state) eq "normal"} return
+        if {![info exists arr(-state)]} {
+            return
+        }
+        if {$arr(-state) eq "" || $arr(-state) eq "normal"} {
+            return
+        }
         # Translate options depending on state
         foreach item [array names arr] {
             if {[regexp -- "^-${state}(.*)\$" $item -> orig]} {

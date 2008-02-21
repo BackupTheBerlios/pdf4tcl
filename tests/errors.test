@@ -74,3 +74,9 @@ test errors-1.6 {write errors} -body {
     removeFile unwritable.tmp
     removeFile writable.tmp
 }
+
+test errors-1.7 {misc option errors} -body {
+    set res {}
+    lappend res [catch {pdf4tcl::new apa -unit gurka}]
+} -result {1}
+
