@@ -8,7 +8,7 @@
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-# $Revision$ $Date$
+# $Id$
 
 # Version 0.1   base features for generating correct pdf files
 # Version 0.2   more graphic operators, fixed font handling

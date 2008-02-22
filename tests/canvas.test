@@ -1,6 +1,6 @@
 # Test canvas commands                                               -*-tcl-*-
 #
-# $Id: graphics.test 122 2008-02-19 12:58:14Z pspjuth $
+# $Id$
 
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 

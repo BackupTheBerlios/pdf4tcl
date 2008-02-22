@@ -1,6 +1,6 @@
 # Test image support                                                 -*-tcl-*-
 #
-# $Id: graphics.test 88 2008-01-30 09:46:00Z pspjuth $
+# $Id$
 
 set thisDir [file dirname [file join [pwd] [info script]]]
 source [file join $thisDir init.tcl]
