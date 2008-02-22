@@ -30,6 +30,7 @@ namespace eval pdf4tcl {
     variable font_afm
     variable paper_sizes
     variable units
+    variable dir [file dirname [file join [pwd] [info script]]]
 
     # path to adobe afm files
     set g(ADOBE_AFM_PATH) {}
@@ -2008,11 +2009,83 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "Q"
     }
 
+    # Add a bitmap to the document, either as image or as pattern
+    method AddBitmap {bitmap args} {
+        variable images
+
+        set id ""
+        set pattern 0
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-id"     {set id $value}
+                "-pattern" {set pattern 1}
+            }
+        }
+
+        # Load the bitmap file
+        if {[string index $bitmap 0] eq "@"} {
+            set filename [string range $bitmap 1 end]
+        } else {
+            # Internal bitmap
+            set filename [file join $pdf4tcl::dir bitmaps ${bitmap}.xbm]
+        }
+        if {![file exists $filename]} {
+            return -code error "No such bitmap $bitmap"
+        }
+        set ch [open $filename r]
+        set bitmapdata [read $ch]
+        close $ch
+        if {![regexp {_width (\d+)} $bitmapdata -> width]} {
+            return -code error "Not a bitmap $bitmap"
+        }
+        if {![regexp {_height (\d+)} $bitmapdata -> height]} {
+            return -code error "Not a bitmap $bitmap"
+        }
+        if {![regexp {_bits \[\]\s*=\s*\{(.*)\}} $bitmapdata -> rawdata]} {
+            return -code error "Not a bitmap $bitmap"
+        }
+        set bytes [regexp -all -inline {0x[a-fA-F0-9]{2}} $rawdata]
+        set bytesPerLine [expr {[llength $bytes] / $height}]
+
+        if {$pattern} {
+
+
+        } else {
+            set    xobject "<<\n/Type /XObject\n"
+            append xobject "/Subtype /Image\n"
+            append xobject "/Width $width\n/Height $height\n"
+            # Maybe do /IM true /Decode [ 1 0 ]  instead of colorspace
+            append xobject "/ColorSpace /DeviceGray\n"
+            append xobject "/Length [llength $bytes] >>\n"
+            append xobject "/BitsPerComponent 1>>\n"
+            append xobject "stream\n"
+
+            set img ""
+            foreach byte $bytes {
+                # Maybe needs reversing??
+                append img [format %c $byte]
+            }
+
+            append xobject $img
+            append xobject "\nendstream"
+
+            set oid [$self AddObject $xobject]
+
+            if {$id eq ""} {
+                set id image$oid
+            }
+            set images($id) [list $width $height $oid]
+            return $id
+        }
+    }
+
     #######################################################################
     # Canvas Handling
     #######################################################################
 
     method canvas {path args} {
+        variable images
+
         set sticky "nw"
         $self Trans 0 0 x y
         set width ""
@@ -2180,7 +2253,32 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     }
                 }
                 bitmap {}
-                image {}
+                image {
+                    set image $opts(-image)
+                    set id image_canvas_$image
+                    if {![info exists images($id)]} {
+                        addRawImage [$image data] -id $id
+                    }
+                    foreach {width height oid} $images($id) break
+                    foreach {x1 y1} $coords break
+                    switch $opts(-anchor) {
+                        nw { set dx 0.0 ; set dy 0.0 }
+                        n  { set dx 0.5 ; set dy 0.0 }
+                        ne { set dx 1.0 ; set dy 0.0 }
+                        e  { set dx 1.0 ; set dy 0.5 }
+                        se { set dx 1.0 ; set dy 1.0 }
+                        s  { set dx 0.5 ; set dy 1.0 }
+                        sw { set dx 0.0 ; set dy 1.0 }
+                        w  { set dx 0.0 ; set dy 0.5 }
+                        default { set dx 0.5 ; set dy 0.5 }
+                    }
+                    set x [expr {$x1 - $width  * $dx}]
+                    set y [expr {$y1 - $height * $dy}]
+
+                    $self Pdfoutcmd "q"
+                    $self Pdfoutcmd $width 0 0 $height $x $y "cm"
+                    $self Pdfout "/$id Do\nQ\n"
+                }
                 text {}
                 window {}
             }
