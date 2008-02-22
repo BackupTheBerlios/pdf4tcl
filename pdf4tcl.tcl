@@ -1474,6 +1474,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return $res
     }
 
+    # Create a four-point spline that forms an arc along the unit circle
     proc Simplearc {phi2} {
         set x0 [expr {cos($phi2)}]
         set y0 [expr {-sin($phi2)}]
@@ -1486,7 +1487,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return [list $x0 $y0 $x1 $y1 $x2 $y2 $x3 $y3]
     }
 
-    method DrawArc {x0 y0 rx ry phi extend stroke filled} {
+    method DrawArc {x0 y0 rx ry phi extend stroke filled style} {
         if {abs($extend) >= 360.0} {
             $self DrawOval $x0 $y0 $rx $ry $stroke $filled
             return
@@ -1513,6 +1514,21 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set phi [expr {$phi+$extend}]
             $self Pdfoutcmd $x1 $y1 $x2 $y2 $x3 $y3 "c"
         }
+        switch $style {
+            "arc" {
+                set filled 0
+            }
+            "pieslice" {
+                # Add the line to the center
+                $self Pdfoutcmd $x0 $y0 "l"
+                # Close the path
+                $self Pdfoutcmd "h"
+            }
+            "chord" {
+                # Close the path
+                $self Pdfoutcmd "h"
+            }
+        }
         if {$filled && $stroke} {
             $self Pdfoutcmd "B"
         } elseif {$filled && !$stroke} {
@@ -1522,6 +1538,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
+    # FIXA: a sane interface to the arc method
     method arc {x0 y0 r phi extend} {
         if {abs($extend) >= 360.0} {
             $self circle $x0 $y0 $r
@@ -1532,7 +1549,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Trans $x0 $y0 x0 y0
         set r [$self GetPoints $r]
 
-        $self DrawArc $x0 $y0 $r $r $phi $extend 1 0
+        $self DrawArc $x0 $y0 $r $r $phi $extend 1 0 arc
     }
 
     method arrow {x1 y1 x2 y2 sz {angle 20}} {
@@ -2149,7 +2166,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd 0 0 0 "rg"
         $self Pdfoutcmd 0 0 0 "RG"
         $self Pdfoutcmd 0 "J" ;# Butt cap style
-        $self Pdfoutcmd 1 "j" ;# Round join style
+        $self Pdfoutcmd 0 "j" ;# Miter join style
+        # Miter limit; Tk switches from miter to bevel at 11 degrees
+        $self Pdfoutcmd [expr {1.0/sin(11.0/180.0*3.14159265/2.0)}] "M"
 
         $self Pdfoutcmd $xscale 0 0 $yscale $xoffset $yoffset "cm"
 
@@ -2214,14 +2233,17 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self DrawOval $x $y $rx $ry $stroke $filled
                 }
                 arc {
-                    # Currently stipple is not implemented,
-                    # neither -style
+                    # Currently stipple is not implemented
                     foreach {x1 y1 x2 y2} $coords break
                     set x  [expr {($x2 + $x1) / 2.0}]
                     set y  [expr {($y2 + $y1) / 2.0}]
                     set rx [expr {($x2 - $x1) / 2.0}]
                     set ry [expr {($y2 - $y1) / 2.0}]
-
+                    
+                    # Canvas draws arc with bevel style
+                    if {![info exists opts(-joinstyle)]} {
+                        set opts(-joinstyle) bevel
+                    }
                     $self CanvasStdOpts opts
                     set stroke [expr {$opts(-outline) ne ""}]
                     set filled [expr {$opts(-fill) ne ""}]
@@ -2229,7 +2251,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set phi $opts(-start)
                     set extend $opts(-extent)
 
-                    $self DrawArc $x $y $rx $ry $phi $extend $stroke $filled
+                    $self DrawArc $x $y $rx $ry $phi $extend $stroke $filled \
+                            $opts(-style)
                 }
                 polygon {
                     # Currently stipple is not implemented neither is
@@ -2251,6 +2274,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     } else {
                         $self Pdfoutcmd "s"
                     }
+                }
+                text {
+                    #$self CanvasStdOpts opts
+                    #
                 }
                 bitmap {}
                 image {
@@ -2279,7 +2306,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self Pdfoutcmd $width 0 0 $height $x $y "cm"
                     $self Pdfout "/$id Do\nQ\n"
                 }
-                text {}
                 window {}
             }
             # Restore graphics state after the item
@@ -2322,13 +2348,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
         # Join style
-        if {[info exists opts(-joinstyle)] && $opts(-joinstyle) ne "round"} {
+        if {[info exists opts(-joinstyle)] && $opts(-joinstyle) ne "miter"} {
             switch $opts(-joinstyle) {
                 bevel {
                     $self Pdfoutcmd 2 "j"
                 }
-                miter {
-                    $self Pdfoutcmd 0 "j"
+                round {
+                    $self Pdfoutcmd 1 "j"
                 }
             }
         }
