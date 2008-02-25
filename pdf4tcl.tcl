@@ -252,6 +252,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     constructor {args} {
         variable images
         variable fonts
+        variable bitmaps
 
         # The unit translation factor is needed before parsing arguments
         set pdf(unit) 1.0
@@ -268,6 +269,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(font_set) false
         set pdf(in_text_object) false
         array set images {}
+        array set bitmaps {}
         set pdf(objects) {}
         set pdf(compress) $options(-compress)
         set pdf(finished) false
@@ -605,6 +607,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Finish document
     method finish {} {
         variable images
+        variable bitmaps
         variable fonts
 
         if {$pdf(finished)} {
@@ -664,6 +667,20 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
             $self Pdfout ">>\n"
         }
+        # pattern references
+        if {[array size bitmaps] > 0} {
+            $self Pdfout "/ColorSpace <<\n"
+            $self Pdfout "/Cs1 \[/Pattern /DeviceRGB\]\n"
+            $self Pdfout ">>\n"
+
+            $self Pdfout "/Pattern <<\n"
+            foreach key [array names bitmaps] {
+                set oid [lindex $bitmaps($key) 2]
+                $self Pdfout "/$key $oid 0 R\n"
+            }
+            $self Pdfout ">>\n"
+        }
+
         $self Pdfout ">>\nendobj\n\n"
 
         # Cross reference table
@@ -2028,16 +2045,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "Q"
     }
 
-    # Add a bitmap to the document, either as image or as pattern
+    # Add a bitmap to the document, as a pattern
     method AddBitmap {bitmap args} {
-        variable images
+        variable bitmaps
 
         set id ""
-        set pattern 0
         foreach {arg value} $args {
             switch -- $arg {
                 "-id"     {set id $value}
-                "-pattern" {set pattern 1}
             }
         }
 
@@ -2060,42 +2075,73 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {![regexp {_height (\d+)} $bitmapdata -> height]} {
             return -code error "Not a bitmap $bitmap"
         }
-        if {![regexp {_bits \[\]\s*=\s*\{(.*)\}} $bitmapdata -> rawdata]} {
+        if {![regexp {_bits\s*\[\]\s*=\s*\{(.*)\}} $bitmapdata -> rawdata]} {
             return -code error "Not a bitmap $bitmap"
         }
         set bytes [regexp -all -inline {0x[a-fA-F0-9]{2}} $rawdata]
         set bytesPerLine [expr {[llength $bytes] / $height}]
 
-        if {$pattern} {
+        set    xobject "<<\n/Type /XObject\n"
+        append xobject "/Subtype /Image\n"
+        append xobject "/Width $width\n/Height $height\n"
+        # Maybe do /IM true /Decode [ 1 0 ]  instead of colorspace
+        append xobject {/IM true /Decode [ 1 0 ]} \n
+        #append xobject "/ColorSpace /DeviceGray\n"
+        append xobject "/Length [llength $bytes]\n"
+        append xobject "/BitsPerComponent 1>>\n"
+        append xobject "stream\n"
 
-
-        } else {
-            set    xobject "<<\n/Type /XObject\n"
-            append xobject "/Subtype /Image\n"
-            append xobject "/Width $width\n/Height $height\n"
-            # Maybe do /IM true /Decode [ 1 0 ]  instead of colorspace
-            append xobject "/ColorSpace /DeviceGray\n"
-            append xobject "/Length [llength $bytes] >>\n"
-            append xobject "/BitsPerComponent 1>>\n"
-            append xobject "stream\n"
-
-            set img ""
-            foreach byte $bytes {
-                # Maybe needs reversing??
-                append img [format %c $byte]
+        set bits ""
+        foreach byte $bytes {
+            # Needs reversing?
+            for {set t 0} {$t < 8} {incr t} {
+                append bits [expr {1 & $byte}]
+                set byte [expr {$byte >> 1}]
             }
-
-            append xobject $img
-            append xobject "\nendstream"
-
-            set oid [$self AddObject $xobject]
-
-            if {$id eq ""} {
-                set id image$oid
-            }
-            set images($id) [list $width $height $oid]
-            return $id
         }
+
+        append xobject [binary format B* $bits]
+        append xobject "\nendstream"
+
+        #set oid [$self AddObject $xobject]
+        #set stream "$oid 0 R Do"
+
+        set    stream "q\n"
+        append stream "$width 0 0 $height 0 0 " "cm" \n
+        append stream "BI\n"
+        append stream "/W [Nf $width]\n"
+        append stream "/H [Nf $height]\n"
+        append stream {/IM true /Decode [ 1 0 ]} \n
+        append stream "/BPC 1\n"
+        append stream "ID\n"
+        append stream [binary format B* $bits]
+        append stream ">\nEI\nQ"
+
+
+        # Pattern object
+        set xobject "<<\n/Type /Pattern\n"
+        append xobject "/PatternType 1\n"
+        append xobject "/PaintType 2\n"
+        append xobject "/TilingType 1\n"
+        append xobject "/BBox \[ 0 0 $width $height \]\n"
+        append xobject "/XStep $width\n"
+        append xobject "/YStep $height\n"
+        append xobject "/Matrix \[ 1 0 0 1 0 0 \] \n"
+        append xobject "/Resources <<\n"
+        append xobject ">>\n"
+        append xobject "/Length [string length $stream]\n"
+        append xobject ">>\n"
+        append xobject "stream\n"
+        append xobject $stream
+        append xobject "\nendstream"
+
+        set oid [$self AddObject $xobject]
+
+        if {$id eq ""} {
+            set id bitmap$oid
+        }
+        set bitmaps($id) [list $width $height $oid]
+        return $id
     }
 
     #######################################################################
@@ -2104,6 +2150,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     method canvas {path args} {
         variable images
+        variable bitmaps
 
         set sticky "nw"
         $self Trans 0 0 x y
@@ -2349,31 +2396,66 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     }
                     $self EndTextObj
                 }
-                bitmap {}
-                image {
-                    set image $opts(-image)
-                    set id image_canvas_$image
-                    if {![info exists images($id)]} {
-                        addRawImage [$image data] -id $id
+                bitmap {
+                    # -fg -bg
+                    set bitmap $opts(-bitmap)
+                    set id bitmap_canvas_[file rootname [file tail $bitmap]]
+                    if {![info exists bitmaps($id)]} {
+                        $self AddBitmap $bitmap -id $id
                     }
-                    foreach {width height oid} $images($id) break
+                    foreach {width height oid} $bitmaps($id) break
                     foreach {x1 y1} $coords break
+                    # Since the canvas coordinate system is upside
+                    # down we must flip back to get the image right.
+                    # We do this by adjusting y and y scale.
                     switch $opts(-anchor) {
-                        nw { set dx 0.0 ; set dy 0.0 }
-                        n  { set dx 0.5 ; set dy 0.0 }
-                        ne { set dx 1.0 ; set dy 0.0 }
+                        nw { set dx 0.0 ; set dy 1.0 }
+                        n  { set dx 0.5 ; set dy 1.0 }
+                        ne { set dx 1.0 ; set dy 1.0 }
                         e  { set dx 1.0 ; set dy 0.5 }
-                        se { set dx 1.0 ; set dy 1.0 }
-                        s  { set dx 0.5 ; set dy 1.0 }
-                        sw { set dx 0.0 ; set dy 1.0 }
+                        se { set dx 1.0 ; set dy 0.0 }
+                        s  { set dx 0.5 ; set dy 0.0 }
+                        sw { set dx 0.0 ; set dy 0.0 }
                         w  { set dx 0.0 ; set dy 0.5 }
                         default { set dx 0.5 ; set dy 0.5 }
                     }
                     set x [expr {$x1 - $width  * $dx}]
-                    set y [expr {$y1 - $height * $dy}]
+                    set y [expr {$y1 + $height * $dy}]
 
                     $self Pdfoutcmd "q"
-                    $self Pdfoutcmd $width 0 0 $height $x $y "cm"
+                    $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                    $self CanvasFillColor $opts(-foreground) $id
+                    $self Pdfoutcmd 0 0 1 1 "re"
+                    $self Pdfoutcmd "f"
+                    $self Pdfoutcmd "Q"
+                }
+                image {
+                    set image $opts(-image)
+                    set id image_canvas_$image
+                    if {![info exists images($id)]} {
+                        $self addRawImage [$image data] -id $id
+                    }
+                    foreach {width height oid} $images($id) break
+                    foreach {x1 y1} $coords break
+                    # Since the canvas coordinate system is upside
+                    # down we must flip back to get the image right.
+                    # We do this by adjusting y and y scale.
+                    switch $opts(-anchor) {
+                        nw { set dx 0.0 ; set dy 1.0 }
+                        n  { set dx 0.5 ; set dy 1.0 }
+                        ne { set dx 1.0 ; set dy 1.0 }
+                        e  { set dx 1.0 ; set dy 0.5 }
+                        se { set dx 1.0 ; set dy 0.0 }
+                        s  { set dx 0.5 ; set dy 0.0 }
+                        sw { set dx 0.0 ; set dy 0.0 }
+                        w  { set dx 0.0 ; set dy 0.5 }
+                        default { set dx 0.5 ; set dy 0.5 }
+                    }
+                    set x [expr {$x1 - $width  * $dx}]
+                    set y [expr {$y1 + $height * $dy}]
+
+                    $self Pdfoutcmd "q"
+                    $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
                     $self Pdfout "/$id Do\nQ\n"
                 }
                 window {}
@@ -2431,21 +2513,32 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # Set the fill color from a Tk color
-    method CanvasFillColor {color} {
+    method CanvasFillColor {color {bitmapid ""}} {
         foreach {red green blue} [winfo rgb . $color] break
         set red   [expr {($red   & 0xFF00) / 65280.0}]
         set green [expr {($green & 0xFF00) / 65280.0}]
         set blue  [expr {($blue  & 0xFF00) / 65280.0}]
-        $self Pdfoutcmd $red $green $blue "rg"
+        if {$bitmapid eq ""} {
+            $self Pdfoutcmd $red $green $blue "rg"
+        } else {
+            $self Pdfout "/Cs1 cs\n"
+            #$self Pdfoutcmd $red $green $blue "scn"
+            $self Pdfoutcmd $red $green $blue "/$bitmapid scn"
+        }
     }
 
     # Set the stroke color from a Tk color
-    method CanvasStrokeColor {color} {
+    method CanvasStrokeColor {color {bitmapid ""}} {
         foreach {red green blue} [winfo rgb . $color] break
         set red   [expr {($red   & 0xFF00) / 65280.0}]
         set green [expr {($green & 0xFF00) / 65280.0}]
         set blue  [expr {($blue  & 0xFF00) / 65280.0}]
-        $self Pdfoutcmd $red $green $blue "RG"
+        if {$bitmapid eq ""} {
+            $self Pdfoutcmd $red $green $blue "RG"
+        } else {
+            $self Pdfout "/Cs1 CS\n"
+            $self Pdfoutcmd $red $green $blue "/$bitmapid SCN"
+        }
     }
 
     # Helper to extract configuration from a canvas item

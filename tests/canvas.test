@@ -51,12 +51,33 @@ test canvas-1.4 {basic} -body {
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-2.1 {demo} -body {
+test canvas-2.1 {image} -body {
+    canvas .c
+    image create photo img1 -file images/logo125.gif
+    .c create rectangle 0 0 250 260 -fill red -outline blue
+    .c create image 10 10 -image img1 -anchor nw
+    mytest {canvas .c} {
+        q * cm * Do Q
+    }
+    # This only tested the presence of an image. Should be improved...
+} -cleanup {destroy .c} -result 1
+
+test canvas-2.2 {bitmap} -body {
+    canvas .c
+    .c create rectangle 0 0 250 260 -fill red -outline blue
+    .c create bitmap 10 10 -bitmap @../bitmaps/questhead.xbm -anchor nw
+    mytest -debug {canvas .c} {
+        q * cm * Do Q
+    }
+    # This only tested the presence of an image. Should be improved...
+} -cleanup {destroy .c} -result 1
+exit
+test canvas-20.1 {demo} -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget
     source $::tk_library/demos/items.tcl
-    #wm deiconify [winfo toplevel .items.frame.c]
-    mytest {canvas .items.frame.c} {
+    wm deiconify [winfo toplevel .items.frame.c]
+    mytest -debug {canvas .items.frame.c} {
         *
     }
 } -cleanup {destroy .item} -result 1
