@@ -2081,16 +2081,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set bytes [regexp -all -inline {0x[a-fA-F0-9]{2}} $rawdata]
         set bytesPerLine [expr {[llength $bytes] / $height}]
 
-        set    xobject "<<\n/Type /XObject\n"
-        append xobject "/Subtype /Image\n"
-        append xobject "/Width $width\n/Height $height\n"
-        # Maybe do /IM true /Decode [ 1 0 ]  instead of colorspace
-        append xobject {/IM true /Decode [ 1 0 ]} \n
-        #append xobject "/ColorSpace /DeviceGray\n"
-        append xobject "/Length [llength $bytes]\n"
-        append xobject "/BitsPerComponent 1>>\n"
-        append xobject "stream\n"
-
         set bits ""
         foreach byte $bytes {
             # Needs reversing?
@@ -2099,12 +2089,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set byte [expr {$byte >> 1}]
             }
         }
-
-        append xobject [binary format B* $bits]
-        append xobject "\nendstream"
-
-        #set oid [$self AddObject $xobject]
-        #set stream "$oid 0 R Do"
 
         set    stream "q\n"
         append stream "$width 0 0 $height 0 0 " "cm" \n
@@ -2116,7 +2100,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append stream "ID\n"
         append stream [binary format B* $bits]
         append stream ">\nEI\nQ"
-
 
         # Pattern object
         set xobject "<<\n/Type /Pattern\n"
@@ -2140,7 +2123,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {$id eq ""} {
             set id bitmap$oid
         }
-        set bitmaps($id) [list $width $height $oid]
+        set bitmaps($id) [list $width $height $oid [binary format B* $bits]]
         return $id
     }
 
@@ -2397,13 +2380,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self EndTextObj
                 }
                 bitmap {
-                    # -fg -bg
+                    # Not supported yet: -fg -bg
                     set bitmap $opts(-bitmap)
                     set id bitmap_canvas_[file rootname [file tail $bitmap]]
                     if {![info exists bitmaps($id)]} {
                         $self AddBitmap $bitmap -id $id
                     }
-                    foreach {width height oid} $bitmaps($id) break
+                    foreach {width height oid stream} $bitmaps($id) break
                     foreach {x1 y1} $coords break
                     # Since the canvas coordinate system is upside
                     # down we must flip back to get the image right.
@@ -2424,9 +2407,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
                     $self Pdfoutcmd "q"
                     $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                    $self CanvasFillColor $opts(-foreground) $id
-                    $self Pdfoutcmd 0 0 1 1 "re"
-                    $self Pdfoutcmd "f"
+                    $self Pdfout "BI\n"
+                    $self Pdfout "/W [Nf $width]\n"
+                    $self Pdfout "/H [Nf $height]\n"
+                    $self Pdfout "/ColorSpace /DeviceGray\n"
+                    $self Pdfout "/BPC 1\n"
+                    $self Pdfout "ID\n"
+                    $self Pdfout $stream
+                    $self Pdfout ">\nEI\n"
                     $self Pdfoutcmd "Q"
                 }
                 image {
