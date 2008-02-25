@@ -55,7 +55,7 @@ test canvas-2.1 {demo} -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget
     source $::tk_library/demos/items.tcl
-    #exec wish $::tk_library/demos/widget &
+    #wm deiconify [winfo toplevel .items.frame.c]
     mytest {canvas .items.frame.c} {
         *
     }

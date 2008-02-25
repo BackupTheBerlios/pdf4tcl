@@ -28,6 +28,18 @@ if {[file exists $tmp/pdf4tcl.tcl_i]} {
 }
 package require pdf4tcl
 
+proc myexec {args} {
+    set ch [open "|$args"]
+    fileevent $ch readable [string map "%ch $ch" {
+        gets %ch line
+        if {[eof %ch]} {
+            close %ch
+            set ::myexec 1
+        }
+    }]
+    vwait ::myexec
+}
+
 proc mytest {args} {
     set pattern [lindex $args end]
     set args [lrange $args 0 end-1]
@@ -80,7 +92,7 @@ proc mytest {args} {
         close $ch
         foreach app {acroread kpdf xpdf kghostview} {
             if {[auto_execok $app] ne ""} {
-                exec $app testdebug.pdf
+                myexec $app testdebug.pdf
                 break
             }
         }

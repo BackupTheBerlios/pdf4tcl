@@ -771,7 +771,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #######################################################################
 
     # Set current font
-    method setFont {size {fontname ""}} {
+    method setFont {size {fontname ""} {internal 0}} {
         variable ::pdf4tcl::font_widths
         variable fonts
 
@@ -786,7 +786,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set font_widths($fontname) $tmp
             }
         }
-        set size [$self GetPoints $size]
+        if {!$internal} {
+            set size [$self GetPoints $size]
+        }
         set pdf(font_size) $size
         $self Pdfoutn "/$fontname [Nf $size]" "Tf"
         $self Pdfoutcmd 0 "Tr"
@@ -2276,8 +2278,76 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     }
                 }
                 text {
-                    #$self CanvasStdOpts opts
-                    #
+                    # Currently stipple is not implemented neither is
+                    # -underline
+
+                    # Width is not a stroke option here
+                    array unset opts -width
+                    $self CanvasStdOpts opts
+
+                    set lines [CanvasGetWrappedText $path $id]
+                    foreach {x y} $coords break
+                    foreach {x1 y1 x2 y2} [$path bbox $id] break
+
+                    $self CanvasSetFont $opts(-font)
+                    set fontsize $pdf(font_size)
+                    # Next, figure out if the text fits within the bbox
+                    # with the current font, or it needs to be scaled.
+                    set widest 0.0
+                    foreach line $lines {
+                        set width [$self getStringWidth $line 1]
+                        if {$width > $widest} {
+                            set widest $width
+                        }
+                    }
+                    set xscale [expr {$widest / ($x2 - $x1)}]
+                    set yscale [expr {([llength $lines] * $fontsize) / \
+                                              ($y2 - $y1)}]
+                    # Scale down if the font is too big
+                    if {$xscale > 1.001} {
+                        $self setFont [expr {$fontsize / $xscale}] "" 1
+                        set fontsize $pdf(font_size)
+                        set widest [expr {$widest / $xscale}]
+                    }
+
+                    # Now we have selected an appropriate font and size.
+
+                    # Move x/y to point nw/n/ne depending on anchor
+                    # and justification
+                    set width $widest
+                    set height [expr {$fontsize * [llength $lines]}]
+                    if {[string match "s*" $opts(-anchor)]} {
+                        set y [expr {$y - $height}]
+                    } elseif {![string match "n*" $opts(-anchor)]} {
+                        set y [expr {$y - ($height / 2.0)}]
+                    }
+                    if {[string match "*w" $opts(-anchor)]} {
+                        set xanchor 0
+                    } elseif {[string match "*e" $opts(-anchor)]} {
+                        set xanchor 2
+                    } else {
+                        set xanchor 1
+                    }
+                    set xjustify [lsearch {left center right} $opts(-justify)]
+                    set x [expr {$x + ($xjustify - $xanchor) * $width / 2.0}]
+
+                    # Displace y to base line of font
+                    set bboxy [$self getFontMetric bboxy 1]
+                    set y [expr {$y + $bboxy + $fontsize}]
+                    foreach line $lines {
+                        set width [$self getStringWidth $line 1]
+                        set x0 [expr {$x - $xjustify * $width / 2.0}]
+
+                        # Since we have put the coordinate system  upside
+                        # down to follow canvas coordinates we need a
+                        # negative y scale here to get the text correct.
+
+                        $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
+                        $self Pdfout "([CleanText $line]) Tj\n"
+
+                        set y [expr {$y + $fontsize}]
+                    }
+                    $self EndTextObj
                 }
                 bitmap {}
                 image {
@@ -2399,6 +2469,101 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
         }
+    }
+
+    # Get the text from a text item, as a list of lines
+    # This takes and line wrapping into account
+    proc CanvasGetWrappedText {w item} {
+        set text  [$w itemcget $item -text]
+        set width [$w itemcget $item -width]
+
+        # Simple non-wrapping case. Only divide on newlines.
+        if {$width == 0} {
+            return [split $text \n]
+        }
+
+        # Run across the text's left side and look for all indexes
+        # that start a line.
+
+        foreach {x1 y1 x2 y2} [$w bbox $item] break
+        set firsts {}
+        for {set y $y1} {$y < $y2} {incr y} {
+            lappend firsts [$w index $item @$x1,$y]
+        }
+        set firsts [lsort -integer -unique $firsts]
+
+        # Extract each displayed line
+        set prev 0
+        set res {}
+        foreach index $firsts {
+            if {$prev != $index} {
+                set line [string range $text $prev [expr {$index - 1}]]
+                if {[string index $line end] eq "\n"} {
+                    set line [string trim $line \n]
+                } else {
+                    # If the line does not end with \n it is wrapped.
+                    # Then spaces should be discarded
+                    set line [string trim $line]
+                }
+                lappend res $line
+            }
+            set prev $index
+        }
+        # The last chunk
+        lappend res [string range $text $prev end]
+        return $res
+    }
+
+    # Given a Tk font, figure out a reasonable font to use and set it
+    # as current font.
+    # In the future we could give more user options for controlling this.
+    method CanvasSetFont {font} {
+        array unset fontinfo
+        array set fontinfo [font actual $font]
+        array set fontinfo [font metrics $font]
+        # Any fixed font maps to courier
+        if {$fontinfo(-fixed)} {
+            set fontinfo(-family) courier
+        }
+        set bold [expr {$fontinfo(-weight) eq "bold"}]
+        set italic [expr {$fontinfo(-slant) eq "italic"}]
+
+        switch -glob [string tolower $fontinfo(-family)] {
+            *courier* - *fixed* {
+                set family Courier
+                if {$bold && $italic} {
+                    append family -BoldOblique
+                } elseif {$bold} {
+                    append family -Bold
+                } elseif {$italic} {
+                    append family -BoldOblique
+                }
+            }
+            *times* {
+                if {$bold && $italic} {
+                    set family Times-BoldItalic
+                } elseif {$bold} {
+                    set family Times-Bold
+                } elseif {$italic} {
+                    set family Times-Italic
+                } else {
+                    set family Times-Roman
+                }
+            }
+            *helvetica* - *arial* - default {
+                set family Helvetica
+                if {$bold && $italic} {
+                    append family -BoldOblique
+                } elseif {$bold} {
+                    append family -Bold
+                } elseif {$italic} {
+                    append family -BoldOblique
+                }
+            }
+        }
+        set fontsize $fontinfo(-linespace)
+        $self BeginTextObj
+        $self setFont $fontsize $family 1
     }
 
     #######################################################################
