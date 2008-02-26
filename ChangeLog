@@ -1,3 +1,7 @@
+2008-02-26 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Redesigned API for arc, splitting r to rx/ry.
+	  *** INCOMPATIBLE CHANGE ***
+
 2008-02-19 Peter Spjuth   <peter.spjuth@gmail.com>
 
 	* Reworked drawTextBox to work correctly in all orientations.

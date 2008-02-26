@@ -66,7 +66,7 @@ test canvas-2.2 {bitmap} -body {
     canvas .c
     .c create rectangle 0 0 250 260 -fill red -outline blue
     .c create bitmap 10 10 -bitmap @../bitmaps/questhead.xbm -anchor nw
-    mytest -debug {canvas .c} {
+    mytest {canvas .c} {
         q * cm * EI Q
     }
     # This only tested the presence of an image. Should be improved...

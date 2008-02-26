@@ -28,7 +28,7 @@ test graphics-1.2 {circle} -body {
 
 test graphics-2.1 {arc} -body {
     # 360 degree arc = circle
-    mytest {arc 10  10  5 50 360} {
+    mytest {arc 10  10  5 5 50 360} {
         115 210 m
         115 212.761 112.761 215 110 215 c
         107.239 215 105 212.761 105 210 c
@@ -40,7 +40,7 @@ test graphics-2.1 {arc} -body {
 
 test graphics-2.2 {arc} -body {
     # 0 degree arc = nothing
-    mytest {arc 10  10  5 60 0.0001} {stream endstream}
+    mytest {arc 10  10  5 5 60 0.0001} {stream endstream}
 } -result 1
 
 test graphics-3.1 {image} -body {

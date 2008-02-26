@@ -1315,15 +1315,22 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "\[$args\] 0 d\n"
     }
 
-    method line {x1 y1 x2 y2 {internal 0}} {
+    method DrawLine {args} {
         $self EndTextObj
+        set cmd "m"
+        foreach {x y} $args {
+            $self Pdfoutcmd $x $y $cmd
+            set cmd "l"
+        }
+        $self Pdfoutcmd "S"
+    }
+
+    method line {x1 y1 x2 y2 {internal 0}} {
         if {!$internal} {
             $self Trans $x1 $y1 x1 y1
             $self Trans $x2 $y2 x2 y2
         }
-        $self Pdfoutcmd $x1 $y1 "m"
-        $self Pdfoutcmd $x2 $y2 "l"
-        $self Pdfoutcmd "S"
+        $self DrawLine $x1 $y1 $x2 $y2
     }
 
     ###>2004-11-03 jpo
@@ -1557,18 +1564,34 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
-    # FIXA: a sane interface to the arc method
-    method arc {x0 y0 r phi extend} {
-        if {abs($extend) >= 360.0} {
-            $self circle $x0 $y0 $r
-            return
+    # Draw an arc
+    method arc {x0 y0 rx ry phi extend args} {
+        set filled 0
+        set stroke 1
+        set style arc
+
+        foreach {arg value} $args {
+            switch -- $arg {
+                "-filled" {
+                    set filled $value
+                }
+                "-stroke" {
+                    set stroke $value
+                }
+                "-style" {
+                    set style $value
+                }
+                default {
+                    return -code error "unknown option $arg"
+                }
+            }
         }
-        if {abs($extend) < 0.01} return
 
         $self Trans $x0 $y0 x0 y0
-        set r [$self GetPoints $r]
+        set rx [$self GetPoints $rx]
+        set ry [$self GetPoints $ry]
 
-        $self DrawArc $x0 $y0 $r $r $phi $extend 1 0 arc
+        $self DrawArc $x0 $y0 $rx $ry $phi $extend $stroke $filled $style
     }
 
     method arrow {x1 y1 x2 y2 sz {angle 20}} {
@@ -1576,11 +1599,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Trans $x2 $y2 x2 y2
         set sz [$self GetPoints $sz]
 
-        $self line $x1 $y1 $x2 $y2 1
+        $self DrawLine $x1 $y1 $x2 $y2
         set rad [expr {$angle*3.1415926/180.0}]
         set ang [expr {atan2(($y1-$y2), ($x1-$x2))}]
-        $self line $x2 $y2 [expr {$x2+$sz*cos($ang+$rad)}] [expr {$y2+$sz*sin($ang+$rad)}] 1
-        $self line $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}] 1
+        $self DrawLine $x2 $y2 [expr {$x2+$sz*cos($ang+$rad)}] [expr {$y2+$sz*sin($ang+$rad)}]
+        $self DrawLine $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}]
     }
 
     method setBgColor {red green blue} {

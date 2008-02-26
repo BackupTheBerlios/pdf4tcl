@@ -329,7 +329,7 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 [call [arg objectName] [method polygon] [opt [arg "x y"]...] [opt [arg "option value"]...]]
 [call [arg objectName] [method circle] [arg "x"] [arg "y"] [arg "radius"] [opt [arg "option value"]...]]
 [call [arg objectName] [method oval] [arg "x"] [arg "y"] [arg "radiusx"] [arg "radiusy"] [opt [arg "option value"]...]]
-[call [arg objectName] [method arc] [arg "x"] [arg "y"] [arg "radius"] [arg "phi"] [arg "extend"]]
+[call [arg objectName] [method arc] [arg "x"] [arg "y"] [arg "radiusx"] [arg "radiusy"] [arg "phi"] [arg "extend"] [opt [arg "option value"]...]]
 [call [arg objectName] [method arrow] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "size"] [opt [arg "angle"]]]
 
 [call [arg objectName] [method rectangle] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [opt [arg "option value"]...]]
