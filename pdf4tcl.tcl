@@ -1325,11 +1325,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "S"
     }
 
-    method line {x1 y1 x2 y2 {internal 0}} {
-        if {!$internal} {
-            $self Trans $x1 $y1 x1 y1
-            $self Trans $x2 $y2 x2 y2
-        }
+    method line {x1 y1 x2 y2} {
+        $self Trans $x1 $y1 x1 y1
+        $self Trans $x2 $y2 x2 y2
+
         $self DrawLine $x1 $y1 $x2 $y2
     }
 
@@ -2260,15 +2259,79 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
                 line {
                     # Currently stipple is not implemented neither is
-                    # -arrow -arrowshape -smooth -splinesteps
+                    # -smooth -splinesteps
 
                     # For a line, -fill means the stroke colour
                     set opts(-outline) $opts(-fill)
                     $self CanvasStdOpts opts
 
+                    set arrows {}
+                    if {$opts(-arrow) eq "first" || $opts(-arrow) eq "both"} {
+                        lappend arrows [lindex $coords 2] [lindex $coords 3] \
+                                [lindex $coords 0] [lindex $coords 1] 0
+                    }
+                    if {$opts(-arrow) eq "last" || $opts(-arrow) eq "both"} {
+                        lappend arrows [lindex $coords end-3] [lindex $coords end-2] \
+                                [lindex $coords end-1] [lindex $coords end] [expr {[llength $coords] - 2}]
+                    }
+                    if {[llength $arrows] > 0} {
+                        foreach {shapeA shapeB shapeC} $opts(-arrowshape) break
+                        # Adjust like Tk does
+                        set shapeA [expr {$shapeA + 0.001}]
+                        set shapeB [expr {$shapeB + 0.001}]
+                        set shapeC [expr {$shapeC + $opts(-width) / 2.0 + 0.001}]
+
+                        set fracHeight [expr {($opts(-width)/2.0)/$shapeC}]
+                        set backup  [expr {$fracHeight * $shapeB + \
+                                           $shapeA * (1.0 - $fracHeight)/2.0}]
+                        foreach {x1 y1 x2 y2 ix} $arrows {
+                            set poly [list 0 0 0 0 0 0 0 0 0 0 0 0]
+                            lset poly 0  $x2
+                            lset poly 10 $x2
+                            lset poly 1  $y2
+                            lset poly 11 $y2
+                            set dx [expr {$x2 - $x1}]
+                            set dy [expr {$y2 - $y1}]
+                            set length [expr {hypot($dx, $dy)}]
+                            if {$length == 0} {
+                                set sinTheta 0.0
+                                set cosTheta 0.0
+                            } else {
+                                set sinTheta [expr {$dy / $length}]
+                                set cosTheta [expr {$dx / $length}]
+                            }
+                            set  vertX  [expr {[lindex $poly 0] - $shapeA * $cosTheta}]
+                            set  vertY  [expr {[lindex $poly 1] - $shapeA * $sinTheta}]
+                            set  temp   [expr {                   $shapeC * $sinTheta}]
+                            lset poly 2 [expr {[lindex $poly 0] - $shapeB * $cosTheta + $temp}]
+                            lset poly 8 [expr {[lindex $poly 2] - 2 * $temp}]
+                            set  temp   [expr {                   $shapeC * $cosTheta}]
+                            lset poly 3 [expr {[lindex $poly 1] - $shapeB * $sinTheta - $temp}]
+                            lset poly 9 [expr {[lindex $poly 3] + 2 * $temp}]
+                            lset poly 4 [expr {[lindex $poly 2] * $fracHeight + $vertX * (1.0-$fracHeight)}]
+                            lset poly 5 [expr {[lindex $poly 3] * $fracHeight + $vertY * (1.0-$fracHeight)}]
+                            lset poly 6 [expr {[lindex $poly 8] * $fracHeight + $vertX * (1.0-$fracHeight)}]
+                            lset poly 7 [expr {[lindex $poly 9] * $fracHeight + $vertY * (1.0-$fracHeight)}]
+
+                            # Adjust line end to draw it under the arrow
+                            lset coords $ix [expr {[lindex $coords $ix] - $backup * $cosTheta}]
+                            incr ix
+                            lset coords $ix [expr {[lindex $coords $ix] - $backup * $sinTheta}]
+
+                            # Draw polygon
+                            set cmd "m"
+                            foreach {x y} $poly {
+                                $self Pdfoutcmd $x $y $cmd
+                                set cmd "l"
+                            }
+                            $self Pdfoutcmd "f"
+                        }
+                    }
+
+                    # Draw lines
                     set cmd "m"
-                    foreach {x1 y1} $coords {
-                        $self Pdfoutcmd $x1 $y1 $cmd
+                    foreach {x y} $coords {
+                        $self Pdfoutcmd $x $y $cmd
                         set cmd "l"
                     }
                     $self Pdfoutcmd "S"
@@ -2294,7 +2357,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set y  [expr {($y2 + $y1) / 2.0}]
                     set rx [expr {($x2 - $x1) / 2.0}]
                     set ry [expr {($y2 - $y1) / 2.0}]
-                    
+
                     # Canvas draws arc with bevel style
                     if {![info exists opts(-joinstyle)]} {
                         set opts(-joinstyle) bevel
@@ -2428,7 +2491,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set x [expr {$x1 - $width  * $dx}]
                     set y [expr {$y1 + $height * $dy}]
 
-                    $self Pdfoutcmd "q"
                     $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
                     $self Pdfout "BI\n"
                     $self Pdfout "/W [Nf $width]\n"
@@ -2438,7 +2500,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self Pdfout "ID\n"
                     $self Pdfout $stream
                     $self Pdfout ">\nEI\n"
-                    $self Pdfoutcmd "Q"
                 }
                 image {
                     set image $opts(-image)
@@ -2465,11 +2526,40 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set x [expr {$x1 - $width  * $dx}]
                     set y [expr {$y1 + $height * $dy}]
 
-                    $self Pdfoutcmd "q"
                     $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                    $self Pdfout "/$id Do\nQ\n"
+                    $self Pdfout "/$id Do\n"
                 }
-                window {}
+                window {
+                    # Ignore window objects if Img is not present
+                    if {![catch {package require Img}]} {
+                        # If the window is not mapped, skip it
+                        if {![catch {image create photo -format window -data $opts(-window)} image]} {
+                            set id [$self addRawImage [$image data]]
+
+                            foreach {width height oid} $images($id) break
+                            foreach {x1 y1} $coords break
+                            # Since the canvas coordinate system is upside
+                            # down we must flip back to get the image right.
+                            # We do this by adjusting y and y scale.
+                            switch $opts(-anchor) {
+                                nw { set dx 0.0 ; set dy 1.0 }
+                                n  { set dx 0.5 ; set dy 1.0 }
+                                ne { set dx 1.0 ; set dy 1.0 }
+                                e  { set dx 1.0 ; set dy 0.5 }
+                                se { set dx 1.0 ; set dy 0.0 }
+                                s  { set dx 0.5 ; set dy 0.0 }
+                                sw { set dx 0.0 ; set dy 0.0 }
+                                w  { set dx 0.0 ; set dy 0.5 }
+                                default { set dx 0.5 ; set dy 0.5 }
+                            }
+                            set x [expr {$x1 - $width  * $dx}]
+                            set y [expr {$y1 + $height * $dy}]
+
+                            $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                            $self Pdfout "/$id Do\n"
+                        }
+                    }
+                }
             }
             # Restore graphics state after the item
             $self Pdfoutcmd "Q"

@@ -71,12 +71,19 @@ test canvas-2.2 {bitmap} -body {
     }
     # This only tested the presence of an image. Should be improved...
 } -cleanup {destroy .c} -result 1
-exit
+
 test canvas-20.1 {demo} -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget
     source $::tk_library/demos/items.tcl
     wm deiconify [winfo toplevel .items.frame.c]
+    # Scroll down to the widgets to get them mapped
+    update
+    foreach {x1 x2} [.items.frame.c xview] break
+    .items.frame.c xview moveto [expr {1.0 - ($x2 - $x1)}]
+    foreach {y1 y2} [.items.frame.c yview] break
+    .items.frame.c yview moveto [expr {1.0 - ($y2 - $y1)}]
+    update
     mytest -debug {canvas .items.frame.c} {
         *
     }
