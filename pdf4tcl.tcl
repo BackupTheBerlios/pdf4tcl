@@ -2174,9 +2174,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #######################################################################
 
     method canvas {path args} {
-        variable images
-        variable bitmaps
-
         set sticky "nw"
         $self Trans 0 0 x y
         set width ""
@@ -2264,362 +2261,373 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
             # Save graphics state for each item
             $self Pdfoutcmd "q"
-            switch [$path type $id] {
-                rectangle {
-                    # Currently stipple is not implemented
-                    foreach {x1 y1 x2 y2} $coords break
-                    set w [expr {$x2 - $x1}]
-                    set h [expr {$y2 - $y1}]
 
-                    $self CanvasStdOpts opts
-                    set stroke [expr {$opts(-outline) ne ""}]
-                    set filled [expr {$opts(-fill) ne ""}]
+            $self CanvasDoItem $path $id $coords opts
 
-                    $self DrawRect $x1 $y1 $w $h $stroke $filled
-                }
-                line {
-                    # Currently stipple is not implemented neither is
-                    # -smooth -splinesteps
-
-                    # For a line, -fill means the stroke colour
-                    set opts(-outline) $opts(-fill)
-                    set opts(-outlinestipple) $opts(-stipple)
-                    $self CanvasStdOpts opts
-
-                    set arrows {}
-                    if {$opts(-arrow) eq "first" || $opts(-arrow) eq "both"} {
-                        lappend arrows [lindex $coords 2] [lindex $coords 3] \
-                                [lindex $coords 0] [lindex $coords 1] 0
-                    }
-                    if {$opts(-arrow) eq "last" || $opts(-arrow) eq "both"} {
-                        lappend arrows [lindex $coords end-3] [lindex $coords end-2] \
-                                [lindex $coords end-1] [lindex $coords end] [expr {[llength $coords] - 2}]
-                    }
-                    if {[llength $arrows] > 0} {
-                        foreach {shapeA shapeB shapeC} $opts(-arrowshape) break
-                        # Adjust like Tk does
-                        set shapeA [expr {$shapeA + 0.001}]
-                        set shapeB [expr {$shapeB + 0.001}]
-                        set shapeC [expr {$shapeC + $opts(-width) / 2.0 + 0.001}]
-
-                        set fracHeight [expr {($opts(-width)/2.0)/$shapeC}]
-                        set backup  [expr {$fracHeight * $shapeB + \
-                                           $shapeA * (1.0 - $fracHeight)/2.0}]
-                        foreach {x1 y1 x2 y2 ix} $arrows {
-                            set poly [list 0 0 0 0 0 0 0 0 0 0 0 0]
-                            lset poly 0  $x2
-                            lset poly 10 $x2
-                            lset poly 1  $y2
-                            lset poly 11 $y2
-                            set dx [expr {$x2 - $x1}]
-                            set dy [expr {$y2 - $y1}]
-                            set length [expr {hypot($dx, $dy)}]
-                            if {$length == 0} {
-                                set sinTheta 0.0
-                                set cosTheta 0.0
-                            } else {
-                                set sinTheta [expr {$dy / $length}]
-                                set cosTheta [expr {$dx / $length}]
-                            }
-                            set  vertX  [expr {[lindex $poly 0] - $shapeA * $cosTheta}]
-                            set  vertY  [expr {[lindex $poly 1] - $shapeA * $sinTheta}]
-                            set  temp   [expr {                   $shapeC * $sinTheta}]
-                            lset poly 2 [expr {[lindex $poly 0] - $shapeB * $cosTheta + $temp}]
-                            lset poly 8 [expr {[lindex $poly 2] - 2 * $temp}]
-                            set  temp   [expr {                   $shapeC * $cosTheta}]
-                            lset poly 3 [expr {[lindex $poly 1] - $shapeB * $sinTheta - $temp}]
-                            lset poly 9 [expr {[lindex $poly 3] + 2 * $temp}]
-                            lset poly 4 [expr {[lindex $poly 2] * $fracHeight + $vertX * (1.0-$fracHeight)}]
-                            lset poly 5 [expr {[lindex $poly 3] * $fracHeight + $vertY * (1.0-$fracHeight)}]
-                            lset poly 6 [expr {[lindex $poly 8] * $fracHeight + $vertX * (1.0-$fracHeight)}]
-                            lset poly 7 [expr {[lindex $poly 9] * $fracHeight + $vertY * (1.0-$fracHeight)}]
-
-                            # Adjust line end to draw it under the arrow
-                            lset coords $ix [expr {[lindex $coords $ix] - $backup * $cosTheta}]
-                            incr ix
-                            lset coords $ix [expr {[lindex $coords $ix] - $backup * $sinTheta}]
-
-                            # Draw polygon
-                            set cmd "m"
-                            foreach {x y} $poly {
-                                $self Pdfoutcmd $x $y $cmd
-                                set cmd "l"
-                            }
-                            $self Pdfoutcmd "f"
-                        }
-                    }
-
-                    # Draw lines
-                    set cmd "m"
-                    foreach {x y} $coords {
-                        $self Pdfoutcmd $x $y $cmd
-                        set cmd "l"
-                    }
-                    $self Pdfoutcmd "S"
-                }
-                oval {
-                    # Currently stipple is not implemented
-                    foreach {x1 y1 x2 y2} $coords break
-                    set x  [expr {($x2 + $x1) / 2.0}]
-                    set y  [expr {($y2 + $y1) / 2.0}]
-                    set rx [expr {($x2 - $x1) / 2.0}]
-                    set ry [expr {($y2 - $y1) / 2.0}]
-
-                    $self CanvasStdOpts opts
-                    set stroke [expr {$opts(-outline) ne ""}]
-                    set filled [expr {$opts(-fill) ne ""}]
-
-                    $self DrawOval $x $y $rx $ry $stroke $filled
-                }
-                arc {
-                    # Currently stipple is not implemented
-                    foreach {x1 y1 x2 y2} $coords break
-                    set x  [expr {($x2 + $x1) / 2.0}]
-                    set y  [expr {($y2 + $y1) / 2.0}]
-                    set rx [expr {($x2 - $x1) / 2.0}]
-                    set ry [expr {($y2 - $y1) / 2.0}]
-
-                    # Canvas draws arc with bevel style
-                    if {![info exists opts(-joinstyle)]} {
-                        set opts(-joinstyle) bevel
-                    }
-                    $self CanvasStdOpts opts
-                    set stroke [expr {$opts(-outline) ne ""}]
-                    set filled [expr {$opts(-fill) ne ""}]
-
-                    set phi $opts(-start)
-                    set extend $opts(-extent)
-
-                    $self DrawArc $x $y $rx $ry $phi $extend $stroke $filled \
-                            $opts(-style)
-                }
-                polygon {
-                    # Currently stipple is not implemented neither is
-                    # -smooth -splinesteps
-
-                    $self CanvasStdOpts opts
-                    set stroke [expr {$opts(-outline) ne ""}]
-                    set filled [expr {$opts(-fill) ne ""}]
-
-                    set cmd "m"
-                    foreach {x1 y1} $coords {
-                        $self Pdfoutcmd $x1 $y1 $cmd
-                        set cmd "l"
-                    }
-                    if {$filled && $stroke} {
-                        $self Pdfoutcmd "b"
-                    } elseif {$filled && !$stroke} {
-                        $self Pdfoutcmd "f"
-                    } else {
-                        $self Pdfoutcmd "s"
-                    }
-                }
-                text {
-                    # Currently stipple is not implemented neither is
-                    # -underline
-
-                    # Width is not a stroke option here
-                    array unset opts -width
-                    $self CanvasStdOpts opts
-
-                    set lines [CanvasGetWrappedText $path $id]
-                    foreach {x y} $coords break
-                    foreach {x1 y1 x2 y2} [$path bbox $id] break
-
-                    $self CanvasSetFont $opts(-font)
-                    set fontsize $pdf(font_size)
-                    # Next, figure out if the text fits within the bbox
-                    # with the current font, or it needs to be scaled.
-                    set widest 0.0
-                    foreach line $lines {
-                        set width [$self getStringWidth $line 1]
-                        if {$width > $widest} {
-                            set widest $width
-                        }
-                    }
-                    set xscale [expr {$widest / ($x2 - $x1)}]
-                    set yscale [expr {([llength $lines] * $fontsize) / \
-                                              ($y2 - $y1)}]
-                    # Scale down if the font is too big
-                    if {$xscale > 1.001} {
-                        $self setFont [expr {$fontsize / $xscale}] "" 1
-                        set fontsize $pdf(font_size)
-                        set widest [expr {$widest / $xscale}]
-                    }
-
-                    # Now we have selected an appropriate font and size.
-
-                    # Move x/y to point nw/n/ne depending on anchor
-                    # and justification
-                    set width $widest
-                    set height [expr {$fontsize * [llength $lines]}]
-                    if {[string match "s*" $opts(-anchor)]} {
-                        set y [expr {$y - $height}]
-                    } elseif {![string match "n*" $opts(-anchor)]} {
-                        set y [expr {$y - ($height / 2.0)}]
-                    }
-                    if {[string match "*w" $opts(-anchor)]} {
-                        set xanchor 0
-                    } elseif {[string match "*e" $opts(-anchor)]} {
-                        set xanchor 2
-                    } else {
-                        set xanchor 1
-                    }
-                    set xjustify [lsearch {left center right} $opts(-justify)]
-                    set x [expr {$x + ($xjustify - $xanchor) * $width / 2.0}]
-
-                    # Displace y to base line of font
-                    set bboxy [$self getFontMetric bboxy 1]
-                    set y [expr {$y + $bboxy + $fontsize}]
-                    foreach line $lines {
-                        set width [$self getStringWidth $line 1]
-                        set x0 [expr {$x - $xjustify * $width / 2.0}]
-
-                        # Since we have put the coordinate system  upside
-                        # down to follow canvas coordinates we need a
-                        # negative y scale here to get the text correct.
-
-                        $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
-                        $self Pdfout "([CleanText $line]) Tj\n"
-
-                        set y [expr {$y + $fontsize}]
-                    }
-                    $self EndTextObj
-                }
-                bitmap {
-                    set bitmap $opts(-bitmap)
-                    if {$bitmap eq ""} {
-                        puts MEEEP
-                    }
-                    set id bitmap_canvas_[file rootname [file tail $bitmap]]
-                    if {![info exists bitmaps($id)]} {
-                        $self AddBitmap $bitmap -id $id
-                    }
-                    foreach {width height oid imoid stream} $bitmaps($id) break
-                    foreach {x1 y1} $coords break
-                    # Since the canvas coordinate system is upside
-                    # down we must flip back to get the image right.
-                    # We do this by adjusting y and y scale.
-                    switch $opts(-anchor) {
-                        nw { set dx 0.0 ; set dy 1.0 }
-                        n  { set dx 0.5 ; set dy 1.0 }
-                        ne { set dx 1.0 ; set dy 1.0 }
-                        e  { set dx 1.0 ; set dy 0.5 }
-                        se { set dx 1.0 ; set dy 0.0 }
-                        s  { set dx 0.5 ; set dy 0.0 }
-                        sw { set dx 0.0 ; set dy 0.0 }
-                        w  { set dx 0.0 ; set dy 0.5 }
-                        default { set dx 0.5 ; set dy 0.5 }
-                    }
-                    set x [expr {$x1 - $width  * $dx}]
-                    set y [expr {$y1 + $height * $dy}]
-
-                    set bg $opts(-background)
-                    if {$bg eq ""} {
-                        # Dummy background to see if masking fails
-                        set bg purple
-                    }
-                    # Build a two-color palette
-                    set colors [concat [CanvasGetColor $bg] \
-                            [CanvasGetColor $opts(-foreground)]]
-                    set PaletteHex ""
-                    foreach color $colors {
-                        append PaletteHex [format %02x \
-                                [expr {int(round($color * 255.0))}]]
-                    }
-                    set paletteX "\[ /Indexed /DeviceRGB "
-                    append paletteX "1 < "
-                    append paletteX $PaletteHex
-                    append paletteX " > \]"
-
-                    # An image object for this bitmap+color
-                    set    xobject "<<\n/Type /XObject\n"
-                    append xobject "/Subtype /Image\n"
-                    append xobject "/Width $width\n/Height $height\n"
-                    append xobject "/ColorSpace $paletteX\n"
-                    append xobject "/BitsPerComponent 1\n"
-                    append xobject "/Length [string length $stream]\n"
-                    if {$opts(-background) eq ""} {
-                        append xobject "/Mask $imoid 0 R\n"
-                    }
-                    append xobject ">>\n"
-                    append xobject "stream\n"
-                    append xobject $stream
-                    append xobject "\nendstream"
-
-                    set newoid [$self AddObject $xobject]
-                    set newid image$newoid
-                    set images($newid) [list $width $height $newoid]
-
-                    # Put the image on the page
-                    $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                    $self Pdfout "/$newid Do\n"
-                }
-                image {
-                    set image $opts(-image)
-                    set id image_canvas_$image
-                    if {![info exists images($id)]} {
-                        $self addRawImage [$image data] -id $id
-                    }
-                    foreach {width height oid} $images($id) break
-                    foreach {x1 y1} $coords break
-                    # Since the canvas coordinate system is upside
-                    # down we must flip back to get the image right.
-                    # We do this by adjusting y and y scale.
-                    switch $opts(-anchor) {
-                        nw { set dx 0.0 ; set dy 1.0 }
-                        n  { set dx 0.5 ; set dy 1.0 }
-                        ne { set dx 1.0 ; set dy 1.0 }
-                        e  { set dx 1.0 ; set dy 0.5 }
-                        se { set dx 1.0 ; set dy 0.0 }
-                        s  { set dx 0.5 ; set dy 0.0 }
-                        sw { set dx 0.0 ; set dy 0.0 }
-                        w  { set dx 0.0 ; set dy 0.5 }
-                        default { set dx 0.5 ; set dy 0.5 }
-                    }
-                    set x [expr {$x1 - $width  * $dx}]
-                    set y [expr {$y1 + $height * $dy}]
-
-                    $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                    $self Pdfout "/$id Do\n"
-                }
-                window {
-                    # Ignore window objects if Img is not present
-                    if {![catch {package require Img}]} {
-                        # If the window is not mapped, skip it
-                        if {![catch {image create photo -format window -data $opts(-window)} image]} {
-                            set id [$self addRawImage [$image data]]
-
-                            foreach {width height oid} $images($id) break
-                            foreach {x1 y1} $coords break
-                            # Since the canvas coordinate system is upside
-                            # down we must flip back to get the image right.
-                            # We do this by adjusting y and y scale.
-                            switch $opts(-anchor) {
-                                nw { set dx 0.0 ; set dy 1.0 }
-                                n  { set dx 0.5 ; set dy 1.0 }
-                                ne { set dx 1.0 ; set dy 1.0 }
-                                e  { set dx 1.0 ; set dy 0.5 }
-                                se { set dx 1.0 ; set dy 0.0 }
-                                s  { set dx 0.5 ; set dy 0.0 }
-                                sw { set dx 0.0 ; set dy 0.0 }
-                                w  { set dx 0.0 ; set dy 0.5 }
-                                default { set dx 0.5 ; set dy 0.5 }
-                            }
-                            set x [expr {$x1 - $width  * $dx}]
-                            set y [expr {$y1 + $height * $dy}]
-
-                            $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                            $self Pdfout "/$id Do\n"
-                        }
-                    }
-                }
-            }
             # Restore graphics state after the item
             $self Pdfoutcmd "Q"
         }
         # Restore graphics state after the canvas
         $self Pdfoutcmd "Q"
+    }
+
+    # Handle one canvas item
+    method CanvasDoItem {path id coords optsName} {
+        upvar 1 $optsName opts
+        variable images
+        variable bitmaps
+
+        switch [$path type $id] {
+            rectangle {
+                # Currently stipple is not implemented
+                foreach {x1 y1 x2 y2} $coords break
+                set w [expr {$x2 - $x1}]
+                set h [expr {$y2 - $y1}]
+
+                $self CanvasStdOpts opts
+                set stroke [expr {$opts(-outline) ne ""}]
+                set filled [expr {$opts(-fill) ne ""}]
+
+                $self DrawRect $x1 $y1 $w $h $stroke $filled
+            }
+            line {
+                # Currently stipple is not implemented neither is
+                # -smooth -splinesteps
+
+                # For a line, -fill means the stroke colour
+                set opts(-outline) $opts(-fill)
+                set opts(-outlinestipple) $opts(-stipple)
+                $self CanvasStdOpts opts
+
+                set arrows {}
+                if {$opts(-arrow) eq "first" || $opts(-arrow) eq "both"} {
+                    lappend arrows [lindex $coords 2] [lindex $coords 3] \
+                            [lindex $coords 0] [lindex $coords 1] 0
+                }
+                if {$opts(-arrow) eq "last" || $opts(-arrow) eq "both"} {
+                    lappend arrows [lindex $coords end-3] [lindex $coords end-2] \
+                            [lindex $coords end-1] [lindex $coords end] [expr {[llength $coords] - 2}]
+                }
+                if {[llength $arrows] > 0} {
+                    foreach {shapeA shapeB shapeC} $opts(-arrowshape) break
+                    # Adjust like Tk does
+                    set shapeA [expr {$shapeA + 0.001}]
+                    set shapeB [expr {$shapeB + 0.001}]
+                    set shapeC [expr {$shapeC + $opts(-width) / 2.0 + 0.001}]
+
+                    set fracHeight [expr {($opts(-width)/2.0)/$shapeC}]
+                    set backup  [expr {$fracHeight * $shapeB + \
+                            $shapeA * (1.0 - $fracHeight)/2.0}]
+                    foreach {x1 y1 x2 y2 ix} $arrows {
+                        set poly [list 0 0 0 0 0 0 0 0 0 0 0 0]
+                        lset poly 0  $x2
+                        lset poly 10 $x2
+                        lset poly 1  $y2
+                        lset poly 11 $y2
+                        set dx [expr {$x2 - $x1}]
+                        set dy [expr {$y2 - $y1}]
+                        set length [expr {hypot($dx, $dy)}]
+                        if {$length == 0} {
+                            set sinTheta 0.0
+                            set cosTheta 0.0
+                        } else {
+                            set sinTheta [expr {$dy / $length}]
+                            set cosTheta [expr {$dx / $length}]
+                        }
+                        set  vertX  [expr {[lindex $poly 0] - $shapeA * $cosTheta}]
+                        set  vertY  [expr {[lindex $poly 1] - $shapeA * $sinTheta}]
+                        set  temp   [expr {                   $shapeC * $sinTheta}]
+                        lset poly 2 [expr {[lindex $poly 0] - $shapeB * $cosTheta + $temp}]
+                        lset poly 8 [expr {[lindex $poly 2] - 2 * $temp}]
+                        set  temp   [expr {                   $shapeC * $cosTheta}]
+                        lset poly 3 [expr {[lindex $poly 1] - $shapeB * $sinTheta - $temp}]
+                        lset poly 9 [expr {[lindex $poly 3] + 2 * $temp}]
+                        lset poly 4 [expr {[lindex $poly 2] * $fracHeight + $vertX * (1.0-$fracHeight)}]
+                        lset poly 5 [expr {[lindex $poly 3] * $fracHeight + $vertY * (1.0-$fracHeight)}]
+                        lset poly 6 [expr {[lindex $poly 8] * $fracHeight + $vertX * (1.0-$fracHeight)}]
+                        lset poly 7 [expr {[lindex $poly 9] * $fracHeight + $vertY * (1.0-$fracHeight)}]
+
+                        # Adjust line end to draw it under the arrow
+                        lset coords $ix [expr {[lindex $coords $ix] - $backup * $cosTheta}]
+                        incr ix
+                        lset coords $ix [expr {[lindex $coords $ix] - $backup * $sinTheta}]
+
+                        # Draw polygon
+                        set cmd "m"
+                        foreach {x y} $poly {
+                            $self Pdfoutcmd $x $y $cmd
+                            set cmd "l"
+                        }
+                        $self Pdfoutcmd "f"
+                    }
+                }
+
+                # Draw lines
+                set cmd "m"
+                foreach {x y} $coords {
+                    $self Pdfoutcmd $x $y $cmd
+                    set cmd "l"
+                }
+                $self Pdfoutcmd "S"
+            }
+            oval {
+                # Currently stipple is not implemented
+                foreach {x1 y1 x2 y2} $coords break
+                set x  [expr {($x2 + $x1) / 2.0}]
+                set y  [expr {($y2 + $y1) / 2.0}]
+                set rx [expr {($x2 - $x1) / 2.0}]
+                set ry [expr {($y2 - $y1) / 2.0}]
+
+                $self CanvasStdOpts opts
+                set stroke [expr {$opts(-outline) ne ""}]
+                set filled [expr {$opts(-fill) ne ""}]
+
+                $self DrawOval $x $y $rx $ry $stroke $filled
+            }
+            arc {
+                # Currently stipple is not implemented
+                foreach {x1 y1 x2 y2} $coords break
+                set x  [expr {($x2 + $x1) / 2.0}]
+                set y  [expr {($y2 + $y1) / 2.0}]
+                set rx [expr {($x2 - $x1) / 2.0}]
+                set ry [expr {($y2 - $y1) / 2.0}]
+
+                # Canvas draws arc with bevel style
+                if {![info exists opts(-joinstyle)]} {
+                    set opts(-joinstyle) bevel
+                }
+                $self CanvasStdOpts opts
+                set stroke [expr {$opts(-outline) ne ""}]
+                set filled [expr {$opts(-fill) ne ""}]
+
+                set phi $opts(-start)
+                set extend $opts(-extent)
+
+                $self DrawArc $x $y $rx $ry $phi $extend $stroke $filled \
+                        $opts(-style)
+            }
+            polygon {
+                # Currently stipple is not implemented neither is
+                # -smooth -splinesteps
+
+                $self CanvasStdOpts opts
+                set stroke [expr {$opts(-outline) ne ""}]
+                set filled [expr {$opts(-fill) ne ""}]
+
+                set cmd "m"
+                foreach {x1 y1} $coords {
+                    $self Pdfoutcmd $x1 $y1 $cmd
+                    set cmd "l"
+                }
+                if {$filled && $stroke} {
+                    $self Pdfoutcmd "b"
+                } elseif {$filled && !$stroke} {
+                    $self Pdfoutcmd "f"
+                } else {
+                    $self Pdfoutcmd "s"
+                }
+            }
+            text {
+                # Currently stipple is not implemented neither is
+                # -underline
+
+                # Width is not a stroke option here
+                array unset opts -width
+                $self CanvasStdOpts opts
+
+                set lines [CanvasGetWrappedText $path $id]
+                foreach {x y} $coords break
+                foreach {x1 y1 x2 y2} [$path bbox $id] break
+
+                $self CanvasSetFont $opts(-font)
+                set fontsize $pdf(font_size)
+                # Next, figure out if the text fits within the bbox
+                # with the current font, or it needs to be scaled.
+                set widest 0.0
+                foreach line $lines {
+                    set width [$self getStringWidth $line 1]
+                    if {$width > $widest} {
+                        set widest $width
+                    }
+                }
+                set xscale [expr {$widest / ($x2 - $x1)}]
+                set yscale [expr {([llength $lines] * $fontsize) / \
+                        ($y2 - $y1)}]
+                # Scale down if the font is too big
+                if {$xscale > 1.001} {
+                    $self setFont [expr {$fontsize / $xscale}] "" 1
+                    set fontsize $pdf(font_size)
+                    set widest [expr {$widest / $xscale}]
+                }
+
+                # Now we have selected an appropriate font and size.
+
+                # Move x/y to point nw/n/ne depending on anchor
+                # and justification
+                set width $widest
+                set height [expr {$fontsize * [llength $lines]}]
+                if {[string match "s*" $opts(-anchor)]} {
+                    set y [expr {$y - $height}]
+                } elseif {![string match "n*" $opts(-anchor)]} {
+                    set y [expr {$y - ($height / 2.0)}]
+                }
+                if {[string match "*w" $opts(-anchor)]} {
+                    set xanchor 0
+                } elseif {[string match "*e" $opts(-anchor)]} {
+                    set xanchor 2
+                } else {
+                    set xanchor 1
+                }
+                set xjustify [lsearch {left center right} $opts(-justify)]
+                set x [expr {$x + ($xjustify - $xanchor) * $width / 2.0}]
+
+                # Displace y to base line of font
+                set bboxy [$self getFontMetric bboxy 1]
+                set y [expr {$y + $bboxy + $fontsize}]
+                foreach line $lines {
+                    set width [$self getStringWidth $line 1]
+                    set x0 [expr {$x - $xjustify * $width / 2.0}]
+
+                    # Since we have put the coordinate system  upside
+                    # down to follow canvas coordinates we need a
+                    # negative y scale here to get the text correct.
+
+                    $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
+                    $self Pdfout "([CleanText $line]) Tj\n"
+
+                    set y [expr {$y + $fontsize}]
+                }
+                $self EndTextObj
+            }
+            bitmap {
+                set bitmap $opts(-bitmap)
+                if {$bitmap eq ""} {
+                    puts MEEEP
+                }
+                set id bitmap_canvas_[file rootname [file tail $bitmap]]
+                if {![info exists bitmaps($id)]} {
+                    $self AddBitmap $bitmap -id $id
+                }
+                foreach {width height oid imoid stream} $bitmaps($id) break
+                foreach {x1 y1} $coords break
+                # Since the canvas coordinate system is upside
+                # down we must flip back to get the image right.
+                # We do this by adjusting y and y scale.
+                switch $opts(-anchor) {
+                    nw { set dx 0.0 ; set dy 1.0 }
+                    n  { set dx 0.5 ; set dy 1.0 }
+                    ne { set dx 1.0 ; set dy 1.0 }
+                    e  { set dx 1.0 ; set dy 0.5 }
+                    se { set dx 1.0 ; set dy 0.0 }
+                    s  { set dx 0.5 ; set dy 0.0 }
+                    sw { set dx 0.0 ; set dy 0.0 }
+                    w  { set dx 0.0 ; set dy 0.5 }
+                    default { set dx 0.5 ; set dy 0.5 }
+                }
+                set x [expr {$x1 - $width  * $dx}]
+                set y [expr {$y1 + $height * $dy}]
+
+                set bg $opts(-background)
+                if {$bg eq ""} {
+                    # Dummy background to see if masking fails
+                    set bg purple
+                }
+                # Build a two-color palette
+                set colors [concat [CanvasGetColor $bg] \
+                        [CanvasGetColor $opts(-foreground)]]
+                set PaletteHex ""
+                foreach color $colors {
+                    append PaletteHex [format %02x \
+                            [expr {int(round($color * 255.0))}]]
+                }
+                set paletteX "\[ /Indexed /DeviceRGB "
+                append paletteX "1 < "
+                append paletteX $PaletteHex
+                append paletteX " > \]"
+
+                # An image object for this bitmap+color
+                set    xobject "<<\n/Type /XObject\n"
+                append xobject "/Subtype /Image\n"
+                append xobject "/Width $width\n/Height $height\n"
+                append xobject "/ColorSpace $paletteX\n"
+                append xobject "/BitsPerComponent 1\n"
+                append xobject "/Length [string length $stream]\n"
+                if {$opts(-background) eq ""} {
+                    append xobject "/Mask $imoid 0 R\n"
+                }
+                append xobject ">>\n"
+                append xobject "stream\n"
+                append xobject $stream
+                append xobject "\nendstream"
+
+                set newoid [$self AddObject $xobject]
+                set newid image$newoid
+                set images($newid) [list $width $height $newoid]
+
+                # Put the image on the page
+                $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                $self Pdfout "/$newid Do\n"
+            }
+            image {
+                set image $opts(-image)
+                set id image_canvas_$image
+                if {![info exists images($id)]} {
+                    $self addRawImage [$image data] -id $id
+                }
+                foreach {width height oid} $images($id) break
+                foreach {x1 y1} $coords break
+                # Since the canvas coordinate system is upside
+                # down we must flip back to get the image right.
+                # We do this by adjusting y and y scale.
+                switch $opts(-anchor) {
+                    nw { set dx 0.0 ; set dy 1.0 }
+                    n  { set dx 0.5 ; set dy 1.0 }
+                    ne { set dx 1.0 ; set dy 1.0 }
+                    e  { set dx 1.0 ; set dy 0.5 }
+                    se { set dx 1.0 ; set dy 0.0 }
+                    s  { set dx 0.5 ; set dy 0.0 }
+                    sw { set dx 0.0 ; set dy 0.0 }
+                    w  { set dx 0.0 ; set dy 0.5 }
+                    default { set dx 0.5 ; set dy 0.5 }
+                }
+                set x [expr {$x1 - $width  * $dx}]
+                set y [expr {$y1 + $height * $dy}]
+
+                $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                $self Pdfout "/$id Do\n"
+            }
+            window {
+                # Ignore window objects if Img is not present
+                if {![catch {package require Img}]} {
+                    # If the window is not mapped, skip it
+                    if {![catch {image create photo -format window -data $opts(-window)} image]} {
+                        set id [$self addRawImage [$image data]]
+
+                        foreach {width height oid} $images($id) break
+                        foreach {x1 y1} $coords break
+                        # Since the canvas coordinate system is upside
+                        # down we must flip back to get the image right.
+                        # We do this by adjusting y and y scale.
+                        switch $opts(-anchor) {
+                            nw { set dx 0.0 ; set dy 1.0 }
+                            n  { set dx 0.5 ; set dy 1.0 }
+                            ne { set dx 1.0 ; set dy 1.0 }
+                            e  { set dx 1.0 ; set dy 0.5 }
+                            se { set dx 1.0 ; set dy 0.0 }
+                            s  { set dx 0.5 ; set dy 0.0 }
+                            sw { set dx 0.0 ; set dy 0.0 }
+                            w  { set dx 0.0 ; set dy 0.5 }
+                            default { set dx 0.5 ; set dy 0.5 }
+                        }
+                        set x [expr {$x1 - $width  * $dx}]
+                        set y [expr {$y1 + $height * $dy}]
+
+                        $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                        $self Pdfout "/$id Do\n"
+                    }
+                }
+            }
+        }
     }
 
     # Setup the graphics state from standard options
