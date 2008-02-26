@@ -30,6 +30,7 @@ package require pdf4tcl
 
 proc myexec {args} {
     set ch [open "|$args"]
+    set ::myexec 0
     fileevent $ch readable [string map "%ch $ch" {
         gets %ch line
         if {[eof %ch]} {
@@ -96,6 +97,7 @@ proc mytest {args} {
                 break
             }
         }
+        file copy -force testdebug.pdf ..
         #file delete testdebug.pdf
     }
     regexp {stream.*endstream} $res res

@@ -2112,6 +2112,24 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
         }
 
+        # The Image Mask Object can be used as transparency Mask
+        # for something else, e.g. when drawing the bitmap itself
+        # with transparent background.
+
+        set bitstream [binary format B* $bits]
+        set    xobject "<<\n/Type /XObject\n"
+        append xobject "/Subtype /Image\n"
+        append xobject "/Width $width\n/Height $height\n"
+        append xobject {/ImageMask true /Decode [ 1 0 ]} \n
+        append xobject "/BitsPerComponent 1\n"
+        append xobject "/Length [string length $bitstream]\n"
+        append xobject ">>\nstream\n"
+        append xobject $bitstream
+        append xobject "\nendstream"
+
+        set imoid [$self AddObject $xobject]
+
+        # Inline image within the Pattern Object
         set    stream "q\n"
         append stream "$width 0 0 $height 0 0 " "cm" \n
         append stream "BI\n"
@@ -2120,10 +2138,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append stream {/IM true /Decode [ 1 0 ]} \n
         append stream "/BPC 1\n"
         append stream "ID\n"
-        append stream [binary format B* $bits]
+        append stream $bitstream
         append stream ">\nEI\nQ"
 
-        # Pattern object
+        # The Pattern Object can be used as a stipple Mask with the Cs1
+        # Colorspace.
+
         set xobject "<<\n/Type /Pattern\n"
         append xobject "/PatternType 1\n"
         append xobject "/PaintType 2\n"
@@ -2145,7 +2165,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {$id eq ""} {
             set id bitmap$oid
         }
-        set bitmaps($id) [list $width $height $oid [binary format B* $bits]]
+        set bitmaps($id) [list $width $height $oid $imoid $bitstream]
         return $id
     }
 
@@ -2263,6 +2283,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
                     # For a line, -fill means the stroke colour
                     set opts(-outline) $opts(-fill)
+                    set opts(-outlinestipple) $opts(-stipple)
                     $self CanvasStdOpts opts
 
                     set arrows {}
@@ -2466,13 +2487,15 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self EndTextObj
                 }
                 bitmap {
-                    # Not supported yet: -fg -bg
                     set bitmap $opts(-bitmap)
+                    if {$bitmap eq ""} {
+                        puts MEEEP
+                    }
                     set id bitmap_canvas_[file rootname [file tail $bitmap]]
                     if {![info exists bitmaps($id)]} {
                         $self AddBitmap $bitmap -id $id
                     }
-                    foreach {width height oid stream} $bitmaps($id) break
+                    foreach {width height oid imoid stream} $bitmaps($id) break
                     foreach {x1 y1} $coords break
                     # Since the canvas coordinate system is upside
                     # down we must flip back to get the image right.
@@ -2491,15 +2514,46 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set x [expr {$x1 - $width  * $dx}]
                     set y [expr {$y1 + $height * $dy}]
 
+                    set bg $opts(-background)
+                    if {$bg eq ""} {
+                        # Dummy background to see if masking fails
+                        set bg purple
+                    }
+                    # Build a two-color palette
+                    set colors [concat [CanvasGetColor $bg] \
+                            [CanvasGetColor $opts(-foreground)]]
+                    set PaletteHex ""
+                    foreach color $colors {
+                        append PaletteHex [format %02x \
+                                [expr {int(round($color * 255.0))}]]
+                    }
+                    set paletteX "\[ /Indexed /DeviceRGB "
+                    append paletteX "1 < "
+                    append paletteX $PaletteHex
+                    append paletteX " > \]"
+
+                    # An image object for this bitmap+color
+                    set    xobject "<<\n/Type /XObject\n"
+                    append xobject "/Subtype /Image\n"
+                    append xobject "/Width $width\n/Height $height\n"
+                    append xobject "/ColorSpace $paletteX\n"
+                    append xobject "/BitsPerComponent 1\n"
+                    append xobject "/Length [string length $stream]\n"
+                    if {$opts(-background) eq ""} {
+                        append xobject "/Mask $imoid 0 R\n"
+                    }
+                    append xobject ">>\n"
+                    append xobject "stream\n"
+                    append xobject $stream
+                    append xobject "\nendstream"
+
+                    set newoid [$self AddObject $xobject]
+                    set newid image$newoid
+                    set images($newid) [list $width $height $newoid]
+
+                    # Put the image on the page
                     $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                    $self Pdfout "BI\n"
-                    $self Pdfout "/W [Nf $width]\n"
-                    $self Pdfout "/H [Nf $height]\n"
-                    $self Pdfout "/ColorSpace /DeviceGray\n"
-                    $self Pdfout "/BPC 1\n"
-                    $self Pdfout "ID\n"
-                    $self Pdfout $stream
-                    $self Pdfout ">\nEI\n"
+                    $self Pdfout "/$newid Do\n"
                 }
                 image {
                     set image $opts(-image)
@@ -2572,13 +2626,34 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method CanvasStdOpts {optsName} {
         upvar 1 $optsName opts
 
+        # Stipple for fill color
+        set fillstippleid ""
+        if {[info exists opts(-stipple)] && $opts(-stipple) ne ""} {
+            set bitmap $opts(-stipple)
+            set id bitmap_canvas_[file rootname [file tail $bitmap]]
+            if {![info exists bitmaps($id)]} {
+                $self AddBitmap $bitmap -id $id
+            }
+            set fillstippleid $id
+        }
+        # Stipple for stroke color
+        set strokestippleid ""
+        if {[info exists opts(-outlinestipple)] && \
+                $opts(-outlinestipple) ne ""} {
+            set bitmap $opts(-outlinestipple)
+            set id bitmap_canvas_[file rootname [file tail $bitmap]]
+            if {![info exists bitmaps($id)]} {
+                $self AddBitmap $bitmap -id $id
+            }
+            set strokestippleid $id
+        }
         # Outline controls stroke color
         if {[info exists opts(-outline)] && $opts(-outline) ne ""} {
-            $self CanvasStrokeColor $opts(-outline)
+            $self CanvasStrokeColor $opts(-outline) $strokestippleid
         }
         # Fill controls fill color
         if {[info exists opts(-fill)] && $opts(-fill) ne ""} {
-            $self CanvasFillColor $opts(-fill)
+            $self CanvasFillColor $opts(-fill) $fillstippleid
         }
         # Line width
         if {[info exists opts(-width)]} {
@@ -2613,12 +2688,18 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
-    # Set the fill color from a Tk color
-    method CanvasFillColor {color {bitmapid ""}} {
+    # Convert a Tk color to PDF color
+    proc CanvasGetColor {color} {
         foreach {red green blue} [winfo rgb . $color] break
         set red   [expr {($red   & 0xFF00) / 65280.0}]
         set green [expr {($green & 0xFF00) / 65280.0}]
         set blue  [expr {($blue  & 0xFF00) / 65280.0}]
+        list $red $green $blue
+    }
+
+    # Set the fill color from a Tk color
+    method CanvasFillColor {color {bitmapid ""}} {
+        foreach {red green blue} [CanvasGetColor $color] break
         if {$bitmapid eq ""} {
             $self Pdfoutcmd $red $green $blue "rg"
         } else {
@@ -2630,10 +2711,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Set the stroke color from a Tk color
     method CanvasStrokeColor {color {bitmapid ""}} {
-        foreach {red green blue} [winfo rgb . $color] break
-        set red   [expr {($red   & 0xFF00) / 65280.0}]
-        set green [expr {($green & 0xFF00) / 65280.0}]
-        set blue  [expr {($blue  & 0xFF00) / 65280.0}]
+        foreach {red green blue} [CanvasGetColor $color] break
         if {$bitmapid eq ""} {
             $self Pdfoutcmd $red $green $blue "RG"
         } else {
