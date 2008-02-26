@@ -74,7 +74,7 @@ namespace eval pdf4tcl {
             c  [expr {72.0 / 2.54}] \
             i  72.0                 \
             p  1.0                  \
-    ]
+           ]
 
     if {[catch {package require zlib} err]} {
         set g(haveZlib) 0
@@ -912,7 +912,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         if {![info exists ::pdf4tcl::FontWidthsCurrent] || \
-                    $::pdf4tcl::FontWidthsCurrent ne $font} {
+                $::pdf4tcl::FontWidthsCurrent ne $font} {
             array unset ::pdf4tcl::FontWidths
             array set ::pdf4tcl::FontWidths $::pdf4tcl::font_widths($font)
             set ::pdf4tcl::FontWidthsCurrent $font
@@ -2279,7 +2279,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         switch [$path type $id] {
             rectangle {
-                # Currently stipple is not implemented
                 foreach {x1 y1 x2 y2} $coords break
                 set w [expr {$x2 - $x1}]
                 set h [expr {$y2 - $y1}]
@@ -2291,8 +2290,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self DrawRect $x1 $y1 $w $h $stroke $filled
             }
             line {
-                # Currently stipple is not implemented neither is
-                # -smooth -splinesteps
+                # Not implemented: -smooth -splinesteps
 
                 # For a line, -fill means the stroke colour
                 set opts(-outline) $opts(-fill)
@@ -2371,7 +2369,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self Pdfoutcmd "S"
             }
             oval {
-                # Currently stipple is not implemented
                 foreach {x1 y1 x2 y2} $coords break
                 set x  [expr {($x2 + $x1) / 2.0}]
                 set y  [expr {($y2 + $y1) / 2.0}]
@@ -2385,7 +2382,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self DrawOval $x $y $rx $ry $stroke $filled
             }
             arc {
-                # Currently stipple is not implemented
                 foreach {x1 y1 x2 y2} $coords break
                 set x  [expr {($x2 + $x1) / 2.0}]
                 set y  [expr {($y2 + $y1) / 2.0}]
@@ -2407,8 +2403,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                         $opts(-style)
             }
             polygon {
-                # Currently stipple is not implemented neither is
-                # -smooth -splinesteps
+                # Not implemented: -smooth -splinesteps
 
                 $self CanvasStdOpts opts
                 set stroke [expr {$opts(-outline) ne ""}]
@@ -2428,8 +2423,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
             text {
-                # Currently stipple is not implemented neither is
-                # -underline
+                # Not implemented: -underline
 
                 # Width is not a stroke option here
                 array unset opts -width
@@ -2502,7 +2496,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             bitmap {
                 set bitmap $opts(-bitmap)
                 if {$bitmap eq ""} {
-                    puts MEEEP
+                    return
                 }
                 set id bitmap_canvas_[file rootname [file tail $bitmap]]
                 if {![info exists bitmaps($id)]} {
@@ -2570,6 +2564,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
             image {
                 set image $opts(-image)
+                if {$image eq ""} {
+                    return
+                }
                 set id image_canvas_$image
                 if {![info exists images($id)]} {
                     $self addRawImage [$image data] -id $id
@@ -2598,34 +2595,36 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
             window {
                 # Ignore window objects if Img is not present
-                if {![catch {package require Img}]} {
-                    # If the window is not mapped, skip it
-                    if {![catch {image create photo -format window -data $opts(-window)} image]} {
-                        set id [$self addRawImage [$image data]]
-
-                        foreach {width height oid} $images($id) break
-                        foreach {x1 y1} $coords break
-                        # Since the canvas coordinate system is upside
-                        # down we must flip back to get the image right.
-                        # We do this by adjusting y and y scale.
-                        switch $opts(-anchor) {
-                            nw { set dx 0.0 ; set dy 1.0 }
-                            n  { set dx 0.5 ; set dy 1.0 }
-                            ne { set dx 1.0 ; set dy 1.0 }
-                            e  { set dx 1.0 ; set dy 0.5 }
-                            se { set dx 1.0 ; set dy 0.0 }
-                            s  { set dx 0.5 ; set dy 0.0 }
-                            sw { set dx 0.0 ; set dy 0.0 }
-                            w  { set dx 0.0 ; set dy 0.5 }
-                            default { set dx 0.5 ; set dy 0.5 }
-                        }
-                        set x [expr {$x1 - $width  * $dx}]
-                        set y [expr {$y1 + $height * $dy}]
-
-                        $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                        $self Pdfout "/$id Do\n"
-                    }
+                if {[catch {package require Img}]} {
+                    return
                 }
+                # If the window is not mapped, skip it
+                if {[catch {image create photo -format window -data $opts(-window)} image]} {
+                    return
+                }
+                set id [$self addRawImage [$image data]]
+
+                foreach {width height oid} $images($id) break
+                foreach {x1 y1} $coords break
+                # Since the canvas coordinate system is upside
+                # down we must flip back to get the image right.
+                # We do this by adjusting y and y scale.
+                switch $opts(-anchor) {
+                    nw { set dx 0.0 ; set dy 1.0 }
+                    n  { set dx 0.5 ; set dy 1.0 }
+                    ne { set dx 1.0 ; set dy 1.0 }
+                    e  { set dx 1.0 ; set dy 0.5 }
+                    se { set dx 1.0 ; set dy 0.0 }
+                    s  { set dx 0.5 ; set dy 0.0 }
+                    sw { set dx 0.0 ; set dy 0.0 }
+                    w  { set dx 0.0 ; set dy 0.5 }
+                    default { set dx 0.5 ; set dy 0.5 }
+                }
+                set x [expr {$x1 - $width  * $dx}]
+                set y [expr {$y1 + $height * $dy}]
+
+                $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                $self Pdfout "/$id Do\n"
             }
         }
     }
