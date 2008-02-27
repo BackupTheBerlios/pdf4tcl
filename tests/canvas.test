@@ -103,6 +103,41 @@ test canvas-4.2 {sticky} -body {
     }
 } -cleanup {destroy .c} -result 1
 
+test canvas-5.1 {stipple} -body {
+    canvas .c
+    .c create rectangle -10 -10 500 500 -fill "" -outline black
+    .c create bitmap 0 0 -bitmap questhead -anchor nw \
+            -background blue -foreground yellow
+    .c create rectangle 50 -5 80 25 -stipple questhead -fill red
+    .c create rectangle -5 50 25 80 -stipple questhead -fill red
+    .c create rectangle 50 50 80 80 -stipple questhead -fill red
+    .c configure -scrollregion [.c bbox all]
+    .c xview moveto 0
+    .c yview moveto 0
+    pack .c -fill both -expand 1
+    #wm deiconify .
+    mytest {canvas .c} {startPage} {canvas .c -bbox {5 5 150 150}} {
+        *
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-5.2 {stipple} -body {
+    canvas .c
+    .c create rectangle -10 -10 200 200 -fill "" -outline black
+    .c create rectangle -5 -5 25 25 -stipple questhead -fill red
+    .c create rectangle 30 -5 60 25 -stipple questhead -fill red
+    .c create rectangle -5 30 25 60 -stipple questhead -fill red
+    .c create rectangle 30 30 60 60 -stipple questhead -fill red -offset #5,5
+    .c configure -scrollregion [.c bbox all]
+    .c xview moveto 0
+    .c yview moveto 0
+    pack .c -fill both -expand 1
+    #wm deiconify .
+    mytest {canvas .c} {
+        *
+    }
+} -cleanup {destroy .c} -result 1
+
 test canvas-20.1 {demo} -constraints "apa" -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget

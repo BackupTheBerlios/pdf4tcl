@@ -253,6 +253,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable images
         variable fonts
         variable bitmaps
+        variable patterns
 
         # The unit translation factor is needed before parsing arguments
         set pdf(unit) 1.0
@@ -270,6 +271,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(in_text_object) false
         array set images {}
         array set bitmaps {}
+        array set patterns {}
         set pdf(objects) {}
         set pdf(compress) $options(-compress)
         set pdf(finished) false
@@ -607,7 +609,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Finish document
     method finish {} {
         variable images
-        variable bitmaps
+        variable patterns
         variable fonts
 
         if {$pdf(finished)} {
@@ -668,14 +670,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout ">>\n"
         }
         # pattern references
-        if {[array size bitmaps] > 0} {
+        if {[array size patterns] > 0} {
             $self Pdfout "/ColorSpace <<\n"
             $self Pdfout "/Cs1 \[/Pattern /DeviceRGB\]\n"
             $self Pdfout ">>\n"
 
             $self Pdfout "/Pattern <<\n"
-            foreach key [array names bitmaps] {
-                set oid [lindex $bitmaps($key) 2]
+            foreach key [array names patterns] {
+                set oid [lindex $patterns($key) 2]
                 $self Pdfout "/$key $oid 0 R\n"
             }
             $self Pdfout ">>\n"
@@ -2070,11 +2072,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Add a bitmap to the document, as a pattern
     method AddBitmap {bitmap args} {
         variable bitmaps
+        variable patterns
 
         set id ""
+        set pattern ""
         foreach {arg value} $args {
             switch -- $arg {
-                "-id"     {set id $value}
+                "-id"      {set id $value}
+                "-pattern" {set pattern $value}
             }
         }
 
@@ -2105,68 +2110,83 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         set bits ""
         foreach byte $bytes {
-            # Needs reversing?
+            # Reverse bit order
             for {set t 0} {$t < 8} {incr t} {
                 append bits [expr {1 & $byte}]
                 set byte [expr {$byte >> 1}]
             }
         }
-
-        # The Image Mask Object can be used as transparency Mask
-        # for something else, e.g. when drawing the bitmap itself
-        # with transparent background.
-
         set bitstream [binary format B* $bits]
-        set    xobject "<<\n/Type /XObject\n"
-        append xobject "/Subtype /Image\n"
-        append xobject "/Width $width\n/Height $height\n"
-        append xobject {/ImageMask true /Decode [ 1 0 ]} \n
-        append xobject "/BitsPerComponent 1\n"
-        append xobject "/Length [string length $bitstream]\n"
-        append xobject ">>\nstream\n"
-        append xobject $bitstream
-        append xobject "\nendstream"
 
-        set imoid [$self AddObject $xobject]
+        if {$pattern eq ""} {
+            # The Image Mask Object can be used as transparency Mask
+            # for something else, e.g. when drawing the bitmap itself
+            # with transparent background.
 
-        # Inline image within the Pattern Object
-        set    stream "q\n"
-        append stream "$width 0 0 $height 0 0 " "cm" \n
-        append stream "BI\n"
-        append stream "/W [Nf $width]\n"
-        append stream "/H [Nf $height]\n"
-        append stream {/IM true /Decode [ 1 0 ]} \n
-        append stream "/BPC 1\n"
-        append stream "ID\n"
-        append stream $bitstream
-        append stream ">\nEI\nQ"
+            set    xobject "<<\n/Type /XObject\n"
+            append xobject "/Subtype /Image\n"
+            append xobject "/Width $width\n/Height $height\n"
+            append xobject {/ImageMask true /Decode [ 1 0 ]} \n
+            append xobject "/BitsPerComponent 1\n"
+            append xobject "/Length [string length $bitstream]\n"
+            append xobject ">>\nstream\n"
+            append xobject $bitstream
+            append xobject "\nendstream"
 
-        # The Pattern Object can be used as a stipple Mask with the Cs1
-        # Colorspace.
+            set imoid [$self AddObject $xobject]
+            if {$id eq ""} {
+                set id bitmap$imoid
+            }
+            set bitmaps($id) [list $width $height $imoid $bitstream]
+            return $id
+        } else {
+            # Inline image within the Pattern Object
+            set    stream "q\n"
+            append stream "$width 0 0 $height 0 0 " "cm" \n
+            append stream "BI\n"
+            append stream "/W [Nf $width]\n"
+            append stream "/H [Nf $height]\n"
+            append stream {/IM true /Decode [ 1 0 ]} \n
+            append stream "/BPC 1\n"
+            append stream "ID\n"
+            append stream $bitstream
+            append stream ">\nEI\nQ"
 
-        set xobject "<<\n/Type /Pattern\n"
-        append xobject "/PatternType 1\n"
-        append xobject "/PaintType 2\n"
-        append xobject "/TilingType 1\n"
-        append xobject "/BBox \[ 0 0 $width $height \]\n"
-        append xobject "/XStep $width\n"
-        append xobject "/YStep $height\n"
-        append xobject "/Matrix \[ 1 0 0 1 0 0 \] \n"
-        append xobject "/Resources <<\n"
-        append xobject ">>\n"
-        append xobject "/Length [string length $stream]\n"
-        append xobject ">>\n"
-        append xobject "stream\n"
-        append xobject $stream
-        append xobject "\nendstream"
+            # The Pattern Object can be used as a stipple Mask with the Cs1
+            # Colorspace.
+            
+            if {[llength $pattern] == 4} {
+                foreach {xscale yscale xoffset yoffset} $pattern break
+            } else {
+                set xscale 1
+                set yscale 1
+                set xoffset 0
+                set yoffset 0
+            }
+            set xobject "<<\n/Type /Pattern\n"
+            append xobject "/PatternType 1\n"
+            append xobject "/PaintType 2\n"
+            append xobject "/TilingType 1\n"
+            append xobject "/BBox \[ 0 0 $width $height \]\n"
+            append xobject "/XStep $width\n"
+            append xobject "/YStep $height\n"
+            append xobject "/Matrix \[ $xscale 0 0 $yscale $xoffset $yoffset \] \n"
+            append xobject "/Resources <<\n"
+            append xobject ">>\n"
+            append xobject "/Length [string length $stream]\n"
+            append xobject ">>\n"
+            append xobject "stream\n"
+            append xobject $stream
+            append xobject "\nendstream"
 
-        set oid [$self AddObject $xobject]
+            set oid [$self AddObject $xobject]
 
-        if {$id eq ""} {
-            set id bitmap$oid
+            if {$id eq ""} {
+                set id pattern$oid
+            }
+            set patterns($id) [list $width $height $oid]
+            return $id
         }
-        set bitmaps($id) [list $width $height $oid $imoid $bitstream]
-        return $id
     }
 
     #######################################################################
@@ -2270,6 +2290,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd 0 "j" ;# Miter join style
         # Miter limit; Tk switches from miter to bevel at 11 degrees
         $self Pdfoutcmd [expr {1.0/sin(11.0/180.0*3.14159265/2.0)}] "M"
+        set pdf(canvasscale) [list [Nf $xscale] [Nf [expr {-$yscale}]] \
+                [Nf $xoffset] [Nf $yoffset]]
 
         $self Pdfoutcmd $xscale 0 0 $yscale $xoffset $yoffset "cm"
 
@@ -2335,8 +2357,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             }
             line {
                 # For a line, -fill means the stroke colour
-                set opts(-outline) $opts(-fill)
+                set opts(-outline)        $opts(-fill)
                 set opts(-outlinestipple) $opts(-stipple)
+                set opts(-outlineoffset)  $opts(-offset)
                 $self CanvasStdOpts opts
 
                 set arrows {}
@@ -2579,7 +2602,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 if {![info exists bitmaps($id)]} {
                     $self AddBitmap $bitmap -id $id
                 }
-                foreach {width height oid imoid stream} $bitmaps($id) break
+                foreach {width height imoid stream} $bitmaps($id) break
                 foreach {x1 y1} $coords break
                 # Since the canvas coordinate system is upside
                 # down we must flip back to get the image right.
@@ -2787,30 +2810,49 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
+    method CanvasGetBitmap {bitmap offset} {
+        # The pattern is unique for the scale for this canvas
+        foreach {xscale yscale xoffset yoffset} $pdf(canvasscale) break
+        # Adapt to offset
+        if {[regexp {^(\#?)(.*),(.*)$} $offset -> pre ox oy]} {
+            set xoffset [expr {$xoffset + $ox * $xscale}]
+            set yoffset [expr {$yoffset - $oy * $yscale}]
+        } else {
+            # Not supported yet
+        }
+        
+        set scale [list $xscale $yscale $xoffset $yoffset]
+        set tail [string map {. x} [join $scale _]]
+        set id pattern_canvas_[file rootname [file tail $bitmap]]_$tail
+        if {![info exists patterns($id)]} {
+            $self AddBitmap $bitmap -id $id -pattern $scale
+        }
+        return $id
+    }
+
     # Setup the graphics state from standard options
     method CanvasStdOpts {optsName} {
         upvar 1 $optsName opts
+        variable patterns
 
         # Stipple for fill color
         set fillstippleid ""
         if {[info exists opts(-stipple)] && $opts(-stipple) ne ""} {
-            set bitmap $opts(-stipple)
-            set id bitmap_canvas_[file rootname [file tail $bitmap]]
-            if {![info exists bitmaps($id)]} {
-                $self AddBitmap $bitmap -id $id
-            }
-            set fillstippleid $id
+            set fillstippleid [$self CanvasGetBitmap $opts(-stipple) \
+                    $opts(-offset)]
         }
         # Stipple for stroke color
         set strokestippleid ""
         if {[info exists opts(-outlinestipple)] && \
                 $opts(-outlinestipple) ne ""} {
-            set bitmap $opts(-outlinestipple)
-            set id bitmap_canvas_[file rootname [file tail $bitmap]]
-            if {![info exists bitmaps($id)]} {
-                $self AddBitmap $bitmap -id $id
+            # Outlineoffset is a 8.5 feature
+            if {[info exists opts(-outlineoffset)]} {
+                set offset $opts(-outlineoffset)
+            } else {
+                set offset $opts(-offset)
             }
-            set strokestippleid $id
+            set strokestippleid [$self CanvasGetBitmap $opts(-outlinestipple) \
+                    $offset]
         }
         # Outline controls stroke color
         if {[info exists opts(-outline)] && $opts(-outline) ne ""} {
