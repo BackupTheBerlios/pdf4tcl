@@ -2671,17 +2671,27 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self Pdfout "/$id Do\n"
             }
             window {
-                # Ignore window objects if Img is not present
-                if {[catch {package require Img}]} {
-                    return
-                }
-                # If the window is not mapped, skip it
+                catch {package require Img}
                 if {[catch {image create photo -format window -data $opts(-window)} image]} {
-                    return
+                    set image ""
                 }
-                set id [$self addRawImage [$image data]]
+                if {$image eq ""} {
+                    # Get a size even if it is unmapped
+                    foreach width [list [winfo width $opts(-window)] \
+                                        $opts(-width) \
+                                        [winfo reqwidth $opts(-window)]] {
+                        if {$width > 1} break
+                    }
+                    foreach height [list [winfo height $opts(-window)] \
+                                         $opts(-height) \
+                                         [winfo reqheight $opts(-window)]] {
+                        if {$height > 1} break
+                    }
+                } else {
+                    set id [$self addRawImage [$image data]]
 
-                foreach {width height oid} $images($id) break
+                    foreach {width height oid} $images($id) break
+                }
                 foreach {x1 y1} $coords break
                 # Since the canvas coordinate system is upside
                 # down we must flip back to get the image right.
@@ -2700,8 +2710,15 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set x [expr {$x1 - $width  * $dx}]
                 set y [expr {$y1 + $height * $dy}]
 
-                $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
-                $self Pdfout "/$id Do\n"
+                if {$image eq ""} {
+                    # Draw a black box
+                    $self Pdfoutcmd $x [expr {$y - $height}] \
+                            $width $height "re"
+                    $self Pdfoutcmd "f"
+                } else {
+                    $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
+                    $self Pdfout "/$id Do\n"
+                }
             }
         }
     }
@@ -2897,7 +2914,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         upvar 1 $ulName underline
         set text  [$w itemcget $item -text]
         set width [$w itemcget $item -width]
-        set underline [$w itemcget $item -underline]
+        # Underline is a 8.5 feature
+        if {[catch {$w itemcget $item -underline} underline]} {
+            set underline -1
+        }
 
         # Simple non-wrapping case. Only divide on newlines.
         if {$width == 0} {

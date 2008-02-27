@@ -103,7 +103,7 @@ test canvas-4.2 {sticky} -body {
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-20.1 {demo} -constraints apa -body {
+test canvas-20.1 {demo} -constraints "apa" -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget
     source $::tk_library/demos/items.tcl
@@ -120,7 +120,7 @@ test canvas-20.1 {demo} -constraints apa -body {
     }
 } -cleanup {destroy .items} -result 1
 
-test canvas-20.2 {demo} -constraints apa -body {
+test canvas-20.2 {demo} -constraints "apa" -body {
     # Find the goldberg demo for canvas
     set dir $::tk_library/demos
     if {![file exists $dir/goldberg.tcl]} {
