@@ -2179,6 +2179,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set width ""
         set height ""
         set bbox [$path bbox all]
+        set bg 0
         foreach {arg value} $args {
             switch -- $arg {
                 "-width"  {set width [$self GetPoints $value]}
@@ -2187,6 +2188,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 "-y"      {$self Trans 0 $value _ y}
                 "-x"      {$self Trans $value 0 x _}
                 "-bbox"   {set bbox $value}
+                "-bg"     {set bg $value}
                 default {
                     return -code error \
                             "unknown option $arg"
@@ -2249,7 +2251,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd $bbx2 $bby2 "l"
         $self Pdfoutcmd $bbx2 $bby1 "l"
         #$self Pdfoutcmd $bbx1 $bby1 $bbw $bbh "re"
-        $self Pdfoutcmd "W n"
+        $self Pdfoutcmd "W"
+        if {$bg} {
+            # Draw the region in background color if requested
+            foreach {red green blue} [CanvasGetColor [$path cget -background]] break
+            $self Pdfoutcmd $red $green $blue "rg"
+            $self Pdfoutcmd "f"
+            $self Pdfoutcmd 0 0 0 "rg"
+        } else {
+            $self Pdfoutcmd "n"
+        }
 
         #set enclosed [$path find enclosed $bbx1 $bby1 $bbx2 $bby2]
         set overlapping [$path find overlapping $bbx1 $bby1 $bbx2 $bby2]
@@ -2290,7 +2301,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self DrawRect $x1 $y1 $w $h $stroke $filled
             }
             line {
-                # Not implemented: -smooth -splinesteps
+                # Not implemented: -splinesteps
 
                 # For a line, -fill means the stroke colour
                 set opts(-outline) $opts(-fill)
@@ -2361,10 +2372,17 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
 
                 # Draw lines
-                set cmd "m"
-                foreach {x y} $coords {
-                    $self Pdfoutcmd $x $y $cmd
-                    set cmd "l"
+                if {[string is true -strict $opts(-smooth)] || \
+                            $opts(-smooth) eq "bezier"} {
+                    $self CanvasBezier $coords
+                } elseif {$opts(-smooth) eq "raw"} {
+                    $self CanvasRawCurve $coords
+                } else {
+                    set cmd "m"
+                    foreach {x y} $coords {
+                        $self Pdfoutcmd $x $y $cmd
+                        set cmd "l"
+                    }
                 }
                 $self Pdfoutcmd "S"
             }
@@ -2403,16 +2421,28 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                         $opts(-style)
             }
             polygon {
-                # Not implemented: -smooth -splinesteps
+                # Not implemented: -splinesteps
 
                 $self CanvasStdOpts opts
                 set stroke [expr {$opts(-outline) ne ""}]
                 set filled [expr {$opts(-fill) ne ""}]
 
-                set cmd "m"
-                foreach {x1 y1} $coords {
-                    $self Pdfoutcmd $x1 $y1 $cmd
-                    set cmd "l"
+                if {[string is true -strict $opts(-smooth)] || \
+                            $opts(-smooth) eq "bezier"} {
+                    # Close the coordinates if necessary
+                    if {[lindex $coords 0] != [lindex $coords end-1] && \
+                                [lindex $coords 1] != [lindex $coords end]} {
+                        lappend $coords [lindex $coords 0] [lindex $coords 1]
+                    }
+                    $self CanvasBezier $coords
+                } elseif {$opts(-smooth) eq "raw"} {
+                    $self CanvasRawCurve $coords
+                } else {
+                    set cmd "m"
+                    foreach {x y} $coords {
+                        $self Pdfoutcmd $x $y $cmd
+                        set cmd "l"
+                    }
                 }
                 if {$filled && $stroke} {
                     $self Pdfoutcmd "b"
@@ -2625,6 +2655,70 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
                 $self Pdfoutcmd $width 0 0 [expr {-$height}] $x $y "cm"
                 $self Pdfout "/$id Do\n"
+            }
+        }
+    }
+
+    method CanvasBezier {coords} {
+        # Is it a closed curve?
+        if {[lindex $coords 0] == [lindex $coords end-1] && \
+                    [lindex $coords 1] == [lindex $coords end]} {
+            set closed 1
+            set x0 [expr {0.5  * [lindex $coords end-3] + 0.5  *[lindex $coords 0]}]
+            set y0 [expr {0.5  * [lindex $coords end-2] + 0.5  *[lindex $coords 1]}]
+            set x1 [expr {0.167* [lindex $coords end-3] + 0.833*[lindex $coords 0]}]
+            set y1 [expr {0.167* [lindex $coords end-2] + 0.833*[lindex $coords 1]}]
+            set x2 [expr {0.833* [lindex $coords 0]     + 0.167*[lindex $coords 2]}]
+            set y2 [expr {0.833* [lindex $coords 1]     + 0.167*[lindex $coords 3]}]
+            set x3 [expr {0.5  * [lindex $coords 0]     + 0.5  *[lindex $coords 2]}]
+            set y3 [expr {0.5  * [lindex $coords 1]     + 0.5  *[lindex $coords 3]}]
+            $self Pdfoutcmd $x0 $y0 "m"
+            $self Pdfoutcmd $x1 $y1 $x2 $y2 $x3 $y3 "c"
+        } else {
+            set closed 0
+            set x3 [lindex $coords 0]
+            set y3 [lindex $coords 1]
+            $self Pdfoutcmd $x3 $y3 "m"
+        }
+        set len [llength $coords]
+        for {set i 2} {$i < ($len - 2)} {incr i 2} {
+            foreach {px1 py1 px2 py2} [lrange $coords $i [expr {$i + 3}]] break
+            set x1 [expr {0.333*$x3 + 0.667*$px1}]
+            set y1 [expr {0.333*$y3 + 0.667*$py1}]
+
+            if {!$closed && $i == ($len - 4)} {
+                # Last of an open curve
+                set x3 $px2
+                set y3 $py2
+            } else {
+                set x3 [expr {0.5 * $px1 + 0.5 * $px2}]
+                set y3 [expr {0.5 * $py1 + 0.5 * $py2}]
+            }
+            set x2 [expr {0.333 * $x3 + 0.667 * $px1}]
+            set y2 [expr {0.333 * $y3 + 0.667 * $py1}]
+            $self Pdfoutcmd $x1 $y1 $x2 $y2 $x3 $y3 "c"
+        }
+    }
+
+    method CanvasRawCurve {coords} {
+        set x3 [lindex $coords 0]
+        set y3 [lindex $coords 1]
+        $self Pdfoutcmd $x3 $y3 "m"
+
+        set len [llength $coords]
+        # Is there a complete set of segements in the list?
+        set add [expr {($len - 2) % 6}]
+        if {$add != 0} {
+            eval lappend coords [lrange $coords 0 [expr {$add - 1}]]
+        }
+        for {set i 0} {$i < ($len - 8)} {incr i 6} {
+            foreach {px1 py1 px2 py2 px3 py3 px4 py4} \
+                    [lrange $coords $i [expr {$i + 7}]] break
+            if {$px1 == $px2 && $py1 == $py2 && $px3 == $px4 && $py3 == $py4} {
+                # Straight line
+                $self Pdfoutcmd $px4 $py4 "l"
+            } else {
+                $self Pdfoutcmd $px2 $py2 $px3 $py3 $px4 $py4 "c"
             }
         }
     }
