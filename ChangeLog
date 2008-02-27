@@ -1,3 +1,6 @@
+2008-02-27 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Addec canvas method to draw the contents of a canvas.
+
 2008-02-26 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Redesigned API for arc, splitting r to rx/ry.
 	  *** INCOMPATIBLE CHANGE ***

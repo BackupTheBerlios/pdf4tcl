@@ -85,6 +85,24 @@ test canvas-3.1 {text} -body {
     }
 } -cleanup {destroy .c} -result 1
 
+test canvas-4.1 {sticky} -body {
+    # Wide canvas contents
+    canvas .c
+    .c create rectangle 0 0 500 100 -outline black
+    mytest -margin 100 {canvas .c -sticky s} {
+        *
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-4.2 {sticky} -body {
+    # Tall canvas contents
+    canvas .c
+    .c create rectangle 0 0 100 500 -outline black
+    mytest -margin 100 {canvas .c -sticky e} {
+        *
+    }
+} -cleanup {destroy .c} -result 1
+
 test canvas-20.1 {demo} -constraints apa -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget

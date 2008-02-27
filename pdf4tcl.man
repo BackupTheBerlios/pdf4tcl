@@ -205,6 +205,11 @@ The area is always filled in one direction, preserving aspect ratio, unless
 If option [arg "-bg"] is true, a background is drawn in the canvas' background
 color.  Otherwise only objects are drawn.  Default is false.
 
+Option -splinesteps for lines/polygons are ignored and so is any stipple offset.
+Stipples does not have the same scaling and offset as on screen.
+Window items requires Img to be present and must be visible on-screen when
+the canvas is drawn.
+
 [list_end]
 [subsection {OBJECT METHODS, TEXT}]
 [list_begin definitions]

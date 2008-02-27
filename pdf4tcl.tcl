@@ -2083,7 +2083,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set filename [string range $bitmap 1 end]
         } else {
             # Internal bitmap
-            set filename [file join $pdf4tcl::dir bitmaps ${bitmap}.xbm]
+            set filename [file join $pdf4tcl::dir "bitmaps" ${bitmap}.xbm]
         }
         if {![file exists $filename]} {
             return -code error "No such bitmap $bitmap"
@@ -2216,19 +2216,47 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         foreach {bbx1 bby1 bbx2 bby2} $bbox break
         set bbw [expr {$bbx2 - $bbx1}]
         set bbh [expr {$bby2 - $bby1}]
+
+        set stickyw [string match "*w*" $sticky]
+        set stickye [string match "*e*" $sticky]
+        set stickyn [string match "*n*" $sticky]
+        set stickys [string match "*s*" $sticky]
+        set fillx [expr {$stickyw && $stickye}]
+        set filly [expr {$stickyn && $stickys}]
+
         # Now calculate offset and scale between canvas coords
         # and pdf coords.
-        # FIXA: assuming sticky news thus not preserving aspect
+
         set xscale  [expr {$width / $bbw}]
-        set yscale  [expr {-($height / $bbh)}]
+        set yscale  [expr {$height / $bbh}]
+
+        if {$xscale > $yscale && !$fillx} {
+            set xscale $yscale
+        }
+        if {$yscale > $xscale && !$filly} {
+            set yscale $xscale
+        }
 
         set xoffset [expr {$x - $bbx1 * $xscale}]
+        if {!$fillx && !$stickyw} {
+            # Move right
+            set xoffset [expr {$xoffset + ($width - $bbw * $xscale)}]
+        }
+
         if {$pdf(orient)} {
             set yoffset $y
         } else {
             set yoffset [expr {$y + $height}]
         }
-        set yoffset [expr {$yoffset - $bby1 * $yscale}]
+        set yoffset [expr {$yoffset + $bby1 * $yscale}]
+        if {!$filly && !$stickyn} {
+            # Move down
+            set yoffset [expr {$yoffset - ($height - $bbh * $yscale)}]
+        }
+
+        # Canvas coordinate system starts in upper corner
+        # Thus we need to flip the y axis
+        set yscale [expr {-$yscale}]
 
         # Set up clean graphics modes
 
@@ -2433,7 +2461,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     # Close the coordinates if necessary
                     if {[lindex $coords 0] != [lindex $coords end-1] && \
                                 [lindex $coords 1] != [lindex $coords end]} {
-                        lappend $coords [lindex $coords 0] [lindex $coords 1]
+                        lappend coords [lindex $coords 0] [lindex $coords 1]
                     }
                     $self CanvasBezier $coords
                 } elseif {$opts(-smooth) eq "raw"} {
