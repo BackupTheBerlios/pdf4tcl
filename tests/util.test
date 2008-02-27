@@ -92,7 +92,7 @@ test util-5.2 {getStringWidth method} -body {
     $pdf startPage
     $pdf setFont 20 Helvetica
     set res {}
-    lappend res [$pdf getStringWidth "MMM"]
+    lappend res [format %.2f [$pdf getStringWidth "MMM"]]
     lappend res [$pdf getStringWidth "MiM"]
     lappend res [$pdf getStringWidth "iii"]
     $pdf destroy

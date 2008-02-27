@@ -73,6 +73,18 @@ test canvas-2.2 {bitmap} -body {
     # This only tested the presence of an image. Should be improved...
 } -cleanup {destroy .c} -result 1
 
+test canvas-3.1 {text} -body {
+    canvas .c
+    .c create rectangle 0 0 500 500 -outline black
+    # Needs 8.5 since underline is 8.5 feature
+    if {[catch {.c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw}]} {
+        return 1
+    }
+    mytest {canvas .c} {
+        18.931 36.778 m 26.375 36.778 l S
+    }
+} -cleanup {destroy .c} -result 1
+
 test canvas-20.1 {demo} -constraints apa -body {
     # Find the demo for canvas
     source $::tk_library/demos/widget

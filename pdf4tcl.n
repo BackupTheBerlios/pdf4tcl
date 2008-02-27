@@ -47,6 +47,8 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .sp
 \fIobjectName\fR \fBgetDrawableArea\fR
 .sp
+\fIobjectName\fR \fBcanvas\fR \fIpath\fR ?\fIoption value\fR...?
+.sp
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
 .sp
 \fIobjectName\fR \fBgetStringWidth\fR \fIstr\fR
@@ -239,6 +241,20 @@ is created.
 This method returns the size of the available area on the page,
 after removing margins.  The return value is a list of width and height,
 in the document's default unit.
+.TP
+\fIobjectName\fR \fBcanvas\fR \fIpath\fR ?\fIoption value\fR...?
+Draws the contents of the canvas widget \fIpath\fR on the current page.
+Option \fI-bbox\fR gives the area of the canvas to be drawn. Default is
+the entire contents, i.e. the result of $path bbox all.
+Options \fI-x\fR, \fI-y\fR, \fI-width\fR and \fI-height\fR defines
+an area on the page where to place the contents. Default area starts at origo,
+stretching over the drawable area of the page.
+Option \fI-sticky\fR defines how to place the contents within the area.
+The area is always filled in one direction, preserving aspect ratio, unless
+\fI-sticky\fR defines that the other direction should be filled too.  Default
+\fI-sticky\fR is \fInw\fR.
+If option \fI-bg\fR is true, a background is drawn in the canvas' background
+color.  Otherwise only objects are drawn.  Default is false.
 .SS "OBJECT METHODS, TEXT"
 .TP
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
@@ -294,7 +310,7 @@ unsupported formats, use Tk and the Img package to load and dump images to raw f
 \fBputRawImage\fR and \fBaddRawImage\fR.
 .TP
 \fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
-Put an image on the current page. The image must have beend added previously by \fBaddImage\fR or
+Put an image on the current page. The image must have been added previously by \fBaddImage\fR or
 \fBaddRawImage\fR. The \fIid\fR is the one returned from the add command.
 .RS
 .TP
@@ -323,7 +339,7 @@ calls to \fBputImage\fR. Supported formats are PNG and JPEG.
 .RS
 .TP
 \fB-id\fR \fIid\fR
-Explicitely select an id for the image. The \fIid\fR must be unique within the document.
+Explicitly select an id for the image. The \fIid\fR must be unique within the document.
 .TP
 \fB-type\fR \fIname\fR
 Set the image type.  This can usually be deduced from the file name, this

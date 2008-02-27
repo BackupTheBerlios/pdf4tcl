@@ -3,6 +3,8 @@
 # $Id$
 
 VERSION = 03
+#TCLSH = $(HOME)/tcl/bin/tclsh8.5
+TCLSH = tclsh
 
 # TOOL paths
 NAGELFAR = nagelfar -encoding iso8859-1
@@ -28,7 +30,7 @@ metrics:
 
 # Tests
 test: cleancc
-	tclsh tests/all.tcl
+	$(TCLSH) tests/all.tcl
 
 check:
 	$(NAGELFAR) pdf4tcl.tcl -filter '*Unknown variable*'

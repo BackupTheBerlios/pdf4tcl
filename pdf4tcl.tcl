@@ -2230,10 +2230,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         set yoffset [expr {$yoffset - $bby1 * $yscale}]
 
+        # Set up clean graphics modes
+
         $self EndTextObj
         $self Pdfoutcmd "q"
-
-        # Set up clean graphics modes
         $self Pdfoutcmd 1.0 "w"
         $self Pdfout "\[\] 0 d\n"
         $self Pdfoutcmd 0 0 0 "rg"
@@ -2288,6 +2288,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable images
         variable bitmaps
 
+        # Not implemented: line/polygon -splinesteps
+        # Not implemented: stipple offset
+        # Limited: Stipple scale and offset does not match screen display
+        # Limited: window item needs Img, and needs to be mapped
+
         switch [$path type $id] {
             rectangle {
                 foreach {x1 y1 x2 y2} $coords break
@@ -2301,8 +2306,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 $self DrawRect $x1 $y1 $w $h $stroke $filled
             }
             line {
-                # Not implemented: -splinesteps
-
                 # For a line, -fill means the stroke colour
                 set opts(-outline) $opts(-fill)
                 set opts(-outlinestipple) $opts(-stipple)
@@ -2421,8 +2424,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                         $opts(-style)
             }
             polygon {
-                # Not implemented: -splinesteps
-
                 $self CanvasStdOpts opts
                 set stroke [expr {$opts(-outline) ne ""}]
                 set filled [expr {$opts(-fill) ne ""}]
@@ -2453,13 +2454,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
             text {
-                # Not implemented: -underline
-
                 # Width is not a stroke option here
                 array unset opts -width
                 $self CanvasStdOpts opts
 
-                set lines [CanvasGetWrappedText $path $id]
+                set lines [CanvasGetWrappedText $path $id underline]
                 foreach {x y} $coords break
                 foreach {x1 y1 x2 y2} [$path bbox $id] break
 
@@ -2508,6 +2507,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 # Displace y to base line of font
                 set bboxy [$self getFontMetric bboxy 1]
                 set y [expr {$y + $bboxy + $fontsize}]
+                set lineNo 0
+                set ulcoords {}
                 foreach line $lines {
                     set width [$self getStringWidth $line 1]
                     set x0 [expr {$x - $xjustify * $width / 2.0}]
@@ -2519,9 +2520,27 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
                     $self Pdfout "([CleanText $line]) Tj\n"
 
+                    if {$underline != -1} {
+                        if {[lindex $underline 0] eq $lineNo} {
+                            set index [lindex $underline 1]
+                            set ulx [$self getStringWidth [string range $line \
+                                               0 [expr {$index - 1}]] 1]
+                            set ulw [$self getStringWidth [string index $line $index] 1]
+                            lappend ulcoords [expr {$x0 + $ulx}] \
+                                    [expr {$y - $bboxy}] $ulw
+                        }
+                    }
+                    incr lineNo
                     set y [expr {$y + $fontsize}]
                 }
                 $self EndTextObj
+
+                # Draw any underline
+                foreach {x y w} $ulcoords {
+                    $self Pdfoutcmd $x $y "m"
+                    $self Pdfoutcmd [expr {$x + $w}] $y "l"
+                    $self Pdfoutcmd "S"
+                }
             }
             bitmap {
                 set bitmap $opts(-bitmap)
@@ -2846,13 +2865,29 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Get the text from a text item, as a list of lines
     # This takes and line wrapping into account
-    proc CanvasGetWrappedText {w item} {
+    proc CanvasGetWrappedText {w item ulName} {
+        upvar 1 $ulName underline
         set text  [$w itemcget $item -text]
         set width [$w itemcget $item -width]
+        set underline [$w itemcget $item -underline]
 
         # Simple non-wrapping case. Only divide on newlines.
         if {$width == 0} {
-            return [split $text \n]
+            set lines [split $text \n]
+            if {$underline != -1} {
+                set isum 0
+                set lineNo 0
+                foreach line $lines {
+                    set iend [expr {$isum + [string length $line]}]
+                    if {$underline < $iend} {
+                        set underline [list $lineNo [expr {$underline - $isum}]]
+                        break
+                    }
+                    incr lineNo
+                    set isum [expr {$iend + 1}]
+                }
+            }
+            return $lines
         }
 
         # Run across the text's left side and look for all indexes
@@ -2872,11 +2907,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             if {$prev != $index} {
                 set line [string range $text $prev [expr {$index - 1}]]
                 if {[string index $line end] eq "\n"} {
-                    set line [string trim $line \n]
+                    set line [string trimright $line \n]
                 } else {
                     # If the line does not end with \n it is wrapped.
                     # Then spaces should be discarded
-                    set line [string trim $line]
+                    set line [string trimright $line]
                 }
                 lappend res $line
             }
@@ -2884,6 +2919,18 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         # The last chunk
         lappend res [string range $text $prev end]
+        if {$underline != -1} {
+            set lineNo -1
+            set prev 0
+            foreach index $firsts {
+                if {$underline < $index} {
+                    set underline [lindex $lineNo [expr {$underline - $prev}]]
+                    break
+                }
+                set prev $index
+                incr lineNo
+            }
+        }
         return $res
     }
 

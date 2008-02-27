@@ -190,6 +190,21 @@ This method returns the size of the available area on the page,
 after removing margins.  The return value is a list of width and height,
 in the document's default unit.
 
+[call [arg objectName] [method canvas] [arg "path"] [opt [arg "option value"]...]]
+
+Draws the contents of the canvas widget [arg "path"] on the current page.
+Option [arg "-bbox"] gives the area of the canvas to be drawn. Default is
+the entire contents, i.e. the result of $path bbox all.
+Options [arg "-x"], [arg "-y"], [arg "-width"] and [arg "-height"] defines
+an area on the page where to place the contents. Default area starts at origo,
+stretching over the drawable area of the page.
+Option [arg "-sticky"] defines how to place the contents within the area.
+The area is always filled in one direction, preserving aspect ratio, unless
+[arg "-sticky"] defines that the other direction should be filled too.  Default
+[arg "-sticky"] is [arg "nw"].
+If option [arg "-bg"] is true, a background is drawn in the canvas' background
+color.  Otherwise only objects are drawn.  Default is false.
+
 [list_end]
 [subsection {OBJECT METHODS, TEXT}]
 [list_begin definitions]
@@ -265,7 +280,7 @@ unsupported formats, use Tk and the Img package to load and dump images to raw f
 
 [call [arg objectName] [method putImage] [arg "id"] [arg "x"] [arg "y"]  [opt [arg "option value"]...]]
 
-Put an image on the current page. The image must have beend added previously by [method addImage] or
+Put an image on the current page. The image must have been added previously by [method addImage] or
 [method addRawImage]. The [arg "id"] is the one returned from the add command.
 
 [list_begin opt]
@@ -296,7 +311,7 @@ calls to [method putImage]. Supported formats are PNG and JPEG.
 [list_begin opt]
 
 [opt_def -id [arg id]]
-Explicitely select an id for the image. The [arg "id"] must be unique within the document.
+Explicitly select an id for the image. The [arg "id"] must be unique within the document.
 
 [opt_def -type [arg name]]
 Set the image type.  This can usually be deduced from the file name, this
