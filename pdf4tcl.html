@@ -331,9 +331,17 @@ The area is always filled in one direction, preserving aspect ratio, unless
 <i class='arg'>-sticky</i> is <i class='arg'>nw</i>.
 If option <i class='arg'>-bg</i> is true, a background is drawn in the canvas' background
 color.  Otherwise only objects are drawn.  Default is false.
-
-Option -splinesteps for lines/polygons are ignored and so is any stipple offset.
-Stipples does not have the same scaling and offset as on screen.
+<br><br>
+Limitations:
+<br><br>
+Fonts for text items are currently limited to PDF's builtins, i.e. Helvetica,
+Times and Courier. A guess is made to chose which one to use to get a reasonable
+display on the page.
+<br><br>
+Option -splinesteps for lines/polygons is ignored.
+<br><br>
+Stipple offset is limited. The form x,y should work.
+<br><br>
 Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.
 

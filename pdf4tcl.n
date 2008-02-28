@@ -6,9 +6,9 @@
 .so man.macros
 .TH "pdf4tcl" n 0.3.x pdf4tcl "Pdf document generation"
 .BS
-.SH "NAME"
+.SH NAME
 pdf4tcl \- Pdf document generation
-.SH "SYNOPSIS"
+.SH SYNOPSIS
 package require \fBTcl  8.4\fR
 .sp
 package require \fBsnit \fR
@@ -112,10 +112,10 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 \fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
 .sp
 .BE
-.SH "DESCRIPTION"
+.SH DESCRIPTION
 This package provides a container class for
 generating \fIpdf\fR documents.
-.SH "COORDINATES"
+.SH COORDINATES
 All coordinates and distances can be expressed with or without a unit. See
 \fBUNITS\fR for valid units.
 When the page is configured with \fB-orient\fR set to false, origo is in
@@ -125,7 +125,7 @@ Origo is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
 Page option \fB-orient\fR can also affect the anchor point for things like
 images.
-.SH "UNITS"
+.SH UNITS
 Any coordinates and distances can be expressed with or without an explicit
 unit.  If no unit is given, the default unit for the document is used.
 A unit may be one of
@@ -255,8 +255,17 @@ The area is always filled in one direction, preserving aspect ratio, unless
 \fI-sticky\fR is \fInw\fR.
 If option \fI-bg\fR is true, a background is drawn in the canvas' background
 color.  Otherwise only objects are drawn.  Default is false.
-Option -splinesteps for lines/polygons are ignored and so is any stipple offset.
-Stipples does not have the same scaling and offset as on screen.
+.sp
+Limitations:
+.sp
+Fonts for text items are currently limited to PDF's builtins, i.e. Helvetica,
+Times and Courier. A guess is made to chose which one to use to get a reasonable
+display on the page.
+.sp
+Option -splinesteps for lines/polygons is ignored.
+.sp
+Stipple offset is limited. The form x,y should work.
+.sp
 Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.
 .SS "OBJECT METHODS, TEXT"
@@ -435,7 +444,7 @@ Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
 .sp
 The default value of this option is zero.
-.SH "EXAMPLES"
+.SH EXAMPLES
 .nf
 
   pdf4tcl::new mypdf -paper a3
@@ -448,9 +457,9 @@ The default value of this option is zero.
 .fi
 .SH "SEE ALSO"
 doctools
-.SH "KEYWORDS"
+.SH KEYWORDS
 document, pdf
-.SH "COPYRIGHT"
+.SH COPYRIGHT
 .nf
 Copyright (c) 2007 Peter Spjuth
 
