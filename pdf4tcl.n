@@ -6,9 +6,9 @@
 .so man.macros
 .TH "pdf4tcl" n 0.3.x pdf4tcl "Pdf document generation"
 .BS
-.SH NAME
+.SH "NAME"
 pdf4tcl \- Pdf document generation
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 package require \fBTcl  8.4\fR
 .sp
 package require \fBsnit \fR
@@ -65,11 +65,7 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .sp
 \fIobjectName\fR \fBgetLineSpacing\fR
 .sp
-\fIobjectName\fR \fBdrawText\fR \fIstr\fR
-.sp
 \fIobjectName\fR \fBtext\fR \fIstr\fR ?\fIoption value\fR...?
-.sp
-\fIobjectName\fR \fBdrawTextAt\fR \fIx\fR \fIy\fR \fIstr\fR ?\fIoption value\fR...?
 .sp
 \fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
 .sp
@@ -112,10 +108,10 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 \fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
 .sp
 .BE
-.SH DESCRIPTION
+.SH "DESCRIPTION"
 This package provides a container class for
 generating \fIpdf\fR documents.
-.SH COORDINATES
+.SH "COORDINATES"
 All coordinates and distances can be expressed with or without a unit. See
 \fBUNITS\fR for valid units.
 When the page is configured with \fB-orient\fR set to false, origo is in
@@ -125,7 +121,7 @@ Origo is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
 Page option \fB-orient\fR can also affect the anchor point for things like
 images.
-.SH UNITS
+.SH "UNITS"
 Any coordinates and distances can be expressed with or without an explicit
 unit.  If no unit is given, the default unit for the document is used.
 A unit may be one of
@@ -215,9 +211,14 @@ the output file will be finished and closed.
 This method starts a new page in the document. The page will have the
 default page settings for the document unless overridden by \fIoption\fR.
 See \fBPAGE CONFIGURATION\fR for page settings.
+This will end any ongoing page.
 .TP
 \fIobjectName\fR \fBendPage\fR
-This method ends a page in the document.
+This method ends a page in the document.  It is normally not needed since
+it is implied by e.g. \fBstartPage\fR and \fBfinish\fR.  However,
+if the document is built page by page in e.g. an event driven environment
+it can be good to call \fBendPage\fR explicitly to have all the page's
+work finished before reentering the event loop.
 .TP
 \fIobjectName\fR \fBfinish\fR
 This method ends the document.
@@ -236,6 +237,7 @@ If no \fIfilename\fR is given, it is written to stdout.
 This will do \fBendPage\fR and \fBfinish\fR if needed.
 If the \fB-file\fR option was given at object creation, an empty file
 is created.
+.SS "OBJECT METHODS"
 .TP
 \fIobjectName\fR \fBgetDrawableArea\fR
 This method returns the size of the available area on the page,
@@ -292,19 +294,14 @@ be set by \fIspacing\fR. This may be any real number, including negative,
 and defaults to the value set by \fBsetLineSpacing\fR.
 .TP
 \fIobjectName\fR \fBsetLineSpacing\fR \fIspacing\fR
-Set the default line spacing used be e.g. \fBnewLine\fR.
+Set the default line spacing used be e.g. \fBnewLine\fR.  Initially
+the spacing is 1.
 .TP
 \fIobjectName\fR \fBgetLineSpacing\fR
 Get the current default line spacing.
 .TP
-\fIobjectName\fR \fBdrawText\fR \fIstr\fR
-Draw text. Deprecated. Use \fBtext\fR.
-.TP
 \fIobjectName\fR \fBtext\fR \fIstr\fR ?\fIoption value\fR...?
 Draw text.
-.TP
-\fIobjectName\fR \fBdrawTextAt\fR \fIx\fR \fIy\fR \fIstr\fR ?\fIoption value\fR...?
-Draw text. Deprecated. Use \fBtext\fR.
 .TP
 \fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
 Draw text.
@@ -444,22 +441,22 @@ Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
 .sp
 The default value of this option is zero.
-.SH EXAMPLES
+.SH "EXAMPLES"
 .nf
 
   pdf4tcl::new mypdf -paper a3
   mypdf startPage
   mypdf setFont 12 Courier
-  mypdf drawTextAt 50 50 "Hejsan"
+  mypdf text "Hejsan" -x 50 -y 50
   mypdf write -file mypdf.pdf
   mypdf destroy
 
 .fi
 .SH "SEE ALSO"
 doctools
-.SH KEYWORDS
+.SH "KEYWORDS"
 document, pdf
-.SH COPYRIGHT
+.SH "COPYRIGHT"
 .nf
 Copyright (c) 2007 Peter Spjuth
 

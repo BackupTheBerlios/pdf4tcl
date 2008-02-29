@@ -31,6 +31,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#package_commands">PACKAGE COMMANDS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_command">OBJECT COMMAND</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods">OBJECT METHODS</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods">OBJECT METHODS</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_text">OBJECT METHODS, TEXT</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_images">OBJECT METHODS, IMAGES</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#object_methods,_colors">OBJECT METHODS, COLORS</a><br>
@@ -71,29 +72,27 @@ package require <b>pdf4tcl ?0.3.x?</b><br>
 <tr valign=top ><td ><a href="#23"><i class='arg'>objectName</i> <strong>newLine</strong> ?<i class='arg'>spacing</i>?</a></td></tr>
 <tr valign=top ><td ><a href="#24"><i class='arg'>objectName</i> <strong>setLineSpacing</strong> <i class='arg'>spacing</i></a></td></tr>
 <tr valign=top ><td ><a href="#25"><i class='arg'>objectName</i> <strong>getLineSpacing</strong></a></td></tr>
-<tr valign=top ><td ><a href="#26"><i class='arg'>objectName</i> <strong>drawText</strong> <i class='arg'>str</i></a></td></tr>
-<tr valign=top ><td ><a href="#27"><i class='arg'>objectName</i> <strong>text</strong> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#28"><i class='arg'>objectName</i> <strong>drawTextAt</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#29"><i class='arg'>objectName</i> <strong>drawTextBox</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#30"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a></td></tr>
-<tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a></td></tr>
-<tr valign=top ><td ><a href="#32"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a></td></tr>
-<tr valign=top ><td ><a href="#33"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#35"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#36"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#37"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
-<tr valign=top ><td ><a href="#38"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
-<tr valign=top ><td ><a href="#39"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
-<tr valign=top ><td ><a href="#40"><i class='arg'>objectName</i> <strong>setLineStyle</strong> <i class='arg'>width</i> <i class='arg'>args</i></a></td></tr>
-<tr valign=top ><td ><a href="#41"><i class='arg'>objectName</i> <strong>line</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a></td></tr>
-<tr valign=top ><td ><a href="#42"><i class='arg'>objectName</i> <strong>qCurve</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>xc</i> <i class='arg'>yc</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a></td></tr>
-<tr valign=top ><td ><a href="#43"><i class='arg'>objectName</i> <strong>polygon</strong> ?<i class='arg'>x y</i>...? ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#44"><i class='arg'>objectName</i> <strong>circle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radius</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#45"><i class='arg'>objectName</i> <strong>oval</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#46"><i class='arg'>objectName</i> <strong>arc</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> <i class='arg'>phi</i> <i class='arg'>extend</i> ?<i class='arg'>option value</i>...?</a></td></tr>
-<tr valign=top ><td ><a href="#47"><i class='arg'>objectName</i> <strong>arrow</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i> <i class='arg'>size</i> ?<i class='arg'>angle</i>?</a></td></tr>
-<tr valign=top ><td ><a href="#48"><i class='arg'>objectName</i> <strong>rectangle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#26"><i class='arg'>objectName</i> <strong>text</strong> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#27"><i class='arg'>objectName</i> <strong>drawTextBox</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#28"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a></td></tr>
+<tr valign=top ><td ><a href="#29"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a></td></tr>
+<tr valign=top ><td ><a href="#30"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a></td></tr>
+<tr valign=top ><td ><a href="#31"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#32"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#33"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#34"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#35"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
+<tr valign=top ><td ><a href="#36"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
+<tr valign=top ><td ><a href="#37"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a></td></tr>
+<tr valign=top ><td ><a href="#38"><i class='arg'>objectName</i> <strong>setLineStyle</strong> <i class='arg'>width</i> <i class='arg'>args</i></a></td></tr>
+<tr valign=top ><td ><a href="#39"><i class='arg'>objectName</i> <strong>line</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a></td></tr>
+<tr valign=top ><td ><a href="#40"><i class='arg'>objectName</i> <strong>qCurve</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>xc</i> <i class='arg'>yc</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a></td></tr>
+<tr valign=top ><td ><a href="#41"><i class='arg'>objectName</i> <strong>polygon</strong> ?<i class='arg'>x y</i>...? ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#42"><i class='arg'>objectName</i> <strong>circle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radius</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#43"><i class='arg'>objectName</i> <strong>oval</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#44"><i class='arg'>objectName</i> <strong>arc</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> <i class='arg'>phi</i> <i class='arg'>extend</i> ?<i class='arg'>option value</i>...?</a></td></tr>
+<tr valign=top ><td ><a href="#45"><i class='arg'>objectName</i> <strong>arrow</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i> <i class='arg'>size</i> ?<i class='arg'>angle</i>?</a></td></tr>
+<tr valign=top ><td ><a href="#46"><i class='arg'>objectName</i> <strong>rectangle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> ?<i class='arg'>option value</i>...?</a></td></tr>
 </table></td></tr></table>
 <h2><a name="description">DESCRIPTION</a></h2>
 <p>
@@ -270,14 +269,17 @@ the output file will be finished and closed.
 This method starts a new page in the document. The page will have the
 default page settings for the document unless overridden by <i class='arg'>option</i>.
 See <a href="#page_configuration">PAGE CONFIGURATION</a> for page settings.
-
+This will end any ongoing page.
 
 <br><br>
 <dt><a name="12"><i class='arg'>objectName</i> <strong>endPage</strong></a><dd>
 
 
-This method ends a page in the document.
-
+This method ends a page in the document.  It is normally not needed since
+it is implied by e.g. <strong>startPage</strong> and <strong>finish</strong>.  However,
+if the document is built page by page in e.g. an event driven environment
+it can be good to call <strong>endPage</strong> explicitly to have all the page's
+work finished before reentering the event loop.
 
 <br><br>
 <dt><a name="13"><i class='arg'>objectName</i> <strong>finish</strong></a><dd>
@@ -287,7 +289,6 @@ This method ends the document.
 This will do <strong>endPage</strong> if needed.
 If the <strong>-file</strong> option was given at object creation,
 the output file will be finished and closed.
-
 
 <br><br>
 <dt><a name="14"><i class='arg'>objectName</i> <strong>get</strong></a><dd>
@@ -307,7 +308,13 @@ This will do <strong>endPage</strong> and <strong>finish</strong> if needed.
 If the <strong>-file</strong> option was given at object creation, an empty file
 is created.
 
-<br><br>
+</dl>
+
+<h3><a name="object_methods">OBJECT METHODS</a></h3>
+<p>
+
+<dl>
+
 <dt><a name="16"><i class='arg'>objectName</i> <strong>getDrawableArea</strong></a><dd>
 
 
@@ -392,7 +399,8 @@ and defaults to the value set by <strong>setLineSpacing</strong>.
 <dt><a name="24"><i class='arg'>objectName</i> <strong>setLineSpacing</strong> <i class='arg'>spacing</i></a><dd>
 
 
-Set the default line spacing used be e.g. <strong>newLine</strong>.
+Set the default line spacing used be e.g. <strong>newLine</strong>.  Initially
+the spacing is 1.
 
 <br><br>
 <dt><a name="25"><i class='arg'>objectName</i> <strong>getLineSpacing</strong></a><dd>
@@ -401,31 +409,19 @@ Set the default line spacing used be e.g. <strong>newLine</strong>.
 Get the current default line spacing.
 
 <br><br>
-<dt><a name="26"><i class='arg'>objectName</i> <strong>drawText</strong> <i class='arg'>str</i></a><dd>
-
-
-Draw text. Deprecated. Use <strong>text</strong>.
-
-<br><br>
-<dt><a name="27"><i class='arg'>objectName</i> <strong>text</strong> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="26"><i class='arg'>objectName</i> <strong>text</strong> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
 Draw text.
 
 <br><br>
-<dt><a name="28"><i class='arg'>objectName</i> <strong>drawTextAt</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a><dd>
-
-
-Draw text. Deprecated. Use <strong>text</strong>.
-
-<br><br>
-<dt><a name="29"><i class='arg'>objectName</i> <strong>drawTextBox</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="27"><i class='arg'>objectName</i> <strong>drawTextBox</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> <i class='arg'>str</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
 Draw text.
 
 <br><br>
-<dt><a name="30"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a><dd>
+<dt><a name="28"><i class='arg'>objectName</i> <strong>getFontMetric</strong> <i class='arg'>metric</i></a><dd>
 
 
 Get information about current font. The available <i class='arg'>metric</i>s are
@@ -433,9 +429,9 @@ Get information about current font. The available <i class='arg'>metric</i>s are
 <strong>height</strong>.
 
 <br><br>
-<dt><a name="31"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a><dd>
+<dt><a name="29"><i class='arg'>objectName</i> <strong>rotateText</strong> <i class='arg'>angle</i></a><dd>
 
-<dt><a name="32"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a><dd>
+<dt><a name="30"><i class='arg'>objectName</i> <strong>skewText</strong> <i class='arg'>xangle</i> <i class='arg'>yangle</i></a><dd>
 
 
 </dl>
@@ -448,7 +444,7 @@ unsupported formats, use Tk and the Img package to load and dump images to raw f
 
 <dl>
 
-<dt><a name="33"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="31"><i class='arg'>objectName</i> <strong>putImage</strong> <i class='arg'>id</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
 Put an image on the current page. The image must have been added previously by <strong>addImage</strong> or
@@ -468,7 +464,7 @@ the height is selected to preserve the aspect ratio of the image.
 
 </dl>
 
-<dt><a name="34"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="32"><i class='arg'>objectName</i> <strong>putRawImage</strong> <i class='arg'>data</i> <i class='arg'>x</i> <i class='arg'>y</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 Put an image on the current page. Works like <strong>putImage</strong> except that the raw image data is given directly.
 
@@ -479,7 +475,7 @@ Put an image on the current page. Works like <strong>putImage</strong> except th
 </pre></td></tr></table></p>
 
 <br><br>
-<dt><a name="35"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="33"><i class='arg'>objectName</i> <strong>addImage</strong> <i class='arg'>filename</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
 Add an image to the document. Returns an id that can be used in subsequent
@@ -496,7 +492,7 @@ Set the image type.  This can usually be deduced from the file name, this
 option helps when that is not possible.  This can be either &quot;png&quot; or &quot;jpeg&quot;.
 </dl>
 
-<dt><a name="36"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="34"><i class='arg'>objectName</i> <strong>addRawImage</strong> <i class='arg'>data</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 <p><table><tr><td bgcolor=black>&nbsp;</td><td><pre class='sample'>
   image create photo img1 -file image.gif
@@ -510,11 +506,11 @@ option helps when that is not possible.  This can be either &quot;png&quot; or &
 <p>
 <dl>
 
-<dt><a name="37"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
+<dt><a name="35"><i class='arg'>objectName</i> <strong>setBgColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
 
-<dt><a name="38"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
+<dt><a name="36"><i class='arg'>objectName</i> <strong>setFillColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
 
-<dt><a name="39"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
+<dt><a name="37"><i class='arg'>objectName</i> <strong>setStrokeColor</strong> <i class='arg'>red</i> <i class='arg'>green</i> <i class='arg'>blue</i></a><dd>
 
 
 </dl>
@@ -522,24 +518,24 @@ option helps when that is not possible.  This can be either &quot;png&quot; or &
 <p>
 <dl>
 
-<dt><a name="40"><i class='arg'>objectName</i> <strong>setLineStyle</strong> <i class='arg'>width</i> <i class='arg'>args</i></a><dd>
+<dt><a name="38"><i class='arg'>objectName</i> <strong>setLineStyle</strong> <i class='arg'>width</i> <i class='arg'>args</i></a><dd>
 
-<dt><a name="41"><i class='arg'>objectName</i> <strong>line</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a><dd>
+<dt><a name="39"><i class='arg'>objectName</i> <strong>line</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a><dd>
 
-<dt><a name="42"><i class='arg'>objectName</i> <strong>qCurve</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>xc</i> <i class='arg'>yc</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a><dd>
+<dt><a name="40"><i class='arg'>objectName</i> <strong>qCurve</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>xc</i> <i class='arg'>yc</i> <i class='arg'>x2</i> <i class='arg'>y2</i></a><dd>
 
-<dt><a name="43"><i class='arg'>objectName</i> <strong>polygon</strong> ?<i class='arg'>x y</i>...? ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="41"><i class='arg'>objectName</i> <strong>polygon</strong> ?<i class='arg'>x y</i>...? ?<i class='arg'>option value</i>...?</a><dd>
 
-<dt><a name="44"><i class='arg'>objectName</i> <strong>circle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radius</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="42"><i class='arg'>objectName</i> <strong>circle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radius</i> ?<i class='arg'>option value</i>...?</a><dd>
 
-<dt><a name="45"><i class='arg'>objectName</i> <strong>oval</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="43"><i class='arg'>objectName</i> <strong>oval</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> ?<i class='arg'>option value</i>...?</a><dd>
 
-<dt><a name="46"><i class='arg'>objectName</i> <strong>arc</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> <i class='arg'>phi</i> <i class='arg'>extend</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="44"><i class='arg'>objectName</i> <strong>arc</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>radiusx</i> <i class='arg'>radiusy</i> <i class='arg'>phi</i> <i class='arg'>extend</i> ?<i class='arg'>option value</i>...?</a><dd>
 
-<dt><a name="47"><i class='arg'>objectName</i> <strong>arrow</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i> <i class='arg'>size</i> ?<i class='arg'>angle</i>?</a><dd>
+<dt><a name="45"><i class='arg'>objectName</i> <strong>arrow</strong> <i class='arg'>x1</i> <i class='arg'>y1</i> <i class='arg'>x2</i> <i class='arg'>y2</i> <i class='arg'>size</i> ?<i class='arg'>angle</i>?</a><dd>
 
 
-<dt><a name="48"><i class='arg'>objectName</i> <strong>rectangle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> ?<i class='arg'>option value</i>...?</a><dd>
+<dt><a name="46"><i class='arg'>objectName</i> <strong>rectangle</strong> <i class='arg'>x</i> <i class='arg'>y</i> <i class='arg'>width</i> <i class='arg'>height</i> ?<i class='arg'>option value</i>...?</a><dd>
 
 
 </dl>
@@ -625,7 +621,7 @@ The default value of this option is zero.
   pdf4tcl::new mypdf -paper a3
   mypdf startPage
   mypdf setFont 12 Courier
-  mypdf drawTextAt 50 50 &quot;Hejsan&quot;
+  mypdf text &quot;Hejsan&quot; -x 50 -y 50
   mypdf write -file mypdf.pdf
   mypdf destroy
 </pre></td></tr></table></p>

@@ -51,7 +51,8 @@ namespace eval pdf4tcl {
     # font name to afm file mapping array
     array set font_afm {}
 
-    # known papersizes
+    # Known papersizes. Make sure they have a unit to be independent of
+    # default unit setting in a document.
     array set paper_sizes {
         a0     {2380p 3368p}
         a1     {1684p 2380p}
@@ -109,6 +110,7 @@ namespace eval pdf4tcl {
 
     # Utility to look up paper size by name
     # A two element list of width and height is also allowed.
+    # Return value is in points
     proc getPaperSize {papername} {
         variable paper_sizes
 
@@ -288,7 +290,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self SetPageMargin $options(-margin)
         set pdf(orient) $options(-orient)
 
-        # output buffer (we need to compress whole pages)
+        # The first buffer if for collecting page data until end of page.
+        # This is to support compressing whole pages.
         set pdf(ob) ""
 
         # Write to file directly if requested.
@@ -411,7 +414,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return -code error "Unknown value $val"
     }
 
-    # If any feature requires version > 1.4 they should call this
+    # If any feature requires PDF version > 1.4 they should call this
     method RequireVersion {version} {
         if {$version > $pdf(version)} {
             set pdf(version) $version
@@ -794,6 +797,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable ::pdf4tcl::font_widths
         variable fonts
 
+        if {!$pdf(inPage)} { $self startPage }
+
         if {$fontname eq ""} {
             set fontname $pdf(current_font)
         }
@@ -1021,6 +1026,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Draw a text string
     # Returns the width of the drawn string.
     method text {str args} {
+        if {!$pdf(inPage)} { $self startPage }
         set align "left"
         set angle 0
         set fill 0
@@ -1099,6 +1105,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Draw a text string at a given position.
     # This function is deprecated, use text.
     method drawTextAt {x y str args} {
+        if {!$pdf(inPage)} { $self startPage }
         set align "left"
         set angle 0
         foreach {arg value} $args {
@@ -1157,6 +1164,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method drawTextBox {x y width height txt args} {
+        if {!$pdf(inPage)} { $self startPage }
         set align left
         foreach {arg value} $args {
             switch -- $arg {
@@ -1282,6 +1290,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method skewText {xangle yangle} {
+        if {!$pdf(inPage)} { $self startPage }
         set tx [expr {tan($xangle*3.1415926/180.0)}]
         set ty [expr {tan($yangle*3.1415926/180.0)}]
         $self Pdfoutcmd 1 $tx $ty 1 $pdf(xpos) $pdf(ypos) "Tm"
@@ -1299,6 +1308,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # end text object, if in text, else do nothing
     method EndTextObj {} {
+        if {!$pdf(inPage)} { $self startPage }
         if {$pdf(in_text_object)} {
             $self Pdfout "ET\n"
             set pdf(in_text_object) false
@@ -1328,6 +1338,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method line {x1 y1 x2 y2} {
+        if {!$pdf(inPage)} { $self startPage }
         $self Trans $x1 $y1 x1 y1
         $self Trans $x2 $y2 x2 y2
 
@@ -1440,6 +1451,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method circle {x y r args} {
+        if {!$pdf(inPage)} { $self startPage }
         set filled 0
         set stroke 1
 
@@ -1464,6 +1476,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method oval {x y rx ry args} {
+        if {!$pdf(inPage)} { $self startPage }
         set filled 0
         set stroke 1
 
@@ -1567,6 +1580,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Draw an arc
     method arc {x0 y0 rx ry phi extend args} {
+        if {!$pdf(inPage)} { $self startPage }
         set filled 0
         set stroke 1
         set style arc
@@ -1596,6 +1610,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method arrow {x1 y1 x2 y2 sz {angle 20}} {
+        if {!$pdf(inPage)} { $self startPage }
         $self Trans $x1 $y1 x1 y1
         $self Trans $x2 $y2 x2 y2
         set sz [$self GetPoints $sz]
@@ -1612,11 +1627,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     method setFillColor {red green blue} {
+        if {!$pdf(inPage)} { $self startPage }
         set pdf(fillColor) [list $red $green $blue]
         $self Pdfout "$red $green $blue rg\n"
     }
 
     method setStrokeColor {red green blue} {
+        if {!$pdf(inPage)} { $self startPage }
         set pdf(strokeColor) [list $red $green $blue]
         $self Pdfout "$red $green $blue RG\n"
     }
@@ -1635,6 +1652,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Draw a rectangle
     method rectangle {x y w h args} {
+        $self EndTextObj
+
         set filled 0
         set stroke 1
         foreach {arg value} $args {
@@ -1650,7 +1669,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
         }
-        $self EndTextObj
         $self Trans $x $y x y
         $self TransR $w $h w h
 
@@ -1663,6 +1681,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Add an image to the document
     method addImage {filename args} {
+        if {!$pdf(inPage)} { $self startPage }
         set id ""
         set type ""
         foreach {arg val} $args {
@@ -1705,6 +1724,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Deprecated jpeg adder, use addImage
     method addJpeg {filename id} {
+        if {!$pdf(inPage)} { $self startPage }
         variable images
 
         set imgOK false
@@ -1943,6 +1963,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Place an image at the page
     method putImage {id x y args} {
+        $self EndTextObj
         variable images
         foreach {width height oid} $images($id) {break}
 
@@ -1964,7 +1985,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set w [expr {$width*$h/$height}]
         }
 
-        $self EndTextObj
         if {$pdf(orient)} {
             set y [expr {$y-$h}]
         }
@@ -1975,6 +1995,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Add a raw image to the document, to be placed later
     method addRawImage {img_data args} {
+        if {!$pdf(inPage)} { $self startPage }
         variable images
         # Determine the width and height of the image, which is
         # a list of lists(rows).
@@ -2019,6 +2040,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Place a raw image at the page
     method putRawImage {img_data x y args} {
+        $self EndTextObj
         # Determine the width and height of the image, which is
         # a list of lists(rows).
         set width [llength [lindex $img_data 0]]
@@ -2042,7 +2064,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set w [expr {$width*$h/$height}]
         }
 
-        $self EndTextObj
         if {$pdf(orient)} {
             set y [expr {$y-$h}]
         }
@@ -2194,6 +2215,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #######################################################################
 
     method canvas {path args} {
+        $self EndTextObj
+
         set sticky "nw"
         $self Trans 0 0 x y
         set width ""
@@ -2280,7 +2303,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # Set up clean graphics modes
 
-        $self EndTextObj
         $self Pdfoutcmd "q"
         $self Pdfoutcmd 1.0 "w"
         $self Pdfout "\[\] 0 d\n"
@@ -2426,8 +2448,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
 
                 # Draw lines
-                if {[string is true -strict $opts(-smooth)] || \
-                            $opts(-smooth) eq "bezier"} {
+                if {([string is true -strict $opts(-smooth)] || \
+                        $opts(-smooth) eq "bezier") && [llength $coords] > 4} {
                     $self CanvasBezier $coords
                 } elseif {$opts(-smooth) eq "raw"} {
                     $self CanvasRawCurve $coords
@@ -2458,7 +2480,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set x  [expr {($x2 + $x1) / 2.0}]
                 set y  [expr {($y2 + $y1) / 2.0}]
                 set rx [expr {($x2 - $x1) / 2.0}]
-                set ry [expr {($y2 - $y1) / 2.0}]
+                # Flip y-axis
+                set ry [expr {-($y2 - $y1) / 2.0}]
 
                 # Canvas draws arc with bevel style
                 if {![info exists opts(-joinstyle)]} {
@@ -2482,7 +2505,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 if {[string is true -strict $opts(-smooth)] || \
                             $opts(-smooth) eq "bezier"} {
                     # Close the coordinates if necessary
-                    if {[lindex $coords 0] != [lindex $coords end-1] && \
+                    if {[lindex $coords 0] != [lindex $coords end-1] || \
                                 [lindex $coords 1] != [lindex $coords end]} {
                         lappend coords [lindex $coords 0] [lindex $coords 1]
                     }
@@ -2624,7 +2647,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set bg $opts(-background)
                 if {$bg eq ""} {
                     # Dummy background to see if masking fails
-                    set bg purple
+                    set bg $opts(-foreground)
                 }
                 # Build a two-color palette
                 set colors [concat [CanvasGetColor $bg] \

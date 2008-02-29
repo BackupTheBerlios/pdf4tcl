@@ -57,9 +57,9 @@ test canvas-2.1 {image} -body {
     .c create rectangle 0 0 250 260 -fill red -outline blue
     .c create image 10 10 -image img1 -anchor nw
     mytest {canvas .c} {
-        q * cm * Do Q
+        q * 2.672 0 0 -2.672 102.672 897.328 cm *
+        82 0 0 -125 10 135 cm /image_canvas_img1 Do Q
     }
-    # This only tested the presence of an image. Should be improved...
 } -cleanup {destroy .c} -result 1
 
 test canvas-2.2 {bitmap} -body {
@@ -68,20 +68,21 @@ test canvas-2.2 {bitmap} -body {
     .c create bitmap 10 10 -bitmap @../bitmaps/hourglass.xbm -anchor nw \
             -background blue -foreground yellow
     mytest {canvas .c} {
-        q * cm * 0000ffffff00 *
+        q * 2.672 0 0 -2.672 102.672 897.328 cm *
+        19 0 0 -21 10 31 cm /image8 Do *
+        0000ffffff00 *
     }
-    # This only tested the presence of an image. Should be improved...
 } -cleanup {destroy .c} -result 1
 
 test canvas-3.1 {text} -body {
     canvas .c
     .c create rectangle 0 0 500 500 -outline black
     # Needs 8.5 since underline is 8.5 feature
-    if {[catch {.c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw}]} {
+    if {[catch {.c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw -font "Helvetica -14"}]} {
         return 1
     }
     mytest {canvas .c} {
-        18.931 36.778 m 26.375 36.778 l S
+        20.047 40.126 m 28.422 40.126 l S
     }
 } -cleanup {destroy .c} -result 1
 
@@ -90,7 +91,7 @@ test canvas-4.1 {sticky} -body {
     canvas .c
     .c create rectangle 0 0 500 100 -outline black
     mytest -margin 100 {canvas .c -sticky s} {
-        *
+        1.195 0 0 -1.195 101.195 220.717 cm
     }
 } -cleanup {destroy .c} -result 1
 
@@ -99,7 +100,25 @@ test canvas-4.2 {sticky} -body {
     canvas .c
     .c create rectangle 0 0 100 500 -outline black
     mytest -margin 100 {canvas .c -sticky e} {
-        *
+        1.594 0 0 -1.594 539.044 898.406
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-4.3 {sticky} -body {
+    # Tall canvas contents, sticky news
+    canvas .c
+    .c create rectangle 0 0 100 500 -outline black
+    mytest -margin 100 {canvas .c -sticky news} {
+        5.882 0 0 -1.594 105.882 898.406 cm
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-4.4 {sticky} -body {
+    # Wide canvas contents, sticky news
+    canvas .c
+    .c create rectangle 0 0 500 100 -outline black
+    mytest -margin 100 {canvas .c -sticky wens} {
+        1.195 0 0 -7.843 101.195 892.157 cm
     }
 } -cleanup {destroy .c} -result 1
 
@@ -117,11 +136,29 @@ test canvas-5.1 {stipple} -body {
     pack .c -fill both -expand 1
     #wm deiconify .
     mytest {canvas .c} {startPage} {canvas .c -bbox {5 5 150 150}} {
-        *
+        /Matrix * 4.828 0 0 4.828 75.862 924.138
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-5.2 {stipple} -body {
+test canvas-5.2 {stipple offset} -body {
+    canvas .c
+    .c create rectangle -10 -10 200 200 -fill "" -outline black
+    .c create rectangle -5 -5 25 25 -stipple questhead -fill red
+    .c create rectangle 30 -5 60 25 -stipple questhead -fill red
+    .c create rectangle -5 30 25 60 -stipple questhead -fill red
+    .c create rectangle 30 30 60 60 -stipple questhead -fill red -offset 5,5
+    .c configure -scrollregion [.c bbox all]
+    .c xview moveto 0
+    .c yview moveto 0
+    pack .c -fill both -expand 1
+    #wm deiconify .
+    mytest {canvas .c} {
+        /Matrix * 3.302 0 0 3.302 136.321 863.679 *
+        /Matrix * 3.302 0 0 3.302 152.831 847.169
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-5.3 {stipple offset} -body {
     canvas .c
     .c create rectangle -10 -10 200 200 -fill "" -outline black
     .c create rectangle -5 -5 25 25 -stipple questhead -fill red
@@ -133,15 +170,74 @@ test canvas-5.2 {stipple} -body {
     .c yview moveto 0
     pack .c -fill both -expand 1
     #wm deiconify .
+    # If # was supported, this would be different
+    mytest {canvas .c} {
+        /Matrix * 3.302 0 0 3.302 136.321 863.679 *
+        /Matrix * 3.302 0 0 3.302 152.831 847.169
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-5.4 {stipple} -body {
+    canvas .c
+    .c create rectangle -10 -10 500 500 -fill "" -outline black
+    .c create bitmap 0 0 -bitmap gray50 -anchor nw \
+            -background blue -foreground yellow
+    .c create rectangle 50 -5 80 25 -stipple gray50 -fill red
+    .c create rectangle -5 50 25 80 -stipple gray50 -fill red
+    .c create rectangle 50 50 80 80 -stipple gray50 -fill red
+    .c configure -scrollregion [.c bbox all]
+    .c xview moveto 0
+    .c yview moveto 0
+    pack .c -fill both -expand 1
+    #wm deiconify .
+    mytest {canvas .c} {startPage} {canvas .c -bbox {5 5 150 150}} {
+        /Matrix * 4.828 0 0 4.828 75.862 924.138
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-6.1 {spline} -body {
+    canvas .c
+    .c create rectangle -10 -10 200 200 -fill "" -outline black
+    .c create line 0 0 10 20 -smooth 1
+    .c create polygon 20 20 20 40 20 60 20 80 40 80 60 80 80 80 80 60 80 40 80 20 60 20 40 20 -smooth 1
+    .c configure -scrollregion [.c bbox all]
+    .c xview moveto 0
+    .c yview moveto 0
+    pack .c -fill both -expand 1
+    #wm deiconify .
     mytest {canvas .c} {
         *
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-20.1 {demo} -constraints "apa" -body {
+test canvas-7.1 {oval} -body {
+    canvas .c
+    .c create rectangle -10 -10 200 200 -fill "" -outline black
+    .c create line 0 0 0 80 40 80 40 0 0 0 -width 4
+    .c create oval 0 0 40 80 -outline red -width 4
+    .c configure -scrollregion [.c bbox all]
+    .c xview moveto 0
+    .c yview moveto 0
+    pack .c -fill both -expand 1
+    #wm deiconify .
+    mytest {canvas .c} {
+        *
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-20.1 {demo} -constraints "" -body {
     # Find the demo for canvas
-    source $::tk_library/demos/widget
-    source $::tk_library/demos/items.tcl
+    set dir $::tk_library/demos
+    source $dir/widget
+    set pdfcmds {}
+    if {[file exists $dir/goldberg.tcl]} {
+        source $dir/goldberg.tcl
+        lappend pdfcmds {canvas .goldberg.c -bg 1} {startPage}
+        wm deiconify [winfo toplevel .goldberg]
+        # Kill off animations
+        catch {after cancel $animationCallbacks(goldberg)}
+    }
+    source $dir/items.tcl
     wm deiconify [winfo toplevel .items.frame.c]
     # Scroll down to the widgets to get them mapped
     update
@@ -150,25 +246,11 @@ test canvas-20.1 {demo} -constraints "apa" -body {
     foreach {y1 y2} [.items.frame.c yview] break
     .items.frame.c yview moveto [expr {1.0 - ($y2 - $y1)}]
     update
-    mytest -debug {canvas .items.frame.c} {
+    lappend pdfcmds {canvas .items.frame.c}
+    eval mytest -debug -paper a4 -margin 15m $pdfcmds {
         *
     }
-} -cleanup {destroy .items} -result 1
-
-test canvas-20.2 {demo} -constraints "apa" -body {
-    # Find the goldberg demo for canvas
-    set dir $::tk_library/demos
-    if {![file exists $dir/goldberg.tcl]} {
-        return 1
-    }
-    source $::tk_library/demos/widget
-    source $dir/goldberg.tcl
-    wm deiconify [winfo toplevel .goldberg.c]
-    update
-    mytest -debug {canvas .goldberg.c -bg 1} {
-        *
-    }
-} -cleanup {destroy .goldberg} -result 1
+} -cleanup {destroy .items .goldberg} -result 1
 
 # To make sure we exit even though Tk is loaded
 exit

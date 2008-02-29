@@ -155,12 +155,15 @@ the output file will be finished and closed.
 This method starts a new page in the document. The page will have the
 default page settings for the document unless overridden by [arg "option"].
 See [sectref {PAGE CONFIGURATION}] for page settings.
-
+This will end any ongoing page.
 
 [call [arg objectName] [method endPage]]
 
-This method ends a page in the document.
-
+This method ends a page in the document.  It is normally not needed since
+it is implied by e.g. [method startPage] and [method finish].  However,
+if the document is built page by page in e.g. an event driven environment
+it can be good to call [method endPage] explicitly to have all the page's
+work finished before reentering the event loop.
 
 [call [arg objectName] [method finish]]
 
@@ -168,7 +171,6 @@ This method ends the document.
 This will do [method endPage] if needed.
 If the [option -file] option was given at object creation,
 the output file will be finished and closed.
-
 
 [call [arg objectName] [method get]]
 
@@ -183,6 +185,12 @@ If no [arg "filename"] is given, it is written to stdout.
 This will do [method endPage] and [method finish] if needed.
 If the [option -file] option was given at object creation, an empty file
 is created.
+
+[list_end]
+
+[subsection {OBJECT METHODS}]
+
+[list_begin definitions]
 
 [call [arg objectName] [method getDrawableArea]]
 
@@ -251,23 +259,16 @@ and defaults to the value set by [method setLineSpacing].
 
 [call [arg objectName] [method setLineSpacing] [arg spacing]]
 
-Set the default line spacing used be e.g. [method newLine].
+Set the default line spacing used be e.g. [method newLine].  Initially
+the spacing is 1.
 
 [call [arg objectName] [method getLineSpacing]]
 
 Get the current default line spacing.
 
-[call [arg objectName] [method drawText] [arg "str"]]
-
-Draw text. Deprecated. Use [method text].
-
 [call [arg objectName] [method text] [arg "str"] [opt [arg "option value"]...]]
 
 Draw text.
-
-[call [arg objectName] [method drawTextAt] [arg "x"] [arg "y"] [arg "str"] [opt [arg "option value"]...]]
-
-Draw text. Deprecated. Use [method text].
 
 [call [arg objectName] [method drawTextBox] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "str"] [opt [arg "option value"]...]]
 
@@ -437,7 +438,7 @@ The default value of this option is zero.
   pdf4tcl::new mypdf -paper a3
   mypdf startPage
   mypdf setFont 12 Courier
-  mypdf drawTextAt 50 50 "Hejsan"
+  mypdf text "Hejsan" -x 50 -y 50
   mypdf write -file mypdf.pdf
   mypdf destroy
 [example_end]
