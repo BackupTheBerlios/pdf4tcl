@@ -4,6 +4,7 @@
 
 VERSION = 03
 #TCLSH = $(HOME)/tcl/bin/tclsh8.5
+#TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
 TCLSH = tclsh
 
 # TOOL paths

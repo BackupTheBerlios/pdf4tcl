@@ -2184,6 +2184,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set xoffset 0
                 set yoffset 0
             }
+
             set xobject "<<\n/Type /Pattern\n"
             append xobject "/PatternType 1\n"
             append xobject "/PaintType 2\n"
@@ -2312,10 +2313,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd 0 "j" ;# Miter join style
         # Miter limit; Tk switches from miter to bevel at 11 degrees
         $self Pdfoutcmd [expr {1.0/sin(11.0/180.0*3.14159265/2.0)}] "M"
+        # Store scale. Used to get the correct size of stipple patterns.
         set pdf(canvasscale) [list [Nf $xscale] [Nf [expr {-$yscale}]] \
                 [Nf $xoffset] [Nf $yoffset]]
-
-        $self Pdfoutcmd $xscale 0 0 $yscale $xoffset $yoffset "cm"
+        
+        # Use better resolution for the scale since that can be small numbers
+        $self Pdfoutn [Nf $xscale 6] 0 0 [Nf $yscale 6] \
+                [Nf $xoffset] [Nf $yoffset] "cm"
 
         # Clip region
         $self Pdfoutcmd $bbx1 $bby1 "m"
@@ -2774,6 +2778,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {[lindex $coords 0] == [lindex $coords end-1] && \
                     [lindex $coords 1] == [lindex $coords end]} {
             set closed 1
+
             set x0 [expr {0.5  * [lindex $coords end-3] + 0.5  *[lindex $coords 0]}]
             set y0 [expr {0.5  * [lindex $coords end-2] + 0.5  *[lindex $coords 1]}]
             set x1 [expr {0.167* [lindex $coords end-3] + 0.833*[lindex $coords 0]}]
@@ -3132,11 +3137,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # helper function for formatting floating point numbers
-    proc Nf {n} {
+    proc Nf {n {deci 3}} {
         # Up to 3 decimals
-        set num [expr {round($n * 1000.0) / 1000.0}]
+        set num [format %.*f $deci $n]
         # Remove surplus decimals
-        return [string trimright [string trimright $num "0"] "."]
+        set num [string trimright [string trimright $num "0"] "."]
+        # Small negative numbers might become -0
+        if {$num eq "-0"} {
+            set num "0"
+        }
+        return $num
     }
 }
 
