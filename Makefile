@@ -14,7 +14,7 @@ ESKIL    = eskil
 all: doc
 
 # Documentation
-doc : pdf4tcl.html pdf4tcl.n
+doc : pdf4tcl.html pdf4tcl.n web/mypdf.pdf
 
 pdf4tcl.html pdf4tcl.n : pdf4tcl.man mkdoc.tcl
 	mkdoc.tcl
@@ -23,6 +23,9 @@ checkdoc:
 	@egrep 'method [a-z]' pdf4tcl.man | grep '\[call' | egrep -v 'method configure' | sed 's/[][]/ /g' | sort > docmeth
 	@egrep 'method [a-z]' pdf4tcl.tcl | sort > srcmeth
 	@eskil -block srcmeth docmeth
+
+web/mypdf.pdf: mkweb.tcl web/index.html
+	mkweb.tcl
 
 # Helpers
 

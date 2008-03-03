@@ -13,8 +13,22 @@
 
 Changes in v0.4 (Not yet released):<br>
 <ul>
- <li> Added canvas method for dumping canvas contents to PDF.</li>
+ <li> New method canvas for dumping canvas contents to PDF.</li>
  <li> PNG support (alpha channels and interlace is not supported).</li>
+ <li> New method addImage for generic image handling.</li>
+ <li> New methods putRawImage, addRawImage.</li>
+ <li> New methods moveTextPosition, setLineSpacing, getLineSpacing.</li>
+ <li> Support Tk's units "m", "c" and "p".</li>
+ <li> Added height metric to getFontMetric.</li>
+ <li> Added document option -unit.</li>
+ <li> Reworked drawTextBox to work correctly in all orientations. Possibly incompatible.</li>
+ <li> Support Tk color formats.</li>
+</ul>
+Incompatible changes in v0.4:<br>
+<ul>
+ <li> Methods circle, polygon and arc changed to be more consistent.</li>
+ <li> Deprecated: addJpeg.</li>
+ <li> Removed: drawText, drawTextAt, beginTextObj, endTextObj, moveTo, closePath.</li>
 </ul>
 
 Changes in v0.3 (2008-01-19):<br>

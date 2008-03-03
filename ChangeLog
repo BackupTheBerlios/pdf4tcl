@@ -1,3 +1,6 @@
+2008-03-03 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Handle more general colors, including Tk colors.
+
 2008-02-27 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Addec canvas method to draw the contents of a canvas.
 

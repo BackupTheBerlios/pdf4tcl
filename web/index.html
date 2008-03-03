@@ -12,8 +12,7 @@
 
 <p>
 pdf4tcl is a tcl package for generating pdf files. It started as a port
-of <a href="http://www.gnuvox.com/pdf4php/">pdf4php</a> to the
-<a href="http://www.tcl.tk">tcl</a> language.
+of pdf4php to the <a href="http://www.tcl.tk">tcl</a> language.
 </p>
 
 <p>
@@ -67,7 +66,7 @@ See <a href="changes.html">Changes page</a>
 
 <p>
 Here is a commented example, which should illustrate, how pdf4tcl can
-be used (using only 0.2 features so far):
+be used (using only 0.3 features so far):
 </p>
 
 <pre>
@@ -75,37 +74,38 @@ be used (using only 0.2 features so far):
 package require pdf4tcl
 
 # create a pdf object and equally named procedure in global namespace
-pdf4tcl::new mypdf -compress 1 -paper a4
+pdf4tcl::new mypdf -paper a4 -margin 15mm
 
 # add the first page
 mypdf startPage
+set width [lindex [mypdf getDrawableArea] 0]
 
 # draw a line, coordinates start in upper left corner of the paper,
 # unit is postscript point, which is 1/72 inch
-mypdf line 20 20 560 20
+mypdf line 0 0 $width 0
 
 # draw some text
 mypdf setFont 8 Helvetica
-mypdf text "sample text" -x 20 -y 32
+mypdf text "sample text" -x 0 -y 12
 
 # use another font and draw centered text
 mypdf setFont 12 "Helvetica-Bold"
-mypdf text "Sample Heading" -align center -x [expr {595/2.0}] -y 32 
+mypdf text "Sample Heading" -align center -x [expr {$width/2.0}] -y 12 
 
 # and some right aligned text
 mypdf setFont 8 Helvetica
-mypdf text "page 1" -align right -x 575 -y 32
+mypdf text "page 1" -align right -x $width -y 12
 
 # draw a rectangle with dashed red outline and lightgrey fill colour
 mypdf setLineStyle 0.5 8 4
 mypdf setStrokeColor 0.8 0 0
 mypdf setFillColor 0.9 0.9 0.9
-mypdf rectangle 20 50 300 100
+mypdf rectangle 20 50 300 100 -filled 1
 
 # set some justified text into this box
 mypdf setFillColor 0 0 0
 mypdf setStrokeColor 0 0 0
-mypdf drawTextBox 22 60 296 96 "This is just some senseless sample text,\
+mypdf drawTextBox 21 51 299 99 "This is just some senseless sample text,\
 	illustrating some features of pdf4tcl. This text should be justified\
 	by stretching white space between words, to make for straight left\
 	and right margins." -align justify
@@ -114,7 +114,7 @@ mypdf drawTextBox 22 60 296 96 "This is just some senseless sample text,\
 mypdf write -file mypdf.pdf
 
 # cleanup memory and unset procedures and variables
-mypdf cleanup
+mypdf destroy
 </pre>
 
 <p>
