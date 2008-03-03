@@ -252,8 +252,8 @@ test canvas-7.2 {oval} -body {
     .c xview moveto 0
     .c yview moveto 0
     pack .c -fill both -expand 1
-    wm deiconify .
-    mytest -debug {canvas .c} {
+    #wm deiconify .
+    mytest {canvas .c} {
         -10 -10 210 210 re S *
         1 1 m 1 27 l 27 27 l 27 1 l 1 1 l S *
         27 14 m

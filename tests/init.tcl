@@ -64,6 +64,7 @@ proc mytest {args} {
         }
     }
     set pdf [eval pdf4tcl::new %AUTO% $opts]
+    $pdf setFont 12 Helvetica
     $pdf startPage
     if {$debug} {
         # Draw a grid to see better in debug mode

@@ -232,7 +232,8 @@ the canvas is drawn.
 
 [call [arg objectName] [method setFont] [arg "size"] [opt [arg "fontname"]]]
 
-This method sets the font used by text drawing routines.
+This method sets the font used by text drawing routines. If [arg "fontname"]
+is not provided, the previously set [arg "fontname"] is kept.
 
 [call [arg objectName] [method getStringWidth] [arg "str"]]
 

@@ -38,6 +38,7 @@ proc TestPng {args} {
 
         set y [expr {($cnt % 3) * 300}]
         set y2 [expr {$y + 50}]
+        lappend cmds [list setFont 12 Helvetica]
         lappend cmds [list text [file tail $file] -x 0 -y $y]
         lappend cmds [list addImage $file -id png$cnt]
         lappend cmds [list addImage $jpeg -id jpg$cnt]

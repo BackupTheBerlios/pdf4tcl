@@ -279,9 +279,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(finished) false
         set pdf(inPage) false
         set pdf(fillColor) [list 0 0 0]
-        # start with Helvetica as default font
-        set pdf(font_size) 12
-        set pdf(current_font) "Helvetica"
+        # start without default font
+        set pdf(font_size) 1
+        set pdf(current_font) ""
         set pdf(line_spacing) 1.0
 
         # Page data
@@ -795,11 +795,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Set current font
     method setFont {size {fontname ""} {internal 0}} {
         variable ::pdf4tcl::font_widths
-        variable fonts
-
-        if {!$pdf(inPage)} { $self startPage }
 
         if {$fontname eq ""} {
+            if {$pdf(current_font) eq ""} {
+                return -code error "No font family set"
+            }
             set fontname $pdf(current_font)
         }
         # font width already loaded?
@@ -810,16 +810,34 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set font_widths($fontname) $tmp
             }
         }
+
         if {!$internal} {
             set size [$self GetPoints $size]
         }
+
+        set pdf(current_font) $fontname
         set pdf(font_size) $size
-        $self Pdfoutn "/$fontname [Nf $size]" "Tf"
+
+        # Delay putting things in until we are actually on a page
+        if {$pdf(inPage)} {
+            $self SetupFont
+        }
+    }
+
+    # Set the current font on the page
+    method SetupFont {} {
+        variable fonts
+        
+        if {$pdf(current_font) eq ""} {
+            return -code error "No font set"
+        }
+        set fontname $pdf(current_font)
+        $self Pdfoutn "/$fontname [Nf $pdf(font_size)]" "Tf"
         $self Pdfoutcmd 0 "Tr"
-        $self Pdfoutcmd $size "TL"
+        $self Pdfoutcmd $pdf(font_size) "TL"
 
         # Make sure a font object exists
-        if {![info exists fonts($fontname)]} {
+        if {![info exists fonts($pdf(current_font))]} {
             set body    "<<\n/Type /Font\n"
             append body "/Subtype /Type1\n"
             append body "/Encoding /WinAnsiEncoding\n"
@@ -827,10 +845,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             append body "/BaseFont /$fontname\n"
             append body ">>"
             set oid [$self AddObject $body]
-            set fonts($fontname) $oid
+            set fonts($pdf(current_font)) $oid
         }
-        set pdf(current_font) $fontname
-
         set pdf(font_set) true
     }
 
@@ -876,6 +892,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Get metrics from current font.
     # Supported metrics are ascend, descend, fixed, bboxy, height
     method getFontMetric {metric {internal 0}} {
+        if {$pdf(current_font) eq ""} {
+            return -code error "No font set"
+        }
         array set tmp $::pdf4tcl::font_metrics($pdf(current_font))
         switch $metric {
             bboxy   {set val [expr {[lindex $tmp(bbox) 1] * 0.001}]}
@@ -892,6 +911,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Get the width of a string under the current font.
     method getStringWidth {txt {internal 0}} {
+        if {$pdf(current_font) eq ""} {
+            return -code error "No font set"
+        }
         set w 0.0
         foreach ch [split $txt ""] {
             set w [expr {$w + [GetCharWidth $pdf(current_font) $ch]}]
@@ -945,6 +967,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Get the width of a character under the current font.
     method getCharWidth {ch {internal 0}} {
+        if {$pdf(current_font) eq ""} {
+            return -code error "No font set"
+        }
         set len [string length $ch]
         if {$len == 0} {
             return 0.0
@@ -986,7 +1011,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method drawText {str} {
         $self BeginTextObj
         if {! $pdf(font_set)} {
-            $self setFont $pdf(font_size) $pdf(current_font)
+            $self SetupFont
         }
         $self Pdfout "([CleanText $str]) '\n"
         # Update to next line
@@ -1065,7 +1090,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         if {! $pdf(font_set)} {
-            $self setFont $pdf(font_size)
+            $self SetupFont
         }
 
         set strWidth [$self getStringWidth $str 1]
@@ -1128,7 +1153,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         if {! $pdf(font_set)} {
-            $self setFont $pdf(font_size)
+            $self SetupFont
         }
 
         $self Trans $x $y x y
@@ -1153,7 +1178,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Draw a text string at a given position.
     method DrawTextAt {x y str {align left}} {
         if {! $pdf(font_set)} {
-            $self setFont $pdf(font_size)
+            $self SetupFont
         }
 
         set strWidth [$self getStringWidth $str 1]
@@ -1195,7 +1220,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         $self BeginTextObj
         if {! $pdf(font_set)} {
-            $self setFont $pdf(font_size)
+            $self SetupFont
         }
 
         # pre-calculate some values

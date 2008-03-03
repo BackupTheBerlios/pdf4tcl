@@ -1,4 +1,7 @@
 2008-03-03 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Require an explicit set font. *** INCOMPATIBLE CHANGE ***
+
+2008-03-03 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Handle more general colors, including Tk colors.
 
 2008-02-27 Peter Spjuth   <peter.spjuth@gmail.com>
