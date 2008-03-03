@@ -1663,12 +1663,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method setFillColor {args} {
         if {!$pdf(inPage)} { $self startPage }
         set pdf(fillColor) [GetColor $args]
+        foreach {red green blue} $pdf(fillColor) break
         $self Pdfoutcmd $red $green $blue "rg"
     }
 
     method setStrokeColor {args} {
         if {!$pdf(inPage)} { $self startPage }
         set pdf(strokeColor) [GetColor $args]
+        foreach {red green blue} $pdf(strokeColor) break
         $self Pdfoutcmd $red $green $blue "RG"
     }
 

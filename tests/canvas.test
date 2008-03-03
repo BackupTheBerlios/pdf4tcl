@@ -240,7 +240,7 @@ test canvas-7.1 {oval} -body {
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-20.1 {demo} -constraints "" -body {
+test canvas-20.1 {demo} -constraints "apa" -body {
     # Find the demo for canvas
     set dir $::tk_library/demos
     source $dir/widget
