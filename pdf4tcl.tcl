@@ -1029,7 +1029,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {!$pdf(inPage)} { $self startPage }
         set align "left"
         set angle 0
-        set fill 0
+        set bg 0
         set x $pdf(xpos)
         set y $pdf(ypos)
         set posSet 0
@@ -1042,8 +1042,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 "-angle" {
                     set angle $value
                 }
-                "-fill" {
-                    set fill $value
+                "-background" - "-bg" - "-fill" {
+                    if {[string is boolean -strict $value]} {
+                        set bg $value
+                    } else {
+                        set bg [GetColor $value]
+                    }
                 }
                 "-y" {
                     $self Trans 0 $value _ y
@@ -1073,14 +1077,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
             set posSet 1
         }
-        if {[llength $fill] > 1 || $fill} {
+        if {[llength $bg] > 1 || $bg} {
             set bboxy [$self getFontMetric bboxy 1]
             set dy [expr {$y + $bboxy}]
             $self EndTextObj
             # Temporarily shift fill color
             $self Pdfoutcmd "q"
-            if {[llength $fill] > 1} {
-                $self Pdfout "$fill rg\n"
+            if {[llength $bg] > 1} {
+                $self Pdfout "$bg rg\n"
             } else {
                 $self Pdfout "$pdf(bgColor) rg\n"
             }
@@ -1318,6 +1322,36 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #######################################################################
     # Graphics Handling
     #######################################################################
+
+    # Convert any user color to PDF color
+    proc GetColor {color} {
+        # Remove list layers, to accept things that have been 
+        # multiply listified
+        if {[llength $color] == 1} {
+            set color [lindex $color 0]
+        }
+        if {[llength $color] == 3} {
+            # Maybe range check them here...
+            return $color
+        }
+        if {[regexp {^\#([[:xdigit:]]{2})([[:xdigit:]]{2})([[:xdigit:]]{2})$} \
+                $color -> rHex gHex bHex]} {
+            set red   [expr {[scan $rHex %x] / 255.0}]
+            set green [expr {[scan $gHex %x] / 255.0}]
+            set blue  [expr {[scan $bHex %x] / 255.0}]
+            return [list $red $green $blue]
+        }
+        # Use catch both to catch bad color, and to catch Tk not present
+        if {[catch {winfo rgb . $color} tkcolor]} {
+            return -code error "Unknown color: $color"
+        }
+        foreach {red green blue} $tkcolor break
+        set red   [expr {($red   & 0xFF00) / 65280.0}]
+        set green [expr {($green & 0xFF00) / 65280.0}]
+        set blue  [expr {($blue  & 0xFF00) / 65280.0}]
+        return [list $red $green $blue]
+
+    }
 
     ###<jpo 2004-11-08: replaced "on off" by "args"
     ###                 to enable resetting dashed lines
@@ -1622,20 +1656,20 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self DrawLine $x2 $y2 [expr {$x2+$sz*cos($ang-$rad)}] [expr {$y2+$sz*sin($ang-$rad)}]
     }
 
-    method setBgColor {red green blue} {
-        set pdf(bgColor) [list $red $green $blue]
+    method setBgColor {args} {
+        set pdf(bgColor) [GetColor $args]
     }
 
-    method setFillColor {red green blue} {
+    method setFillColor {args} {
         if {!$pdf(inPage)} { $self startPage }
-        set pdf(fillColor) [list $red $green $blue]
-        $self Pdfout "$red $green $blue rg\n"
+        set pdf(fillColor) [GetColor $args]
+        $self Pdfoutcmd $red $green $blue "rg"
     }
 
-    method setStrokeColor {red green blue} {
+    method setStrokeColor {args} {
         if {!$pdf(inPage)} { $self startPage }
-        set pdf(strokeColor) [list $red $green $blue]
-        $self Pdfout "$red $green $blue RG\n"
+        set pdf(strokeColor) [GetColor $args]
+        $self Pdfoutcmd $red $green $blue "RG"
     }
 
     # Draw a rectangle, internal version
@@ -2330,7 +2364,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd "W"
         if {$bg} {
             # Draw the region in background color if requested
-            foreach {red green blue} [CanvasGetColor [$path cget -background]] break
+            foreach {red green blue} [GetColor [$path cget -background]] break
             $self Pdfoutcmd $red $green $blue "rg"
             $self Pdfoutcmd "f"
             $self Pdfoutcmd 0 0 0 "rg"
@@ -2654,8 +2688,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set bg $opts(-foreground)
                 }
                 # Build a two-color palette
-                set colors [concat [CanvasGetColor $bg] \
-                        [CanvasGetColor $opts(-foreground)]]
+                set colors [concat [GetColor $bg] [GetColor $opts(-foreground)]]
                 set PaletteHex ""
                 foreach color $colors {
                     append PaletteHex [format %02x \
@@ -2923,18 +2956,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
-    # Convert a Tk color to PDF color
-    proc CanvasGetColor {color} {
-        foreach {red green blue} [winfo rgb . $color] break
-        set red   [expr {($red   & 0xFF00) / 65280.0}]
-        set green [expr {($green & 0xFF00) / 65280.0}]
-        set blue  [expr {($blue  & 0xFF00) / 65280.0}]
-        list $red $green $blue
-    }
-
     # Set the fill color from a Tk color
     method CanvasFillColor {color {bitmapid ""}} {
-        foreach {red green blue} [CanvasGetColor $color] break
+        foreach {red green blue} [GetColor $color] break
         if {$bitmapid eq ""} {
             $self Pdfoutcmd $red $green $blue "rg"
         } else {
@@ -2946,7 +2970,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Set the stroke color from a Tk color
     method CanvasStrokeColor {color {bitmapid ""}} {
-        foreach {red green blue} [CanvasGetColor $color] break
+        foreach {red green blue} [GetColor $color] break
         if {$bitmapid eq ""} {
             $self Pdfoutcmd $red $green $blue "RG"
         } else {

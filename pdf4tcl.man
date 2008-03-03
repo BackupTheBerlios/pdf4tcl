@@ -342,11 +342,23 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 
 [list_end]
 [subsection {OBJECT METHODS, COLORS}]
+
+Colors can be expressed in various formats. First, as a three element list
+of values in the range 0.0 to 1.0. Second, in the format #XXXXXX where
+the Xes are two hexadecimal digits per color value.  Third, if Tk is available,
+any color accepted by winfo rgb is accepted.
+
 [list_begin definitions]
 
 [call [arg objectName] [method setBgColor] [arg "red"] [arg "green"] [arg "blue"]]
+Sets the background color for text operations where -bg is true.
+
 [call [arg objectName] [method setFillColor] [arg "red"] [arg "green"] [arg "blue"]]
+Sets the fill color for graphics operations, and the foreground color for
+text operations.
+
 [call [arg objectName] [method setStrokeColor] [arg "red"] [arg "green"] [arg "blue"]]
+Sets the stroke color for graphics operations.
 
 [list_end]
 [subsection {OBJECT METHODS, GRAPHICS}]

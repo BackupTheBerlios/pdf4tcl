@@ -52,7 +52,7 @@ test text-3.2 {text method, fill} -body {
 test text-3.3 {text method, fill, text position} -body {
     mytest {setFont 20 Courier} \
             {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} \
-            {text Tomat -fill {0.1 0.1 0.1}} {
+            {text Tomat -background {0.1 0.1 0.1}} {
                 q 0.6 0.7 0.8 rg 110 205 72 20 re f Q BT
                 1 0 0 1 110 210 Tm
                 (Gurkan) Tj ET
@@ -60,6 +60,13 @@ test text-3.3 {text method, fill, text position} -body {
                 1 0 0 1 182 210 Tm
                 (Tomat) Tj
             }
+} -result 1
+
+test text-3.4 {text method, fill, other color format} -body {
+    mytest {setFont 20 Courier} \
+            {text Gurkan -x 10 -y 10 -bg \#33FF66} {
+        q 0.2 1.0 0.4 rg 110 205 72 20 re f Q BT
+    }
 } -result 1
 
 test text-4.1 {setTextPosition, -x -y does not effect newLine} -body {
