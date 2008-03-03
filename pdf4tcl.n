@@ -273,7 +273,8 @@ the canvas is drawn.
 .SS "OBJECT METHODS, TEXT"
 .TP
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
-This method sets the font used by text drawing routines.
+This method sets the font used by text drawing routines. If \fIfontname\fR
+is not provided, the previously set \fIfontname\fR is kept.
 .TP
 \fIobjectName\fR \fBgetStringWidth\fR \fIstr\fR
 This method returns the width of a string under the current font.
