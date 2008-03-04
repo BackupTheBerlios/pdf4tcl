@@ -2,7 +2,7 @@
 #
 # $Id$
 
-VERSION = 03
+VERSION = 04
 #TCLSH = $(HOME)/tcl/bin/tclsh8.5
 #TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
 TCLSH = tclsh
@@ -68,7 +68,8 @@ cleancc:
 
 release: doc
 	@\rm -f pdf4tcl.tar.gz
-	@tar -zcvf pdf4tcl.tar.gz pdf4tcl.tcl pkgIndex.tcl metrics.tcl \
-		glyphnames.tcl pdf4tcl.man pdf4tcl.html licence.terms
+	@ln -s pkg pdf4tcl$(VERSION)
+	@tar -zcvhf pdf4tcl.tar.gz --exclude=.svn pdf4tcl$(VERSION)
+	@\rm -f pdf4tcl$(VERSION)
 	@cp pdf4tcl.tar.gz pdf4tcl`date +%Y%m%d`.tar.gz
 	@mv pdf4tcl.tar.gz pdf4tcl$(VERSION).tar.gz

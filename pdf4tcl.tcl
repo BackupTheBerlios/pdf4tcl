@@ -10,11 +10,7 @@
 
 # $Id$
 
-# Version 0.1   base features for generating correct pdf files
-# Version 0.2   more graphic operators, fixed font handling
-# Version 0.3   Redesigned to use Snit. A lot of added features.
-
-package provide pdf4tcl 0.3
+package provide pdf4tcl 0.4
 
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames

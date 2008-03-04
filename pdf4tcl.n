@@ -4,7 +4,7 @@
 '\"
 '\" -*- tcl -*- doctools manpage
 .so man.macros
-.TH "pdf4tcl" n 0.3.x pdf4tcl "Pdf document generation"
+.TH "pdf4tcl" n 0.4 pdf4tcl "Pdf document generation"
 .BS
 .SH NAME
 pdf4tcl \- Pdf document generation
@@ -13,7 +13,7 @@ package require \fBTcl  8.4\fR
 .sp
 package require \fBsnit \fR
 .sp
-package require \fBpdf4tcl  ?0.3.x?\fR
+package require \fBpdf4tcl  ?0.4?\fR
 .sp
 \fB::pdf4tcl::new\fR \fIobjectName\fR ?\fIoption value\fR...?
 .sp
