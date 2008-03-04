@@ -73,7 +73,7 @@ be used (using only 0.3 features so far):
 # import pdf4tcl
 package require pdf4tcl
 
-# create a pdf object and equally named procedure in global namespace
+# create a pdf object
 pdf4tcl::new mypdf -paper a4 -margin 15mm
 
 # add the first page
@@ -104,7 +104,6 @@ mypdf rectangle 20 50 300 100 -filled 1
 
 # set some justified text into this box
 mypdf setFillColor 0 0 0
-mypdf setStrokeColor 0 0 0
 mypdf drawTextBox 21 51 299 99 "This is just some senseless sample text,\
 	illustrating some features of pdf4tcl. This text should be justified\
 	by stretching white space between words, to make for straight left\

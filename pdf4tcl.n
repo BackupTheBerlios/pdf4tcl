@@ -71,10 +71,6 @@ package require \fBpdf4tcl  ?0.3.x?\fR
 .sp
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 .sp
-\fIobjectName\fR \fBrotateText\fR \fIangle\fR
-.sp
-\fIobjectName\fR \fBskewText\fR \fIxangle\fR \fIyangle\fR
-.sp
 \fIobjectName\fR \fBputImage\fR \fIid\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 .sp
 \fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
@@ -311,10 +307,6 @@ Draw text.
 Get information about current font. The available \fImetric\fRs are
 \fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxy\fR and
 \fBheight\fR.
-.TP
-\fIobjectName\fR \fBrotateText\fR \fIangle\fR
-.TP
-\fIobjectName\fR \fBskewText\fR \fIxangle\fR \fIyangle\fR
 .SS "OBJECT METHODS, IMAGES"
 A limited set of image formats are directly understood by pdf4tcl, currently JPEG and some PNG formats.  To use
 unsupported formats, use Tk and the Img package to load and dump images to raw format which can be fed to

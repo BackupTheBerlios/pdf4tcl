@@ -983,20 +983,37 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return $width
     }
 
-    # Set coordinate for next text command.
-    method setTextPosition {x y {internal 0}} {
+    # Set coordinate for next text command. Internal version
+    method SetTextPosition {x y} {
         $self BeginTextObj
-        if {$internal} {
-            set pdf(xpos) $x
-            set pdf(ypos) $y
-        } else {
-            $self Trans $x $y pdf(xpos) pdf(ypos)
-            # Store for reference
-            set pdf(origxpos) $pdf(xpos)
-            set pdf(origypos) $pdf(ypos)
-        }
-
+        set pdf(xpos) $x
+        set pdf(ypos) $y
         $self Pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) "Tm"
+    }
+
+    method SetTextPositionAngle {x y angle xangle yangle} {
+        $self BeginTextObj
+        set rad [expr {$angle*3.1415926/180.0}]
+        set c [expr {cos($rad)}]
+        set s [expr {sin($rad)}]
+        set pdf(xpos) $x
+        set pdf(ypos) $y
+        $self Pdfoutcmd $c [expr {-$s}] $s $c $pdf(xpos) $pdf(ypos) "Tm"
+
+        # TODO: support skew too
+        set tx [expr {tan($xangle*3.1415926/180.0)}]
+        set ty [expr {tan($yangle*3.1415926/180.0)}]
+        #$self Pdfoutcmd 1 $tx $ty 1 $pdf(xpos) $pdf(ypos) "Tm"
+    }
+
+    # Set coordinate for next text command.
+    method setTextPosition {x y} {
+        $self BeginTextObj
+        $self Trans $x $y x y
+        # Store for reference
+        set pdf(origxpos) $x
+        set pdf(origypos) $y
+        $self SetTextPosition $x $y
     }
 
     # Move coordinate for next text command.
@@ -1004,10 +1021,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self TransR $x $y x y
         set y [expr {$pdf(ypos) + $y}]
         set x [expr {$pdf(xpos) + $x}]
-        $self setTextPosition $x $y 1
+        $self SetTextPosition $x $y
     }
 
     # Draw text at current position, with a newline before
+    # DEPRECATED!
     method drawText {str} {
         $self BeginTextObj
         if {! $pdf(font_set)} {
@@ -1031,7 +1049,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         # Update to next line
         set y [expr {$pdf(ypos) - $pdf(font_size) * $spacing}]
         set x $pdf(origxpos)
-        $self setTextPosition $x $y 1
+        $self SetTextPosition $x $y
     }
 
     # Set Line spacing factor (which is used by method newLine
@@ -1102,6 +1120,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
             set posSet 1
         }
+        # Draw a background box if needed.
         if {[llength $bg] > 1 || $bg} {
             set bboxy [$self getFontMetric bboxy 1]
             set dy [expr {$y + $bboxy}]
@@ -1120,59 +1139,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         $self BeginTextObj
         if {$angle != 0} {
-            set pdf(xpos) $x
-            set pdf(ypos) $y
-            $self rotateText $angle
+            $self SetTextPositionAngle $x $y $angle 0 0
         } elseif {$posSet} {
-            $self setTextPosition $x $y 1
+            $self SetTextPosition $x $y
         }
         $self Pdfout "([CleanText $str]) Tj\n"
         set pdf(xpos) [expr {$x + $strWidth}]
         return $strWidth
-    }
-
-    # Draw a text string at a given position.
-    # This function is deprecated, use text.
-    method drawTextAt {x y str args} {
-        if {!$pdf(inPage)} { $self startPage }
-        set align "left"
-        set angle 0
-        foreach {arg value} $args {
-            switch -- $arg {
-                "-align" {
-                    set align $value
-                }
-                "-angle" {
-                    set angle $value
-                }
-                default {
-                    return -code error \
-                            "unknown option $arg"
-                }
-            }
-        }
-
-        if {! $pdf(font_set)} {
-            $self SetupFont
-        }
-
-        $self Trans $x $y x y
-        set strWidth [$self getStringWidth $str 1]
-        if {$align == "right"} {
-            set x [expr {$x - $strWidth}]
-        } elseif {$align == "center"} {
-            set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
-            set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
-        }
-        $self BeginTextObj
-        if {$angle != 0} {
-            set pdf(xpos) $x
-            set pdf(ypos) $y
-            $self rotateText $angle
-        } else {
-            $self setTextPosition $x $y 1
-        }
-        $self Pdfout "([CleanText $str]) Tj\n"
     }
 
     # Draw a text string at a given position.
@@ -1188,7 +1161,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set x [expr {$x - $strWidth / 2}]
         }
         $self BeginTextObj
-        $self setTextPosition $x $y 1
+        $self SetTextPosition $x $y
         $self Pdfout "([CleanText $str]) Tj\n"
     }
 
@@ -1308,23 +1281,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             incr pos
         }
         return ""
-    }
-
-    method rotateText {angle} {
-        $self BeginTextObj
-        set rad [expr {$angle*3.1415926/180.0}]
-        set c [expr {cos($rad)}]
-        set s [expr {sin($rad)}]
-        $self Pdfoutcmd $c [expr {-$s}] $s $c $pdf(xpos) $pdf(ypos) "Tm"
-    }
-
-    method skewText {xangle yangle} {
-        if {!$pdf(inPage)} { $self startPage }
-        set tx [expr {tan($xangle*3.1415926/180.0)}]
-        set ty [expr {tan($yangle*3.1415926/180.0)}]
-        $self Pdfoutcmd 1 $tx $ty 1 $pdf(xpos) $pdf(ypos) "Tm"
-        set pdf(xpos) 0
-        set pdf(ypos) $pdf(height)
     }
 
     # start text object, if not already in text

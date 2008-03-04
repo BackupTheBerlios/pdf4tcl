@@ -281,9 +281,6 @@ Get information about current font. The available [arg "metric"]s are
 [option ascend], [option descend], [option fixed], [option bboxy] and
 [option height].
 
-[call [arg objectName] [method rotateText] [arg "angle"]]
-[call [arg objectName] [method skewText] [arg "xangle"] [arg "yangle"]]
-
 [list_end]
 [subsection {OBJECT METHODS, IMAGES}]
 
