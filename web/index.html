@@ -31,16 +31,13 @@ or (preferably) make it work and send in a patch.
 <h2>Features</h2>
 
 <p>
-pdf4tcl is now version 0.3, so don't expect too much. For now you can
+pdf4tcl is now version 0.4, so don't expect too much. For now you can
 create pdf files with these features and objects:
 <ul>
 <li>compressed pdf, if tcl-package zip is available. tclkit has it built
 in.</li>
-<li>lines</li>
-<li>arrows</li>
-<li>rectangles</li>
-<li>circles</li>
-<li>arcs</li>
+<li>dumping canvas to pdf</li>
+<li>lines, arrows, rectangles, circles, ovals, arcs, curves</li>
 <li>set stroke and fill colour</li>
 <li>set line style (thickness and dashes)</li>
 <li>simple text strings, left or right aligned or centered</li>
@@ -50,9 +47,9 @@ text.</li>
 <li>text with skewed characters</li>
 <li>use adobe standard fonts, for which pdf4tcl has built in knowledge
 about the font metrics</li>
-<li>use other fonts, if you supply an .afm file. Beware - pdf4tcl 0.3
+<li>use other fonts, if you supply an .afm file. Beware - pdf4tcl 0.4
 does not yet have support for embedding fonts</li>
-<li>jpeg images</li>
+<li>jpeg and png images, plus support for raw image data</li>
 <li>pdf4tcl knows about most commonly used paper dimensions, you can
 provide your own, too.</li>
 <li>pages can be built top-down or bottom-up</li>
@@ -66,7 +63,7 @@ See <a href="changes.html">Changes page</a>
 
 <p>
 Here is a commented example, which should illustrate, how pdf4tcl can
-be used (using only 0.3 features so far):
+be used:
 </p>
 
 <pre>
