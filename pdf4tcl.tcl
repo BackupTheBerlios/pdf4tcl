@@ -1164,10 +1164,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method drawTextBox {x y width height txt args} {
         if {!$pdf(inPage)} { $self startPage }
         set align left
+        set linesVar ""
         foreach {arg value} $args {
             switch -- $arg {
                 "-align" {
                     set align $value
+                }
+                "-linesvar" {
+                    set linesVar $value
                 }
                 default {
                     return -code error \
@@ -1175,6 +1179,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
             }
         }
+
+        if {$linesVar ne ""} {
+            upvar 1 $linesVar lines
+        }
+        set lines 0
 
         $self Trans  $x $y x y
         $self TransR $width $height width height
@@ -1261,6 +1270,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
                 # Move y down to next line
                 set y [expr {$y-$font_height}]
+                incr lines
 
                 set start $pos
                 incr start
