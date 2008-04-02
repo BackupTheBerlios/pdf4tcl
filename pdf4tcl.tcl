@@ -1984,6 +1984,154 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(png_ga) [$self AddObject $body]
     }
 
+    # Incomplete gif experiment...
+    method AddGif {filename id} {
+        variable images
+
+        set imgOK false
+        if {[catch {open $filename "r"} if]} {
+            return -code error "Could not open file $filename"
+        }
+
+        fconfigure $if -translation binary
+        set sign [read $if 6]
+        if {![string match "GIF*" $sign]} {
+            close $if
+            return -code error "file does not contain GIF data"
+        }
+        set img [read $if]
+        close $if
+
+        set pos 0
+        set img_length [string length $img]
+        set img_data ""
+        set palette ""
+
+        # Read the screen descriptor
+        binary scan $img "ssccc" scrWidth scrHeight cr bg dummy
+        set pos 7
+        set depth [expr {($cr & 7) + 1}]
+        set colorMap [expr {($cr >> 7) & 1}]
+        set colorRes [expr {($cr >> 4) & 7}]
+        set nColor [expr {1 << $colorRes}]
+
+        set gMap {}
+        if {$colorMap} {
+            for {set t 0} {$t < $nColor} {incr t} {
+                binary scan $img "@${pos}ccc" red green blue
+                incr pos 3
+                lappend gMap $red $green $blue
+            }
+        }
+
+        while {$pos < $img_length} {
+            # Scan one chunk
+            binary scan $img "@${pos}Ia4" length type
+            incr pos 8
+            set data [string range $img $pos [expr {$pos + $length - 1}]]
+            incr pos $length
+            binary scan $img "@${pos}I" crc
+            incr pos 4
+
+            switch $type {
+                "IHDR" {
+                    set imgOK 1
+                    binary scan $data IIccccc width height depth color \
+                            compression filter interlace
+                }
+                "PLTE" {
+                    set palette $data
+                }
+                "IDAT" {
+                    append img_data $data
+                }
+            }
+        }
+
+        if {!$imgOK} {
+            return -code error "something is wrong with PNG data in file $filename"
+        }
+        if {[string length $img_data] == 0} {
+            return -code error "PNG file does not contain any IDAT chunks"
+        }
+        if {$compression != 0} {
+            return -code error "PNG file is of an unsupported compression type"
+        }
+        if {$filter != 0} {
+            return -code error "PNG file is of an unsupported filter type"
+        }
+        if {$interlace != 0} {
+            # Would need to unpack and repack to do interlaced
+            return -code error "Interlaced PNG is not supported"
+        }
+
+        if {$palette ne ""} {
+            # Transform the palette into a PDF Indexed color space
+            binary scan $palette H* PaletteHex
+            set PaletteLen [expr {[string length $palette] / 3 - 1}]
+            set paletteX "\[ /Indexed /DeviceRGB "
+            append paletteX $PaletteLen " < "
+            append paletteX $PaletteHex
+            append paletteX " > \]"
+        }
+
+        set    xobject "<<\n/Type /XObject\n"
+        append xobject "/Subtype /Image\n"
+        append xobject "/Width $width\n/Height $height\n"
+
+        if {$depth > 8} {
+            $self RequireVersion 1.5
+        }
+
+        switch $color {
+            0 { # Grayscale
+                append xobject "/ColorSpace /DeviceGray\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 1 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            2 { # RGB
+                append xobject "/ColorSpace /DeviceRGB\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            3 { # Palette
+                append xobject "/ColorSpace $paletteX\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 1 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            4 { # Gray + alpha
+                $self PngInitGrayAlpha
+                append xobject "/ColorSpace $pdf(png_ga) 0 R\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 2 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+            6 { # RGBA
+                $self PngInitRgba
+                append xobject "/ColorSpace $pdf(png_rgba) 0 R\n"
+                append xobject "/BitsPerComponent $depth\n"
+                append xobject "/Filter /FlateDecode\n"
+                append xobject "/DecodeParms << /Predictor 15 /Colors 4 /BitsPerComponent $depth /Columns $width>>\n"
+            }
+        }
+
+        append xobject "/Length [string length $img_data] >>\n"
+        append xobject "stream\n"
+        append xobject $img_data
+        append xobject "\nendstream"
+
+        set oid [$self AddObject $xobject]
+
+        if {$id eq ""} {
+            set id image$oid
+        }
+        set images($id) [list $width $height $oid]
+        return $id
+    }
+
     # Place an image at the page
     method putImage {id x y args} {
         $self EndTextObj
@@ -2137,7 +2285,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {![file exists $filename]} {
             return -code error "No such bitmap $bitmap"
         }
-        set ch [open $filename r]
+        set ch [open $filename "r"]
         set bitmapdata [read $ch]
         close $ch
         if {![regexp {_width (\d+)} $bitmapdata -> width]} {
@@ -3123,6 +3271,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # helper function: mask parentheses and backslash
     proc CleanText {in} {
+        # Since the font is set up as WinAnsiEncoding, we get as close
+        # as possible by using cp1252
+        set in [encoding convertto cp1252 $in]
         return [string map {( \\( ) \\) \\ \\\\} $in]
     }
 

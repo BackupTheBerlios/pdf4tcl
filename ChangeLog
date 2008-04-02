@@ -1,4 +1,7 @@
 2008-04-02 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Use cp1252 encoding to match font encoding.
+
+2008-04-02 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added -linesvar option to drawTextBox.
 
 2008-03-04 Peter Spjuth   <peter.spjuth@gmail.com>

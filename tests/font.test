@@ -30,3 +30,24 @@ test font-2.1 {font size, units works} -body {
         /Courier 10 Tf * /Courier 56.693 Tf
     }
 } -result 1
+
+test font-3.1 {font, unicode} -body {
+    set cmds [list [list setFont 10 Courier]]
+    for {set code 32} {$code <= 255} {incr code} {
+        set l [expr {($code-32) % 4}]
+        set h [expr {($code-32) / 4}]
+        set char [format %c $code]
+        set cpchar [encoding convertfrom cp1252 $char]
+        set cpcode [scan $cpchar %c]
+        set hex  [format %04X $cpcode]
+        if {[info exists ::pdf4tcl::glyph_names($hex)]} {
+            set glyph $::pdf4tcl::glyph_names($hex)
+        } else {
+            set glyph "---"
+        }
+        lappend cmds [list text "$hex '$cpchar' $glyph" \
+                -x [expr {$l * 130}] -y [expr {$h * 14}]]
+    }
+
+    eval mytest $cmds [list "*20AC '\u0080' euro*"]
+} -result 1

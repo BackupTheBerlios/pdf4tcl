@@ -8,5 +8,6 @@ namespace import tcltest::*
 eval configure $argv -testdir [list [file dir [info script]]]
 workingDirectory [configure -testdir]
 configure -tmpdir [configure -testdir]
+#tcltest::configure -file font*
 runAllTests
 exit
