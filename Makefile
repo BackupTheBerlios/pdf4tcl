@@ -2,7 +2,7 @@
 #
 # $Id$
 
-VERSION = 04
+VERSION = 05
 #TCLSH = $(HOME)/tcl/bin/tclsh8.5
 #TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
 TCLSH = tclsh

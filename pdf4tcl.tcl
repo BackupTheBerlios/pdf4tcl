@@ -10,7 +10,7 @@
 
 # $Id$
 
-package provide pdf4tcl 0.4
+package provide pdf4tcl 0.5
 
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames

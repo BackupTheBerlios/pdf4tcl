@@ -1,11 +1,11 @@
 [comment {-*- tcl -*- doctools manpage}]
-[manpage_begin pdf4tcl n 0.4]
+[manpage_begin pdf4tcl n 0.5]
 [copyright {2007 Peter Spjuth}]
 [moddesc   {Pdf document generation}]
 [titledesc {Pdf document generation}]
 [require Tcl 8.4]
 [require snit]
-[require pdf4tcl [opt 0.4]]
+[require pdf4tcl [opt 0.5]]
 [description]
 
 This package provides a container class for

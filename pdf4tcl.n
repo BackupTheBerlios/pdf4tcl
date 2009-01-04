@@ -2,9 +2,8 @@
 '\" Generated from file 'pdf4tcl.man' by tcllib/doctools with format 'nroff'
 '\" Copyright (c) 2007 Peter Spjuth
 '\"
-'\" -*- tcl -*- doctools manpage
 .so man.macros
-.TH "pdf4tcl" n 0.4 pdf4tcl "Pdf document generation"
+.TH "pdf4tcl" n 0.5 pdf4tcl "Pdf document generation"
 .BS
 .SH NAME
 pdf4tcl \- Pdf document generation
@@ -13,7 +12,7 @@ package require \fBTcl  8.4\fR
 .sp
 package require \fBsnit \fR
 .sp
-package require \fBpdf4tcl  ?0.4?\fR
+package require \fBpdf4tcl  ?0.5?\fR
 .sp
 \fB::pdf4tcl::new\fR \fIobjectName\fR ?\fIoption value\fR...?
 .sp
@@ -162,6 +161,7 @@ The format of \fIval\fR is '\fInum\fR ?\fIunit\fR?' where
 \fInum\fR is a valid integer or double. See \fBUNIT\fR for valid
 \fIunit\fRs.  If no \fIunit\fR is given, the value is interpreted
 as points.
+.PP
 .SS "OBJECT COMMAND"
 All commands created by \fB::pdf4tcl::new\fR have the following
 general form and may be used to invoke various operations on their
@@ -171,6 +171,7 @@ pdf object.
 The method \fBmethod\fR and its \fIarg\fR'uments determine the exact
 behavior of the command. See section \fBOBJECT METHODS\fR for
 the detailed specifications.
+.PP
 .SS "OBJECT METHODS"
 .TP
 \fIobjectName\fR \fBconfigure\fR
@@ -233,6 +234,7 @@ If no \fIfilename\fR is given, it is written to stdout.
 This will do \fBendPage\fR and \fBfinish\fR if needed.
 If the \fB-file\fR option was given at object creation, an empty file
 is created.
+.PP
 .SS "OBJECT METHODS"
 .TP
 \fIobjectName\fR \fBgetDrawableArea\fR
@@ -266,6 +268,7 @@ Stipple offset is limited. The form x,y should work.
 .sp
 Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.
+.PP
 .SS "OBJECT METHODS, TEXT"
 .TP
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
@@ -307,6 +310,7 @@ Draw text.
 Get information about current font. The available \fImetric\fRs are
 \fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxy\fR and
 \fBheight\fR.
+.PP
 .SS "OBJECT METHODS, IMAGES"
 A limited set of image formats are directly understood by pdf4tcl, currently JPEG and some PNG formats.  To use
 unsupported formats, use Tk and the Img package to load and dump images to raw format which can be fed to
@@ -358,6 +362,7 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
   mypdf putImage $id 20 60 -width 100
 
 .fi
+.PP
 .SS "OBJECT METHODS, COLORS"
 Colors can be expressed in various formats. First, as a three element list
 of values in the range 0.0 to 1.0. Second, in the format #XXXXXX where
@@ -373,6 +378,7 @@ text operations.
 .TP
 \fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 Sets the stroke color for graphics operations.
+.PP
 .SS "OBJECT METHODS, GRAPHICS"
 .TP
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
@@ -392,6 +398,7 @@ Sets the stroke color for graphics operations.
 \fIobjectName\fR \fBarrow\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIsize\fR ?\fIangle\fR?
 .TP
 \fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
+.PP
 .SS "OBJECT CONFIGURATION"
 All pdf4tcl objects understand the options from \fBPAGE CONFIGURATION\fR,
 which defines default page settings when used with a pdf4tcl object.
@@ -413,6 +420,7 @@ a unit is interpreted using this unit.
 See \fBUNIT\fR for valid units.
 Default value is "p" as in points.
 This option can only be set at object creation.
+.PP
 .SS "PAGE CONFIGURATION"
 .TP
 \fB-paper\fR \fIname\fR
@@ -442,6 +450,7 @@ Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
 .sp
 The default value of this option is zero.
+.PP
 .SH EXAMPLES
 .nf
 

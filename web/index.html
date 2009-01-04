@@ -31,7 +31,7 @@ or (preferably) make it work and send in a patch.
 <h2>Features</h2>
 
 <p>
-pdf4tcl is now version 0.4, so don't expect too much. For now you can
+pdf4tcl is now version 0.5, so don't expect too much. For now you can
 create pdf files with these features and objects:
 <ul>
 <li>compressed pdf, if tcl-package zip is available. tclkit has it built
@@ -47,13 +47,21 @@ text.</li>
 <li>text with skewed characters</li>
 <li>use adobe standard fonts, for which pdf4tcl has built in knowledge
 about the font metrics</li>
-<li>use other fonts, if you supply an .afm file. Beware - pdf4tcl 0.4
+<li>use other fonts, if you supply an .afm file. Beware - pdf4tcl 0.5
 does not yet have support for embedding fonts</li>
 <li>jpeg and png images, plus support for raw image data</li>
 <li>pdf4tcl knows about most commonly used paper dimensions, you can
 provide your own, too.</li>
 <li>pages can be built top-down or bottom-up</li>
 </ul>
+</p>
+<h2>Missing Features</h2>
+<p>
+The weakest point as of 0.5 is fonts and encodings. If you stay with built
+in fonts and encoding cp1252 you are ok but beyond that...
+<br>
+Having tried to understand how fonts and encodings work in PDF I have given
+up and can only hope for someone with more knowledge to turn up.
 </p>
 <h2>Changes</h2>
 
