@@ -201,3 +201,25 @@ test text-7.6 {drawTextBox, overflow} -body {
 } -cleanup {
     Apa destroy
 } -result {Bla}
+
+test text-8.1 {getTextPosition} -body {
+    pdf4tcl::new Apa
+    set res [list [Apa getTextPosition]]
+    Apa setTextPosition 30 40
+    lappend res [Apa getTextPosition]
+    Apa moveTextPosition 2i 3i
+    lappend res [Apa getTextPosition]
+} -cleanup {
+    Apa destroy
+} -result {{0.0 0.0} {30.0 40.0} {174.0 256.0}}
+
+test text-8.2 {getTextPosition} -body {
+    pdf4tcl::new Apa -unit i -orient 1
+    set res [list [Apa getTextPosition]]
+    Apa setTextPosition 30 40
+    lappend res [Apa getTextPosition]
+    Apa moveTextPosition 2i 3i
+    lappend res [Apa getTextPosition]
+} -cleanup {
+    Apa destroy
+} -result {{0.0 0.0} {30.0 40.0} {32.0 43.0}}

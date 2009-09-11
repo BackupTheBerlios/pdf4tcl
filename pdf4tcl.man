@@ -251,6 +251,10 @@ Set coordinate for next text command.
 
 Move coordinate for next text command.
 
+[call [arg objectName] [method getTextPosition]]
+
+This method returns the current text coordinate.
+
 [call [arg objectName] [method newLine] [opt [arg spacing]]]
 
 Moves text coordinate down and resets x to where the latest

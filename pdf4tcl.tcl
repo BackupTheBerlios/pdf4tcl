@@ -1039,6 +1039,23 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self SetTextPosition $x $y
     }
 
+    # Get current test position
+    method getTextPosition {} {
+        # This is basically a reverse Trans
+        set tx [expr {$pdf(xpos) - $pdf(marginleft)}]
+        if {$pdf(orient)} {
+            set ty [expr {$pdf(height) - $pdf(ypos)}]
+            set ty [expr {$ty - $pdf(margintop)}]
+        } else {
+            set ty [expr {$pdf(ypos) - $pdf(marginbottom)}]
+        }
+
+        # Translate to current unit
+        set tx [expr {$tx / $pdf(unit)}]
+        set ty [expr {$ty / $pdf(unit)}]
+        return [ list $tx $ty ]
+    }
+
     # Draw text at current position, with a newline before
     # DEPRECATED!
     method drawText {str} {

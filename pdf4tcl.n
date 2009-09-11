@@ -58,6 +58,8 @@ package require \fBpdf4tcl  ?0.5?\fR
 .sp
 \fIobjectName\fR \fBmoveTextPosition\fR \fIx\fR \fIy\fR
 .sp
+\fIobjectName\fR \fBgetTextPosition\fR
+.sp
 \fIobjectName\fR \fBnewLine\fR ?\fIspacing\fR?
 .sp
 \fIobjectName\fR \fBsetLineSpacing\fR \fIspacing\fR
@@ -286,6 +288,9 @@ Set coordinate for next text command.
 .TP
 \fIobjectName\fR \fBmoveTextPosition\fR \fIx\fR \fIy\fR
 Move coordinate for next text command.
+.TP
+\fIobjectName\fR \fBgetTextPosition\fR
+This method returns the current text coordinate.
 .TP
 \fIobjectName\fR \fBnewLine\fR ?\fIspacing\fR?
 Moves text coordinate down and resets x to where the latest
