@@ -435,6 +435,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(height) $height
         set pdf(xpos)   0
         set pdf(ypos)   $height
+        set pdf(origxpos) 0
+        set pdf(origypos) $height
     }
 
     # Start on a new page
