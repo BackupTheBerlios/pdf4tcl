@@ -39,6 +39,9 @@ test: cleancc
 check:
 	$(NAGELFAR) pdf4tcl.tcl -filter '*Unknown variable*'
 
+bench: cleancc
+	$(TCLSH) bench/all.tcl
+
 # Code coverage tests
 SRCFILES = pdf4tcl.tcl
 IFILES   = $(SRCFILES:.tcl=.tcl_i)

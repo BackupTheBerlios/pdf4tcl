@@ -4,6 +4,7 @@
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
 # Copyright (c) 2006-2008 by Peter Spjuth <peter.spjuth@gmail.com>
+# Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
 
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -74,6 +75,9 @@ namespace eval pdf4tcl {
 
     if {[catch {package require zlib} err]} {
         set g(haveZlib) 0
+        if {[info commands zlib] eq "zlib"} {
+            set g(haveZlib) 1
+        }
     } else {
         set g(haveZlib) 1
     }
@@ -325,7 +329,6 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self destroy
     }
 
-
     #######################################################################
     # Collect PDF Output
     #######################################################################
@@ -500,7 +503,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "/Parent 2 0 R\n"
         $self Pdfout "/Resources 3 0 R\n"
         $self Pdfout [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
-        $self Pdfout "/Contents \[[$self NextOid] 0 R \]\n"
+        $self Pdfout "/Contents \[[$self NextOid] 0 R\]\n"
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
 
@@ -562,6 +565,22 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         set pdf(objects) {}
         $self Flush
+    }
+
+    # This must create optionally compressed PDF stream.
+    # dictval must contain correct string value without << terminator.
+    # Terminator and length will be added by this proc.
+    proc MakeStream {dictval body compress} {
+        set res $dictval
+        if {$compress} {
+            set body [zlib compress $body]
+            append res "\n/Filter \[/FlateDecode\]"
+        }
+        set len [string length $body]
+        append res "\n/Length $len\n>>\nstream\n"
+        append res $body 
+        append res "\nendstream"
+        return $res
     }
 
     # Create an object to be added to the stream at a suitable time.
@@ -954,6 +973,26 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd 1 0 0 1 $pdf(xpos) $pdf(ypos) "Tm"
     }
 
+    proc MulVxM {vector matrix} {
+        foreach {x y} $vector break
+        foreach {a b c d e f} $matrix break
+        lappend res [expr {$a*$x + $c*$y + $e}]
+        lappend res [expr {$b*$x + $d*$y + $f}]
+        return $res
+    }
+
+    proc MulMxM {m1 m2} {
+        foreach {a1 b1 c1 d1 e1 f1} $m1 break
+        foreach {a2 b2 c2 d2 e2 f2} $m2 break
+        lappend res [expr {$a1*$a2 + $b1*$c2}]
+        lappend res [expr {$a1*$b2 + $b1*$d2}]
+        lappend res [expr {$c1*$a2 + $d1*$c2}]
+        lappend res [expr {$c1*$b2 + $d1*$d2}]
+        lappend res [expr {$e1*$a2 + $f1*$c2 + $e2}]
+        lappend res [expr {$e1*$b2 + $f1*$d2 + $f2}]
+        return $res
+    }
+
     method SetTextPositionAngle {x y angle xangle yangle} {
         $self BeginTextObj
         set rad [expr {$angle*3.1415926/180.0}]
@@ -961,12 +1000,23 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set s [expr {sin($rad)}]
         set pdf(xpos) $x
         set pdf(ypos) $y
-        $self Pdfoutcmd $c [expr {-$s}] $s $c $pdf(xpos) $pdf(ypos) "Tm"
 
-        # TODO: support skew too
+        if {$xangle == 0 && $yangle == 0} {
+            $self Pdfoutcmd $c [expr {-$s}] $s $c $x $y "Tm"
+            return
+        }
+
+        # Add skew if specified
         set tx [expr {tan($xangle*3.1415926/180.0)}]
         set ty [expr {tan($yangle*3.1415926/180.0)}]
-        #$self Pdfoutcmd 1 $tx $ty 1 $pdf(xpos) $pdf(ypos) "Tm"
+
+        set mr [list $c [expr {-$s}] $s $c 0 0]
+        set ms [list 1 $tx $ty 1 0 0]
+        set ma [MulMxM $mr $ms]
+        lset ma 4 $x
+        lset ma 5 $y
+
+        $self Pdfoutcmd {*}$ma "Tm" ;# 8.5
     }
 
     # Set coordinate for next text command.
@@ -991,7 +1041,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # DEPRECATED!
     method drawText {str} {
         $self BeginTextObj
-        if {! $pdf(font_set)} {
+        if {!$pdf(font_set)} {
             $self SetupFont
         }
         $self Pdfout "([CleanText $str]) '\n"
@@ -1035,6 +1085,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {!$pdf(inPage)} { $self startPage }
         set align "left"
         set angle 0
+        set xangle 0
+        set yangle 0
         set bg 0
         set x $pdf(xpos)
         set y $pdf(ypos)
@@ -1047,6 +1099,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
                 "-angle" {
                     set angle $value
+                }
+                "-xangle" {
+                    set xangle $value
+                }
+                "-yangle" {
+                    set yangle $value
                 }
                 "-background" - "-bg" - "-fill" {
                     if {[string is boolean -strict $value]} {
@@ -1061,16 +1119,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
                 "-x" {
                     $self Trans $value 0 x _
-                    set posSet 1
+           
+         set posSet 1
                 }
                 default {
-                    return -code error \
-                            "unknown option $arg"
+                    return -code error "unknown option $arg"
                 }
             }
         }
 
-        if {! $pdf(font_set)} {
+        if {!$pdf(font_set)} {
             $self SetupFont
         }
 
@@ -1141,8 +1199,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     set linesVar $value
                 }
                 default {
-                    return -code error \
-                            "unknown option $arg"
+                    return -code error "unknown option $arg"
                 }
             }
         }
@@ -1258,7 +1315,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # start text object, if not already in text
     method BeginTextObj {} {
-        if {! $pdf(in_text_object)} {
+        if {!$pdf(in_text_object)} {
             $self Pdfout "BT\n"
             set pdf(in_text_object) true
         }
@@ -1562,7 +1619,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         } elseif {$filled && !$stroke} {
             $self Pdfoutcmd "f"
         } else {
-            $self Pdfoutcmd " S"
+            $self Pdfoutcmd "S"
         }
     }
 
@@ -1637,6 +1694,26 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfoutcmd "f"
         } else {
             $self Pdfoutcmd "S"
+        }
+    }
+
+    # Draw a polygon, internal version
+    method DrawPoly {stroke filled args} {
+        set start 1
+        foreach {x y} $args {
+            if {$start} {
+                $self Pdfoutcmd $x $y "m"
+                set start 0
+            } else {
+                $self Pdfoutcmd $x $y "l"
+            }
+        }
+        if {$filled && $stroke} {
+            $self Pdfoutcmd "b"
+        } elseif {$filled && !$stroke} {
+            $self Pdfoutcmd "f"
+        } else {
+            $self Pdfoutcmd "s"
         }
     }
 
@@ -2110,6 +2187,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set h $height
         set wfix 0
         set hfix 0
+
         foreach {arg value} $args {
             set value [pdf4tcl::getPoints $value $pdf(unit)]
             switch -- $arg {
@@ -2197,6 +2275,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 "-height" {set h $value; set hfix 1}
             }
         }
+
         if {$wfix && !$hfix} {
             set h [expr {$height*$w/$width}]
         }
@@ -2374,8 +2453,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 "-bbox"   {set bbox $value}
                 "-bg"     {set bg $value}
                 default {
-                    return -code error \
-                            "unknown option $arg"
+                    return -code error "unknown option $arg"
                 }
             }
         }
