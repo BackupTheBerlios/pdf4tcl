@@ -1016,7 +1016,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         lset ma 4 $x
         lset ma 5 $y
 
-        $self Pdfoutcmd {*}$ma "Tm" ;# 8.5
+        eval \$self Pdfoutcmd $ma "Tm" ;# 8.5
     }
 
     # Set coordinate for next text command.
@@ -2230,7 +2230,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         append xobject "/Subtype /Image\n"
         append xobject "/Width $width\n/Height $height\n"
         append xobject "/ColorSpace /DeviceRGB\n"
-        append xobject "/BitsPerComponent 8>>\n"
+        append xobject "/BitsPerComponent 8\n"
+        append xobject "/Length [expr {$width * $height * 3}]>>\n"
         append xobject "stream\n"
 
         # Iterate on each row of the image data.

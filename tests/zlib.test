@@ -36,6 +36,7 @@ test zlib-1.2 {zlib used} -body {
 catch {::_instrument_::cleanup}
 package forget zlib
 package forget pdf4tcl
+rename zlib {}
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 proc zlib {args} {set ::zlibcalled 1 ; return "zlib_dummy"}
 
