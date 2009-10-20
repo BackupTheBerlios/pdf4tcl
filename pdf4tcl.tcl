@@ -11,8 +11,10 @@
 
 # $Id$
 
-package provide pdf4tcl 0.5.1
+package provide pdf4tcl 0.6
 
+package require pdf4tcl::stdmetrics
+package require pdf4tcl::glyph2unicode
 package require pdf4tcl::metrics
 package require pdf4tcl::glyphnames
 package require snit
