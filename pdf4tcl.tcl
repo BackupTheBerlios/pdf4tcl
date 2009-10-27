@@ -1130,6 +1130,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             -configuremethod SetCompress -readonly 1
     option -margin    -default 0      -validatemethod CheckMargin \
             -configuremethod SetPageOption
+    option -rotate    -default 0      -validatemethod CheckRotation \
+            -configuremethod SetPageOption
 
     # Validator for -paper
     method CheckPaper {option value} {
@@ -1169,6 +1171,13 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
     }
 
+    # Validator for -rotate
+    method CheckRotation {option value} {
+        if { $value % 90  } {
+            return -code error "Rotation $value not a multiple of 90"
+        }
+    }
+
     # Configure method for -compress
     method SetCompress {option value} {
         variable ::pdf4tcl::g
@@ -1187,7 +1196,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     method SetPageOption {option value} {
         set options($option) $value
         # Fill in page properies
-        $self SetPageSize   $options(-paper) $options(-landscape)
+        $self SetPageSize   $options(-paper) $options(-landscape) \
+                $options(-rotate)
         $self SetPageMargin $options(-margin)
     }
 
@@ -1239,7 +1249,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # Page data
         # Fill in page properies
-        $self SetPageSize   $options(-paper) $options(-landscape)
+        $self SetPageSize   $options(-paper) $options(-landscape) \
+                $options(-rotate)
         $self SetPageMargin $options(-margin)
         set pdf(orient) $options(-orient)
 
@@ -1373,7 +1384,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # Fill in page data from options
-    method SetPageSize {paper landscape} {
+    method SetPageSize {paper landscape rotation} {
         set papersize [pdf4tcl::getPaperSize $paper $pdf(unit)]
         set width  [lindex $papersize 0]
         set height [lindex $papersize 1]
@@ -1388,6 +1399,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set pdf(height) $height
         set pdf(xpos)   0
         set pdf(ypos)   $height
+        set pdf(rotate) $rotation
         set pdf(origxpos) 0
         set pdf(origypos) $height
     }
@@ -1399,6 +1411,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set localopts(-landscape) $options(-landscape)
         set localopts(-margin)    $options(-margin)
         set localopts(-paper)     $options(-paper)
+        set localopts(-rotate)    $options(-rotate)
 
         if {[llength $args] == 1} {
             # Single arg = paper
@@ -1432,6 +1445,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     -orient {
                         $self CheckBoolean $option $value
                     }
+                    -rotate {
+                        $self CheckRotation $option $value
+                    }
                     default {
                         return -code error "Unknown option $option"
                     }
@@ -1444,7 +1460,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self endPage
         }
         # Fill in page properies
-        $self SetPageSize $localopts(-paper) $localopts(-landscape)
+        $self SetPageSize $localopts(-paper) $localopts(-landscape) \
+                $localopts(-rotate)
         $self SetPageMargin $localopts(-margin)
         set pdf(orient) $localopts(-orient)
 
@@ -1458,6 +1475,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "/Parent 2 0 R\n"
         $self Pdfout "/Resources 3 0 R\n"
         $self Pdfout [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
+        if {$pdf(rotate) != 0} {
+            $self Pdfout "/Rotate $pdf(rotate)\n"
+        }
         $self Pdfout "/Contents \[[$self NextOid] 0 R\]\n"
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"

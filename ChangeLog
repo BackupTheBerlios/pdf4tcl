@@ -1,3 +1,6 @@
+2009-10-27 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added -rotate document/page option. (Thanks to Martin Walcher)
+
 2009-09-11 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added getTextPosition method.
 

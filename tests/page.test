@@ -99,3 +99,22 @@ test page-2.2 {misc page handling, with file} -body {
     set data
 } -match glob \
         -result "%PDF*/Page*/Page*/Page*/Page*/Pages*/Count 4*%%EOF\n"
+
+test page-2.3 {misc page handling, rotate} -body {
+    pdf4tcl::new apa -rotate 90
+    apa startPage
+    apa startPage -rotate 0
+    apa startPage -rotate 180
+    apa get
+} -cleanup {apa destroy} -match glob \
+        -result "%PDF*/Page*/Rotate 90*/Page*/Page*/Rotate 180*/Pages*/Count 3*%%EOF\n"
+
+test page-2.4 {misc page handling, rotate} -body {
+    # No rotate in document
+    pdf4tcl::new apa -rotate 0
+    apa startPage
+    apa startPage -rotate 0
+    apa startPage
+    string match *Rotate* [apa get]
+} -cleanup {apa destroy} -match glob \
+        -result 0

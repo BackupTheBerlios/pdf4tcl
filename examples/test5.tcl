@@ -11,5 +11,14 @@ p1 circle 100 100 50
 p1 arc 100 100 90 90 0 90
 p1 arc 100 100 85 85 15 135
 p1 arc 100 100 85 85 5 -135
+
+p1 startPage -rotate 90
+
+p1 line 100 100 200 200
+p1 circle 100 100 50
+p1 arc 100 100 90 90 0 90
+p1 arc 100 100 85 85 15 135
+p1 arc 100 100 85 85 5 -135
+
 p1 write -file test5.pdf
 p1 cleanup

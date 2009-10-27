@@ -1,15 +1,16 @@
 [comment {-*- tcl -*- doctools manpage}]
-[manpage_begin pdf4tcl n 0.5]
+[manpage_begin pdf4tcl n 0.6]
 [copyright {2007 Peter Spjuth}]
+[copyright {2009 Yaroslav Schekin}]
 [moddesc   {Pdf document generation}]
 [titledesc {Pdf document generation}]
 [require Tcl 8.4]
+[require dict]
 [require snit]
-[require pdf4tcl [opt 0.5]]
+[require pdf4tcl [opt 0.6]]
 [description]
 
-This package provides a container class for
-generating [term {pdf}] documents.
+This package provides a container class for generating [term {pdf}] documents.
 
 [section COORDINATES]
 
@@ -82,6 +83,58 @@ The format of [arg "val"] is '[arg "num"] [opt [arg "unit"]]' where
 [arg "num"] is a valid integer or double. See [sectref UNIT] for valid
 [arg "unit"]s.  If no [arg "unit"] is given, the value is interpreted
 as points.
+
+
+[call [cmd ::pdf4tcl::LoadBaseTrueTypeFont] [arg "basefontname"] [arg "ttf_file_name"]]
+
+This call loads TTF font from file to be used by all pdf4tcl objects.
+The [arg "basefontname"] is used to reference this font.
+To use this base font in documents, font with some encoding must be
+created from it using CreateFont.
+
+
+[call [cmd ::pdf4tcl::CreateBaseTrueTypeFont] [arg "basefontname"] [arg "ttf_data"]]
+
+This call creates base font from TTF binary data.
+
+
+[call [cmd ::pdf4tcl::LoadBaseType1Font] [arg "basefontname"] [arg "AFM_file_name"] [arg "PFB_file_name"]]
+
+This call loads Type1 font from two files (.afm and .pfb) to be used by
+all pdf4tcl objects. The [arg "basefontname"] is used to reference this font.
+To use this base font in documents, font with some encoding must be
+created from it using CreateFont.
+
+
+[call [cmd ::pdf4tcl::CreateBaseType1Font] [arg "basefontname"] [arg "AFM_data"] [arg "PFB_data"]]
+ 
+This call creates base font from AFM text and PFB binary data.
+
+
+[call [cmd ::pdf4tcl::CreateFont] [arg "basefontname"] [arg "fontname"] [arg "encoding_name"]]
+
+This call creates font that can be used in documents from base font.
+
+[example {
+pdf4tcl::LoadBaseTrueTypeFont BaseArial "arial.ttf"
+pdf4tcl::CreateFont BaseArial MyArial cp1251 
+pdf4tcl::LoadBaseType1Font BaseType1 "a010013l.afm" "a010013l.pfb"
+pdf4tcl::CreateFont BaseType1 MyType1 cp1251 
+pdf4tcl::new mypdf -paper a4 -compress 1
+mypdf startPage
+mypdf setFont 10 MyArial
+set txt "\u042D\u0442\u043E \u0442\u0435\u043A\u0441\u0442 \u043D\u0430 \u0440\u0443\u0441\u0441\u043A\u043E\u043C \u044F\u0437\u044B\u043A\u0435. This is text in Russian."
+mypdf text $txt -bg #CACACA -x 50 -y 100
+mypdf setFont 10 MyType1
+mypdf text $txt -x 50 -y 200
+mypdf write -file fonts.pdf
+mypdf destroy
+}]
+
+[call [cmd ::pdf4tcl::CreateFont_SpecEnc] [arg "basefontname"] [arg "fontname"] [arg "subset"]]
+
+This call creates font that can be used in documents from base font.
+The [arg "subset"] must be a list of unicode values.
 
 [list_end]
 
@@ -285,25 +338,31 @@ Get information about current font. The available [arg "metric"]s are
 [option ascend], [option descend], [option fixed], [option bboxy] and
 [option height].
 
+Get information about current font. The available [arg "metric"]s are
+[option bboxt] and [option bboxb].
+
 [list_end]
 [subsection {OBJECT METHODS, IMAGES}]
 
-A limited set of image formats are directly understood by pdf4tcl, currently JPEG and some PNG formats.  To use
-unsupported formats, use Tk and the Img package to load and dump images to raw format which can be fed to
+A limited set of image formats are directly understood by pdf4tcl, currently
+JPEG and some PNG formats.  To use unsupported formats, use Tk and the Img
+package to load and dump images to raw format which can be fed to
 [method putRawImage] and [method addRawImage].
 
 [list_begin definitions]
 
 [call [arg objectName] [method putImage] [arg "id"] [arg "x"] [arg "y"]  [opt [arg "option value"]...]]
 
-Put an image on the current page. The image must have been added previously by [method addImage] or
-[method addRawImage]. The [arg "id"] is the one returned from the add command.
+Put an image on the current page. The image must have been added previously by
+[method addImage] or [method addRawImage]. The [arg "id"] is the one returned
+from the add command.
 
 [list_begin opt]
 
 [opt_def -width [arg width]]
-Set the width of the image.  Default width is one point per pixel.  If [arg height] is set but not [arg width],
-the width is selected to preserve the aspect ratio of the image.
+Set the width of the image.  Default width is one point per pixel.
+If [arg height] is set but not [arg width], the width is selected to
+preserve the aspect ratio of the image.
 
 [opt_def -height [arg height]]
 Set the height of the image.  Default height is one point per pixel.  If [arg width] is set but not [arg height],
@@ -438,10 +497,18 @@ With [option -orient] true, origo is in the top left corner.
 The default value of this option is true.
 
 [opt_def -margin [arg values]]
+
 The margin is a one, two or four element list of margins.
 For one element, it specifies all margins.
 Two elements specify left/right and top/bottom.
 Four elements specify left, right, top and bottom.
+[nl]
+The default value of this option is zero.
+
+[opt_def -rotate [arg angle]]
+
+This value defines a rotation angle for the display of the page.
+Allowed values are multiples of 90.
 [nl]
 The default value of this option is zero.
 
