@@ -6,6 +6,7 @@ VERSION = 05
 #TCLSH = $(HOME)/tcl/bin/tclsh8.5
 #TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
 TCLSH = tclsh
+TCLKIT84 = $(HOME)/tclkit/v84/tclkit-linux-x86
 
 # TOOL paths
 NAGELFAR = nagelfar -encoding iso8859-1
@@ -37,7 +38,7 @@ test: cleancc
 	$(TCLSH) tests/all.tcl
 
 check:
-	$(NAGELFAR) pdf4tcl.tcl -filter '*Unknown variable*'
+	$(TCLKIT84) `which $(NAGELFAR)` pdf4tcl.tcl -filter '*Unknown variable*'
 
 bench: cleancc
 	$(TCLSH) bench/all.tcl

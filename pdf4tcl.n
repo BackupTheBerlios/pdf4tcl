@@ -95,6 +95,12 @@ package require \fBpdf4tcl  ?0.6?\fR
 .sp
 \fIobjectName\fR \fBaddRawImage\fR \fIdata\fR ?\fIoption value\fR...?
 .sp
+\fIobjectName\fR \fBgetImageHeight\fR \fIid\fR
+.sp
+\fIobjectName\fR \fBgetImageSize\fR \fIid\fR
+.sp
+\fIobjectName\fR \fBgetImageWidth\fR \fIid\fR
+.sp
 \fIobjectName\fR \fBsetBgColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 .sp
 \fIobjectName\fR \fBsetFillColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
@@ -428,6 +434,16 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
   mypdf putImage $id 20 60 -width 100
 
 .fi
+.TP
+\fIobjectName\fR \fBgetImageHeight\fR \fIid\fR
+This method returns the height of the image identified by \fIid\fR.
+.TP
+\fIobjectName\fR \fBgetImageSize\fR \fIid\fR
+This method returns the size of the image identified by \fIid\fR.  The
+return value is a list of width and height.
+.TP
+\fIobjectName\fR \fBgetImageWidth\fR \fIid\fR
+This method returns the width of the image identified by \fIid\fR.
 .PP
 .SS "OBJECT METHODS, COLORS"
 Colors can be expressed in various formats. First, as a three element list

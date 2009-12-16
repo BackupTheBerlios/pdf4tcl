@@ -3167,6 +3167,37 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         return $id
     }
 
+    # Return the height of an image.
+    method getImageHeight {id} {
+        variable images
+        set status {}
+        if {[info exists images($id)]} {
+            set status [lindex $images($id) 1]
+        }
+        return $status
+    }
+
+    # Return the size of an image. The size is returned as a list containing
+    # the width and height of the image.
+    method getImageSize {id} {
+        variable images
+        set status {}
+        if {[info exists images($id)]} {
+            set status [lrange $images($id) 0 1]
+        }
+        return $status
+    }
+
+    # Return the width of an image.
+    method getImageWidth {id} {
+        variable images
+        set status {}
+        if {[info exists images($id)]} {
+            set status [lindex $images($id) 0]
+        }
+        return $status
+    }
+
     # Place an image at the page
     method putImage {id x y args} {
         $self EndTextObj
@@ -3229,7 +3260,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set img ""
         foreach rawRow $img_data {
             # Remove spaces and # characters
-            regsub -all -- {((\#)|( ))} $rawRow {} row
+            set row [string map "# {} { } {}" $rawRow]
             # Convert data to binary format and
             # add to data stream.
             append img [binary format H* $row]
@@ -3290,7 +3321,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         # Iterate on each row of the image data.
         foreach rawRow $img_data {
             # Remove spaces and # characters
-            regsub -all -- {((\#)|( ))} $rawRow {} row
+            set row [string map "# {} { } {}" $rawRow]
             # Convert data to binary format and
             # add to data stream.
             $self Pdfout [binary format H* $row]

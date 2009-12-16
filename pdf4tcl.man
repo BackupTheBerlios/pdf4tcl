@@ -401,6 +401,19 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
   mypdf putImage $id 20 60 -width 100
 }]
 
+[call [arg objectName] [method getImageHeight] [arg "id"]]
+
+This method returns the height of the image identified by [arg "id"].
+
+[call [arg objectName] [method getImageSize] [arg "id"]]
+
+This method returns the size of the image identified by [arg "id"].  The
+return value is a list of width and height.
+
+[call [arg objectName] [method getImageWidth] [arg "id"]]
+
+This method returns the width of the image identified by [arg "id"].
+
 [list_end]
 [subsection {OBJECT METHODS, COLORS}]
 

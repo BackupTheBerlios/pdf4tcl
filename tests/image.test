@@ -37,5 +37,13 @@ test image-1.5 {misc image handling} -body {
     mytest {addImage tcl.jpg -type png} {/_image0}
 } -returnCodes 1 -result "file does not contain PNG data"
 
-file delete tcl.jpg tcl.ext
+test image-2.1 {image introspection} -body {
+    pdf4tcl::new apa
+    set id [apa addRawImage "#444546 #444546"]
+    set res {}
+    lappend res [apa getImageHeight $id]
+    lappend res [apa getImageWidth  $id]
+    lappend res [apa getImageSize   $id]
+} -result {2 1 {1 2}} -cleanup {apa destroy}
 
+file delete tcl.jpg tcl.ext
