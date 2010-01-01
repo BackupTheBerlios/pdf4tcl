@@ -1216,8 +1216,12 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable fonts
         variable bitmaps
         variable patterns
+        variable metadata
         #Array of type1 base fonts already included in this PDF file:
         variable type1basefonts
+
+        set pdf(bookmarks) {}
+        #set metadata(CreationDate) [string range [clock format [clock seconds] -format {D:%Y%m%d%H%M%S%z} -gmt 0] 0 end-2]
 
         # The unit translation factor is needed before parsing arguments
         set pdf(unit) 1.0
@@ -1571,6 +1575,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         variable images
         variable patterns
         variable fonts
+        variable metadata
 
         if {$pdf(finished)} {
             return
@@ -1588,6 +1593,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self Pdfout "/Version $pdf(version)\n"
         }
         $self Pdfout "/Pages 2 0 R\n"
+        # Determine the number of bookmarks to add to the document.
+        set nbookmarks [llength $pdf(bookmarks)]
+        if {$nbookmarks > 0} {
+            $self Pdfout "/Outlines [$self NextOid] 0 R\n"
+        }
         $self Pdfout ">>\n"
         $self Pdfout "endobj\n\n"
 
@@ -1645,6 +1655,42 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         $self Pdfout ">>\nendobj\n\n"
 
+        if {$nbookmarks > 0} {
+            set count [BookmarkCount $pdf(bookmarks) -1]
+
+            # Create the outline dictionary.
+            set oid [$self GetOid]
+            $self StoreXref $oid
+            $self Pdfout "$oid 0 obj\n"
+            $self Pdfout "<<\n/Type /Outlines\n"
+            $self Pdfout "/First [expr {$oid + 1}] 0 R\n"
+            $self Pdfout "/Last [expr {$oid + $nbookmarks}] 0 R\n"
+            if {$count} {$self Pdfout "/Count $count\n"}
+            $self Pdfout ">>\nendobj\n\n"
+
+            # Create the outline item dictionary for each bookmark.
+            set nbookmark 0
+            set parent $oid
+            set previous {}
+            foreach bookmark $pdf(bookmarks) {
+                if {[lindex $bookmark 1] == 0} {
+                    set previous [BookmarkObject $self $parent $previous [lrange $pdf(bookmarks) $nbookmark end]]
+                }
+                incr nbookmark
+            }
+        }
+
+        # Create the PDF document information dictionary.
+        if {[array exists metadata]} {
+            set metadata_oid [$self GetOid]
+            $self StoreXref $metadata_oid
+            $self Pdfout "$metadata_oid 0 obj\n<<\n"
+            foreach {name value} [array get metadata] {
+                $self Pdfout "/$name ([CleanText $value])\n"
+            }
+            $self Pdfout ">>\nendobj\n\n"
+        }
+
         # Cross reference table
         set xref_pos $pdf(out_pos)
         $self Pdfout "xref\n"
@@ -1660,6 +1706,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfout "<<\n"
         $self Pdfout "/Size [$self NextOid]\n"
         $self Pdfout "/Root 1 0 R\n"
+        if {[info exists metadata_oid]} {
+            $self Pdfout "/Info $metadata_oid 0 R\n"
+        }
         $self Pdfout ">>\n"
         $self Pdfout "\nstartxref\n"
         $self Pdfout "$xref_pos\n"
@@ -1743,6 +1792,199 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set w [expr {$w / $pdf(unit)}]
         set h [expr {$h / $pdf(unit)}]
         return [list $w $h]
+    }
+
+    #######################################################################
+    # Bookmark Handling
+    #######################################################################
+
+    method bookmarkAdd {args} {
+        set closed 0
+        set level  0
+        set title  {}
+
+        foreach {option value} $args {
+            switch -- $option {
+                -title {
+                    set value [string trim $value]
+                    if {[string length $value] == 0} {
+                        return -code error "Option $option requires a string."
+                    }
+                    set title $value
+                }
+                -level {
+                    if {[string is integer -strict $value]} {
+                        if {$value < 0} {
+                            return -code error "Option $option requires a non-negative integer value."
+                        }
+                    } else {
+                        return -code error "Option $option requires a non-negative integer value."
+                    }
+                    set level $value
+                }
+                -closed {
+                    $self CheckBoolean $option $value
+                    set closed $value
+                }
+                default {
+                    return -code error "Unknown option $option"
+                }
+            }
+        }
+
+        if {$pdf(pages) == {}} {
+            return -code error "No pages defined."
+        }
+
+        # Determine the object id of the current page.
+        set oid [lindex $pdf(pages) end]
+
+        # Add the bookmark to the list.
+        lappend pdf(bookmarks) [list $oid $level $closed $title]
+    }
+
+    #---------------------------------------------------------------------------
+    # This procedure determines the number of open items of an outline
+    # dictionary object.
+
+    proc BookmarkCount {bookmarks level} {
+        set count 0
+
+        # Increment the count if the bookmark is not closed.
+        foreach bookmark $bookmarks {
+            if {[lindex $bookmark 1] <= $level} {break}
+            if {! [lindex $bookmark 2]} {
+                incr count
+            }
+        }
+
+        return $count
+    }
+
+    #---------------------------------------------------------------------------
+    # This procedure creates a outline item dictionary object.
+
+    proc BookmarkObject {self parent previous bookmarks} {
+        set bookmark [lindex $bookmarks 0]
+
+        set destination [lindex $bookmark 0]
+        set level       [lindex $bookmark 1]
+        set closed      [lindex $bookmark 2]
+        set title       [lindex $bookmark 3]
+
+        set oid [$self GetOid]
+        $self StoreXref $oid
+
+        BookmarkProperties $oid $level [lrange $bookmarks 1 end] \
+                next first last count
+
+        if {$closed} {
+            set count [expr {-$count}]
+        }
+
+        $self Pdfout "$oid 0 obj\n"
+        $self Pdfout "<<\n/Title ([CleanText $title])\n"
+        $self Pdfout "/Parent $parent 0 R\n"
+        if {$previous != {}} {$self Pdfout "/Prev $previous 0 R\n"}
+        if {$next     != {}} {$self Pdfout "/Next $next 0 R\n"}
+        if {$first    != {}} {$self Pdfout "/First $first 0 R\n"}
+        if {$last     != {}} {$self Pdfout "/Last $last 0 R\n"}
+        if {$count} {$self Pdfout "/Count $count\n"}
+        $self Pdfout "/Dest \[$destination 0 R /XYZ null null null\]\n"
+        $self Pdfout ">>\n"
+        $self Pdfout "endobj\n\n"
+
+        if {$next != {}} {
+            set previous $oid
+        }
+
+        # Create the bookmark objects for all bookmarks that are children of
+        # this bookmark.
+        if {$first != {}} {
+            set parent $oid
+            set prev {}
+            incr level
+            set n 0
+            foreach bookmark [lrange $bookmarks 1 end] {
+                incr n
+                if {[lindex $bookmark 1] < $level} {break}
+                if {[lindex $bookmark 1] == $level} {
+                    set prev [BookmarkObject $self $parent $prev \
+                            [lrange $bookmarks $n end]]
+                }
+            }
+        }
+
+        return $previous
+    }
+
+    #---------------------------------------------------------------------------
+    # This procedure determines the properties for an outline item dictionary
+    # object.
+
+    proc BookmarkProperties {oid current bookmarks n f l c} {
+        upvar 1 $n next $f first $l last $c count
+
+        set next  {}
+        set first {}
+        set last  {}
+
+        # Determine the number of open decendants.
+        set count [BookmarkCount $bookmarks $current]
+
+        set child [expr {$current + 1}]
+
+        set n 0
+
+        foreach bookmark $bookmarks {
+            incr n
+
+            set level [lindex $bookmark 1]
+
+            if {$level < $current} {break}
+
+            # Determine the object ID for the next bookmark at the same level.
+            if {$next == {}} {
+                if {$level == $current} {
+                    set next [expr {$oid + $n}]
+                    continue
+                }
+
+                # Determine the object ID for the first and last child
+                # bookmarks.
+                if {$level == $child} {
+                    if {$first == {}} {
+                        set first [expr {$oid + $n}]
+                    }
+                    set last [expr {$oid + $n}]
+                }
+            }
+        }
+    }
+
+    #--------------------------------------------------------------------------
+    # Configure method for the PDF document metadata options.
+    method metadata {args} {
+        variable metadata
+        foreach {option value} $args {
+            set value [string trim $value]
+            if {[string length $value] > 0} {
+                switch -- $option {
+                    -author   {set metadata(Author)   $value}
+                    -creator  {set metadata(Creator)  $value}
+                    -keywords {set metadata(Keywords) $value}
+                    -producer {set metadata(Producer) $value}
+                    -subject  {set metadata(Subject)  $value}
+                    -title    {set metadata(Title)    $value}
+                    -creationdate {
+                        if {$value == 0} {
+                            set value [clock seconds]
+                        }
+                        set metadata(CreationDate) [string range [clock format $value -format {D:%Y%m%d%H%M%S%z} -gmt 0] 0 end-2]
+                    }
+                }
+            }
+        }
     }
 
     #######################################################################

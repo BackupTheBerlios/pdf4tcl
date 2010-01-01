@@ -33,6 +33,11 @@ test examples-1.5 {example test5} -body {
     exec diff -a ../examples/test5.pdf test5.pdf
 } -result {} -cleanup {catch {p1 destroy}}
 
+test examples-1.6 {example test6} -body {
+    source ../examples/test6.tcl
+    exec diff -a ../examples/test6.pdf test6.pdf
+} -result {} -cleanup {catch {p1 destroy}}
+
 # Cleanup
 eval file delete [glob test*.pdf]
 file delete tcl.jpg

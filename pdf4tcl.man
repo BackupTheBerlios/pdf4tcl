@@ -279,6 +279,28 @@ Stipple offset is limited. The form x,y should work.
 Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.
 
+[call [arg objectName] [method metadata] [opt [arg "option value"]...]]
+
+This method sets metadata fields for this document.  Supported fields are...
+
+[call [arg objectName] [method bookmarkAdd] [opt [arg "option value"]...]]
+
+Add a bookmark on the current page.
+
+[list_begin opt]
+
+[opt_def -title [arg text]]
+Set the text of the bookmark.
+
+[opt_def -level [arg level]]
+Set the level of the bookmark. Default is 0.
+
+[opt_def -closed [arg boolean]]
+Select if the bookmark is closed by default. Default is false, i.e. not closed.
+
+[list_end]
+
+
 [list_end]
 [subsection {OBJECT METHODS, TEXT}]
 [list_begin definitions]

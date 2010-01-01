@@ -63,6 +63,10 @@ package require \fBpdf4tcl  ?0.6?\fR
 .sp
 \fIobjectName\fR \fBcanvas\fR \fIpath\fR ?\fIoption value\fR...?
 .sp
+\fIobjectName\fR \fBmetadata\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBbookmarkAdd\fR ?\fIoption value\fR...?
+.sp
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
 .sp
 \fIobjectName\fR \fBgetStringWidth\fR \fIstr\fR
@@ -332,6 +336,23 @@ Stipple offset is limited. The form x,y should work.
 .sp
 Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.
+.TP
+\fIobjectName\fR \fBmetadata\fR ?\fIoption value\fR...?
+This method sets metadata fields for this document.  Supported fields are...
+.TP
+\fIobjectName\fR \fBbookmarkAdd\fR ?\fIoption value\fR...?
+Add a bookmark on the current page.
+.RS
+.TP
+\fB-title\fR \fItext\fR
+Set the text of the bookmark.
+.TP
+\fB-level\fR \fIlevel\fR
+Set the level of the bookmark. Default is 0.
+.TP
+\fB-closed\fR \fIboolean\fR
+Select if the bookmark is closed by default. Default is false, i.e. not closed.
+.RE
 .PP
 .SS "OBJECT METHODS, TEXT"
 .TP
