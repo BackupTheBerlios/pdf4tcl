@@ -1,5 +1,8 @@
+2010-01-29 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Removed AFM file reader.
+
 2010-01-27 Peter Spjuth   <peter.spjuth@gmail.com>
-	* More of Yaroslav Schenkin's patch.
+	* More of Yaroslav Schekin's patch.
 	* Added font argument to CleanText.
 	* Added bboxt and bboxb font metrics.
 	* Corrected size of background fill for text.

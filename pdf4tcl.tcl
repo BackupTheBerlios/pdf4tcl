@@ -26,29 +26,13 @@ namespace eval pdf4tcl {
     variable font_widths
     variable font_metrics
     variable glyph_names
-    variable font_afm
     variable paper_sizes
     variable units
     variable dir [file dirname [file join [pwd] [info script]]]
 
-    # path to adobe afm files
-    set g(ADOBE_AFM_PATH) {}
-    # change this to reflect your machines install!
-    lappend g(ADOBE_AFM_PATH) {/usr/share/texmf/fonts/afm/adobe/*}
-    #lappend g(ADOBE_AFM_PATH) {/usr/share/enscript}
-    #lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/ghostscript}
-    lappend g(ADOBE_AFM_PATH) {/usr/share/fonts/default/Type1}
-    #lappend g(ADOBE_AFM_PATH) {/usr/share/a2ps/afm}
-    #lappend g(ADOBE_AFM_PATH) {/usr/share/ogonkify/afm}
-    lappend g(ADOBE_AFM_PATH) /usr/X11R6/lib/X11/fonts/Type1
-    lappend g(ADOBE_AFM_PATH) /usr/lib/openoffice/share/psprint/fontmetric
-
     # font width array
     array set font_widths {}
     array set font_metrics {}
-
-    # font name to afm file mapping array
-    array set font_afm {}
 
     # Known papersizes. These are always in points.
     array set paper_sizes {
@@ -82,31 +66,6 @@ namespace eval pdf4tcl {
         }
     } else {
         set g(haveZlib) 1
-    }
-
-    proc Init {} {
-        LoadAfmMapping
-    }
-
-    proc LoadAfmMapping {} {
-        variable font_afm
-        variable g
-
-        foreach path $g(ADOBE_AFM_PATH) {
-            foreach file [glob -nocomplain [file join $path "*.afm"]] {
-                set if [open $file "r"]
-                while {[gets $if line]!=-1} {
-                    if {[regexp {^FontName\s*(.*)$} $line dummy fontname]} {
-                        set font_afm($fontname) $file
-                        break
-                    }
-                }
-                close $if
-            }
-        }
-        #parray font_afm
-        #puts [join [lsort -dict [array names ::pdf4tcl::font_widths]] \n]
-        #exit
     }
 
     # Utility to look up paper size by name
@@ -1105,8 +1064,6 @@ namespace eval pdf4tcl {
         unset -nocomplain type1AFM
         unset -nocomplain type1name
     }
-
-    Init
 }
 
 # Object used for generating pdf
@@ -2002,11 +1959,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         # font width already loaded?
         if {! [info exists font_widths($fontname)]} {
-            if {[catch {loadFontMetrics $fontname} tmp]} {
-                return -code error "Could not load font metrics for $fontname"
-            } else {
-                set font_widths($fontname) $tmp
-            }
+            return -code error "Could not load font metrics for $fontname"
         }
 
         if {!$internal} {
@@ -2035,7 +1988,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         $self Pdfoutcmd $pdf(font_size) "TL"
 
         # Make sure a font object exists
-        if {![info exists fonts($pdf(current_font))]} {
+        if {![info exists fonts($fontname)]} {
             set body    "<<\n/Type /Font\n"
             append body "/Subtype /Type1\n"
             append body "/Encoding /WinAnsiEncoding\n"
@@ -2043,48 +1996,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             append body "/BaseFont /$fontname\n"
             append body ">>"
             set oid [$self AddObject $body]
-            set fonts($pdf(current_font)) $oid
+            set fonts($fontname) $oid
         }
         set pdf(font_set) true
-    }
-
-    # Load font metrics from AFM file
-    proc loadFontMetrics {font} {
-        variable ::pdf4tcl::font_afm
-
-        set file $font_afm($font)
-        if {[catch {open $file "r"} if]} {
-            return ""
-        } else {
-            set started false
-            array set widths {}
-            while {[gets $if line]!=-1} {
-                if {! $started} {
-                    if {[string first "StartCharMetrics" $line]==0} {
-                        set started true
-                    }
-                } else {
-                    # Done?
-                    if {[string first "EndCharMetrics" $line]==0} {
-                        break
-                    }
-                    if {[string index $line 0]=="C"} {
-                        scan [string range $line 1 4] "%d" ch
-                        if {($ch>0) && ($ch<256)} {
-                            set pos [string first "WX" $line]
-                            incr pos 2
-                            set endpos $pos
-                            incr endpos 4
-                            scan [string range $line $pos $endpos] "%d" w
-                            set char [format "%c" $ch]
-                            set widths($char) $w
-                        }
-                    }
-                }
-            }
-            close $if
-            return [array get widths]
-        }
     }
 
     # Get metrics from current font.
