@@ -36,7 +36,7 @@ test text-2.3 {text method, align} -body {
 
 test text-3.1 {text method, fill} -body {
     mytest {setFont 10 Courier} {setBgColor 0.2 0.3 0.4} {text Gurkan -x 10 -y 10 -fill 1} {
-        q 0.2 0.3 0.4 rg 110 207.5 36 10 re f Q BT
+        q 0.2 0.3 0.4 rg 110 207.5 36 10.55 re f Q BT
     }
 } -result 1
 
@@ -45,7 +45,7 @@ test text-3.2 {text method, fill} -body {
             {setBgColor 0.2 0.3 0.4} \
             {setFillColor 0.1 0.6 0.5} \
             {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} {
-        q 0.6 0.7 0.8 rg 110 205 72 20 re f Q BT
+        q 0.6 0.7 0.8 rg 110 205 72 21.1 re f Q BT
     }
 } -result 1
 
@@ -53,10 +53,10 @@ test text-3.3 {text method, fill, text position} -body {
     mytest {setFont 20 Courier} \
             {text Gurkan -x 10 -y 10 -fill {0.6 0.7 0.8}} \
             {text Tomat -background {0.1 0.1 0.1}} {
-                q 0.6 0.7 0.8 rg 110 205 72 20 re f Q BT
+                q 0.6 0.7 0.8 rg 110 205 72 21.1 re f Q BT
                 1 0 0 1 110 210 Tm
                 (Gurkan) Tj ET
-                q 0.1 0.1 0.1 rg 182 205 60 20 re f Q BT
+                q 0.1 0.1 0.1 rg 182 205 60 21.1 re f Q BT
                 1 0 0 1 182 210 Tm
                 (Tomat) Tj
             }
@@ -65,7 +65,7 @@ test text-3.3 {text method, fill, text position} -body {
 test text-3.4 {text method, fill, other color format} -body {
     mytest {setFont 20 Courier} \
             {text Gurkan -x 10 -y 10 -bg \#33FF66} {
-        q 0.2 1.0 0.4 rg 110 205 72 20 re f Q BT
+        q 0.2 1.0 0.4 rg 110 205 72 21.1 re f Q BT
     }
 } -result 1
 

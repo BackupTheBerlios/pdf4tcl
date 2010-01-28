@@ -4,3 +4,4 @@
 ##nagelfar syntax destructor c
 ##nagelfar syntax option x p*
 ##nagelfar syntax zlib s x
+##nagelfar syntax BookmarkProperties x x x l l l l

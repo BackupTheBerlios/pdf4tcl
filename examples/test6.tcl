@@ -11,6 +11,15 @@ p1 text "Bookmark 1" -x 10 -y 10
 p1 bookmarkAdd -title "Bookmark 1"
 p1 bookmarkAdd -title "Bookmark 1.1" -level 1
 
+#p1 setTextPosition 50 50
+#set bboxb [p1 getFontMetric bboxb]
+#set bboxt [p1 getFontMetric bboxt]
+#set dh [expr {$bboxb - $bboxt}]
+#set sp [expr {$dh / 12.0}]
+#p1 text "FilljXYÅÄÖQ" -fill "1.0 0.0 0.0"
+#p1 newLine $sp
+#p1 text " iilljXYÅÄ" -fill "0.0 1.0 0.0"
+
 p1 startPage
 p1 text "Bookmark 2" -x 50 -y 50
 p1 bookmarkAdd -title "Bookmark 2"

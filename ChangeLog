@@ -1,3 +1,10 @@
+2010-01-27 Peter Spjuth   <peter.spjuth@gmail.com>
+	* More of Yaroslav Schenkin's patch.
+	* Added font argument to CleanText.
+	* Added bboxt and bboxb font metrics.
+	* Corrected size of background fill for text.
+	* Support angle for background fill for text.
+
 2010-01-01 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added bookmarkAdd and metadata methods. (Kevin Partin) [FR 4842]
 

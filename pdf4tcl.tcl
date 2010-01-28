@@ -1,14 +1,14 @@
 # library of tcl procedures for generating portable document format files
 # this is a port of pdf4php from php to tcl
-
+#
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
 # Copyright (c) 2006-2008 by Peter Spjuth <peter.spjuth@gmail.com>
 # Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
-
+#
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-
+#
 # $Id$
 
 package provide pdf4tcl 0.6
@@ -425,7 +425,6 @@ namespace eval pdf4tcl {
         set BFA($ttfname,bbox) \
                 [list [rescale $xMin] [rescale $yMin] [rescale $xMax] [rescale $yMax]]
 
-        #======
         # OS/2 - OS/2 and Windows metrics table (needs data from head table)
         if {[info exists ttftables(OS/2)]} {
             set ttfpos [lindex $ttftables(OS/2) 1]
@@ -1674,7 +1673,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             set previous {}
             foreach bookmark $pdf(bookmarks) {
                 if {[lindex $bookmark 1] == 0} {
-                    set previous [BookmarkObject $self $parent $previous [lrange $pdf(bookmarks) $nbookmark end]]
+                    set previous [$self BookmarkObject $parent $previous [lrange $pdf(bookmarks) $nbookmark end]]
                 }
                 incr nbookmark
             }
@@ -1686,7 +1685,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             $self StoreXref $metadata_oid
             $self Pdfout "$metadata_oid 0 obj\n<<\n"
             foreach {name value} [array get metadata] {
-                $self Pdfout "/$name ([CleanText $value])\n"
+                $self Pdfout "/$name ([CleanText $value $pdf(current_font)])\n"
             }
             $self Pdfout ">>\nendobj\n\n"
         }
@@ -1864,7 +1863,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #---------------------------------------------------------------------------
     # This procedure creates a outline item dictionary object.
 
-    proc BookmarkObject {self parent previous bookmarks} {
+    method BookmarkObject {parent previous bookmarks} {
         set bookmark [lindex $bookmarks 0]
 
         set destination [lindex $bookmark 0]
@@ -1883,7 +1882,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
 
         $self Pdfout "$oid 0 obj\n"
-        $self Pdfout "<<\n/Title ([CleanText $title])\n"
+        $self Pdfout "<<\n/Title ([CleanText $title $pdf(current_font)])\n"
         $self Pdfout "/Parent $parent 0 R\n"
         if {$previous != {}} {$self Pdfout "/Prev $previous 0 R\n"}
         if {$next     != {}} {$self Pdfout "/Next $next 0 R\n"}
@@ -1909,7 +1908,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 incr n
                 if {[lindex $bookmark 1] < $level} {break}
                 if {[lindex $bookmark 1] == $level} {
-                    set prev [BookmarkObject $self $parent $prev \
+                    set prev [$self BookmarkObject $parent $prev \
                             [lrange $bookmarks $n end]]
                 }
             }
@@ -2097,6 +2096,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         array set tmp $::pdf4tcl::font_metrics($pdf(current_font))
         switch $metric {
             bboxy   {set val [expr {[lindex $tmp(bbox) 1] * 0.001}]}
+            bboxt   {set val [expr {[lindex $tmp(bbox) 1] * 0.001}]}
+            bboxb   {set val [expr {[lindex $tmp(bbox) 3] * 0.001}]}
             fixed   {return $tmp(fixed)}
             height  {set val 1.0}
             default {set val [expr {$tmp($metric) * 0.001}]}
@@ -2278,7 +2279,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {!$pdf(font_set)} {
             $self SetupFont
         }
-        $self Pdfout "([CleanText $str]) '\n"
+        $self Pdfout "([CleanText $str $pdf(current_font)]) '\n"
         # Update to next line
         set strWidth [$self getStringWidth $str 1]
         set pdf(ypos) [expr {$pdf(ypos) - $pdf(font_size) * $pdf(line_spacing)}]
@@ -2376,8 +2377,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         # Draw a background box if needed.
         if {[llength $bg] > 1 || $bg} {
-            set bboxy [$self getFontMetric bboxy 1]
-            set dy [expr {$y + $bboxy}]
+            set bboxb [$self getFontMetric bboxb 1]
+            set bboxt [$self getFontMetric bboxt 1]
+            set db [expr {$y + $bboxb}]
+            set dt [expr {$y + $bboxt}]
+            set dh [expr {$bboxb - $bboxt}]
             $self EndTextObj
             # Temporarily shift fill color
             $self Pdfoutcmd "q"
@@ -2386,18 +2390,48 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
             } else {
                 $self Pdfout "$pdf(bgColor) rg\n"
             }
-            $self DrawRect $x $dy $strWidth $pdf(font_size) 0 1
+            if {$angle || $xangle || $yangle} {
+                # Create rotated and skewed background polygon:
+                # Translation from x,y to origin matrix:
+                set mt [list 1 0 0 1 [expr {-$x}] [expr {-$y}]]
+                # Rotation matrix:
+                set r1 [expr {(360.0-$angle)*3.1415926/180.0}]
+                set c [expr {cos($r1)}]
+                set s [expr {sin($r1)}]
+                set mr [list $c $s [expr {-$s}] $c 0 0]
+                # Skew matrix:
+                set tx [expr {tan($xangle*3.1415926/180.0)}]
+                set ty [expr {tan($yangle*3.1415926/180.0)}]
+                set ms [list 1 $tx $ty 1 0 0]
+                # Translation from origin to x,y matrix:
+                set mtb [list 1 0 0 1 $x $y]
+                # Matrix of all operations:
+                set ma [MulMxM $mt $mr]
+                set ma [MulMxM $ma $ms]
+                set ma [MulMxM $ma $mtb]
+                # Four points must be translated:
+                set x2 [expr {$x+$strWidth}]
+                set y2 $dt
+                set p1 [MulVxM [list $x $db] $ma]
+                set p2 [MulVxM [list $x2 $db] $ma]
+                set p3 [MulVxM [list $x2 $y2] $ma]
+                set p4 [MulVxM [list $x $y2] $ma]
+                eval \$self DrawPoly 0 1 $p1 $p2 $p3 $p4
+            } else {
+                $self DrawRect $x $dt $strWidth $dh 0 1
+            }
             $self Pdfoutcmd "Q"
             # Position needs to be set since we left the text object
             set posSet 1
         }
         $self BeginTextObj
-        if {$angle != 0} {
-            $self SetTextPositionAngle $x $y $angle 0 0
+        if {$angle || $xangle || $yangle} {
+            $self SetTextPositionAngle $x $y $angle $xangle $yangle
         } elseif {$posSet} {
             $self SetTextPosition $x $y
         }
-        $self Pdfout "([CleanText $str]) Tj\n"
+
+        $self Pdfout "([CleanText $str $pdf(current_font)]) Tj\n"
         set pdf(xpos) [expr {$x + $strWidth}]
         return $strWidth
     }
@@ -2416,7 +2450,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         }
         $self BeginTextObj
         $self SetTextPosition $x $y
-        $self Pdfout "([CleanText $str]) Tj\n"
+        $self Pdfout "([CleanText $str $pdf(current_font)]) Tj\n"
     }
 
     method drawTextBox {x y width height txt args} {
@@ -2463,9 +2497,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set space_width [$self getCharWidth " " 1]
 
         # Displace y to put the first line within the box
-        set bboxy [$self getFontMetric bboxy 1]
+        set bboxt [$self getFontMetric bboxt 1]
         set ystart $y
-        set y [expr {$y - $pdf(font_size) - $bboxy}]
+        set y [expr {$y - $pdf(font_size) - $bboxt}]
 
         set len [string length $txt]
 
@@ -2535,7 +2569,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set lastbp $start
 
                 # Will another line fit?
-                if {($ystart - ($y + $bboxy)) > $height} {
+                if {($ystart - ($y + $bboxt)) > $height} {
                     return [string range $txt $start end]
                 }
             } else {
@@ -4066,8 +4100,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set x [expr {$x + ($xjustify - $xanchor) * $width / 2.0}]
 
                 # Displace y to base line of font
-                set bboxy [$self getFontMetric bboxy 1]
-                set y [expr {$y + $bboxy + $fontsize}]
+                set bboxt [$self getFontMetric bboxt 1]
+                set y [expr {$y + $bboxt + $fontsize}]
                 set lineNo 0
                 set ulcoords {}
                 foreach line $lines {
@@ -4079,7 +4113,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                     # negative y scale here to get the text correct.
 
                     $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
-                    $self Pdfout "([CleanText $line]) Tj\n"
+                    $self Pdfout "([CleanText $line $pdf(current_font)]) Tj\n"
 
                     if {$underline != -1} {
                         if {[lindex $underline 0] eq $lineNo} {
@@ -4088,7 +4122,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                                                0 [expr {$index - 1}]] 1]
                             set ulw [$self getStringWidth [string index $line $index] 1]
                             lappend ulcoords [expr {$x0 + $ulx}] \
-                                    [expr {$y - $bboxy}] $ulw
+                                    [expr {$y - $bboxt}] $ulw
                         }
                     }
                     incr lineNo
@@ -4582,11 +4616,11 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     #######################################################################
 
     # helper function: mask parentheses and backslash
-    proc CleanText {in} {
+    proc CleanText {in fn} {
         # Since the font is set up as WinAnsiEncoding, we get as close
         # as possible by using cp1252
-        set in [encoding convertto cp1252 $in]
-        return [string map {( \\( ) \\) \\ \\\\} $in]
+        set out [encoding convertto cp1252 $in]
+        return [string map {( \\( ) \\) \\ \\\\} $out]
     }
 
     # helper function: consume and return an object id
