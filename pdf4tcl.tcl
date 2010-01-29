@@ -49,7 +49,7 @@ namespace eval pdf4tcl {
             i  72.0                 \
             p  1.0                  \
            ]
- 
+
     # Font Variables
 
     variable ttfpos 0
@@ -66,7 +66,7 @@ namespace eval pdf4tcl {
     variable ttftables
     variable type1AFM
     variable type1PFB
- 
+
     if {[catch {package require zlib} err]} {
         set g(haveZlib) 0
         if {[info commands zlib] eq "zlib"} {
@@ -128,13 +128,13 @@ namespace eval pdf4tcl {
 
     # ===== Procs for TrueType fonts processing =====
 
-    proc CreateBaseTrueTypeFont {basefontname ttf_data {validate 0}} {
+    proc createBaseTrueTypeFont {basefontname ttf_data {validate 0}} {
         variable ttfname $basefontname
         variable ttfdata $ttf_data
         InitBaseTTF $validate
     }
 
-    proc LoadBaseTrueTypeFont {basefontname filename {validate 0}} {
+    proc loadBaseTrueTypeFont {basefontname filename {validate 0}} {
         variable ttfname $basefontname
         variable ttfdata
         set fd [open $filename]
@@ -155,30 +155,29 @@ namespace eval pdf4tcl {
         set BFA($ttfname,FontType) TTF
         set subfontIndex 0
 
-        if {[readHeader]} {
-            readTTCHeader
-            getSubfont $subfontIndex $validate
+        if {[ReadHeader]} {
+            ReadTTCHeader
+            GetSubfont $subfontIndex $validate
         } else {
-            checksumFile
-            readTableDirectory $validate
+            ChecksumFile
+            ReadTableDirectory $validate
             set BFA($ttfname,subfontNameX) ""
         }
 
-        extractInfo
+        ExtractInfo
 
         unset -nocomplain ttfdata
         unset -nocomplain ttftables
         set BFA($ttfname,SubFontIdx) 0
-        return
     }
 
-    #Pad data with zero bytes to: len % 4 == 0
+    # Pad data with zero bytes to: len % 4 == 0
     proc CalcTTFCheckSum {data pos len} {
-        binary scan $data "@${pos}Iu[expr {$len>>2}]" datalst
+        binary scan $data "@${pos}Iu[expr {$len >> 2}]" datalst
 
-        if {$len&3} {
-            set s [expr {$pos+(($len>>2)<<2)}]
-            set e [expr {$s+($len&3)}]
+        if {$len & 3} {
+            set s [expr {$pos + (($len >> 2) << 2)}]
+            set e [expr {$s + ($len & 3)}]
             set lc "[string range $data $s $e][string repeat "\0" 3]"
             binary scan $lc "Iu" lastb
             lappend datalst $lastb
@@ -192,8 +191,8 @@ namespace eval pdf4tcl {
         return $sum
     }
 
-    #read the sfnt header at the current position:
-    proc readHeader {} {
+    # read the sfnt header at the current position:
+    proc ReadHeader {} {
         variable ttfpos
         variable ttfdata
         set ttfVersions [list 65536 1953658213 1953784678]
@@ -206,19 +205,18 @@ namespace eval pdf4tcl {
         if {[lsearch -exact $ttfVersions $version] < 0} {# 8.5
             error "Not a TrueType font: version=$version"
         }
-        expr {$version==[lindex $ttfVersions end]}
+        return [expr {$version == [lindex $ttfVersions end]}]
     }
 
-    proc checksumFile {} {
+    proc ChecksumFile {} {
         variable ttfdata
         set checksum [CalcTTFCheckSum $ttfdata 0 [string length $ttfdata]]
-        if {$checksum!=0xB1B0AFBA} {
+        if {$checksum != 0xB1B0AFBA} {
             error "Invalid TTF file checksum [format %X $checksum]"
         }
-        return
     }
 
-    proc readTTCHeader {} {
+    proc ReadTTCHeader {} {
         variable ttfname
         variable ttfpos
         variable ttfdata
@@ -226,7 +224,8 @@ namespace eval pdf4tcl {
         variable ttfsubfontOffsets
         set ttcVersions [list 65536 131072]
 
-        binary scan $ttfdata "@${ttfpos}IuIu" ttcVersion BFA($ttfname,numSubfonts)
+        binary scan $ttfdata "@${ttfpos}IuIu" \
+                ttcVersion BFA($ttfname,numSubfonts)
         incr ttfpos 8
 
         if {[lsearch -exact $ttcVersions $ttcVersion] < 0} {# 8.5
@@ -235,54 +234,52 @@ namespace eval pdf4tcl {
 
         binary scan $ttfdata "@${ttfpos}Iu$BFA($ttfname,numSubfonts)" \
                 ttfSubFontOffsets
-        incr ttfpos [expr {$BFA($ttfname,numSubfonts)*4}]
+        incr ttfpos [expr {$BFA($ttfname,numSubfonts) * 4}]
     }
 
-    proc getSubfont {subfontIndex {validate 0}} {
+    proc GetSubfont {subfontIndex {validate 0}} {
         variable ttfpos
         variable ttfSubFontOffsets
-        if {$subfontIndex>=[llength $ttfSubFontOffsets]} {
+        if {$subfontIndex >= [llength $ttfSubFontOffsets]} {
             error "Bad subfontIndex $subfontIndex"
         }
         set ttfpos [lindex $ttfSubFontOffsets $subfontIndex]
-        readHeader
-        readTableDirectory $validate
-        return
+        ReadHeader
+        ReadTableDirectory $validate
     }
 
-    proc readTableDirectory {validate} {
+    proc ReadTableDirectory {validate} {
         variable ttfdata
         variable ttfpos
         variable ttftables
         variable ttfname
         variable BFP
         variable BFA
-        #Must copy only needed tables here, if they exist:
+        # Must copy only needed tables here, if they exist:
         set NT [list "name" "OS/2" "cvt " "fpgm" "prep" \
                 "glyf" "post" "hhea" "maxp" "head"]
 
-        #'srange', 'esel' and 'rshift' are UNUSED
+        # 'srange', 'esel' and 'rshift' are UNUSED
         binary scan $ttfdata "@${ttfpos}SuSuSuSu" numTables srange esel rshift
         incr ttfpos 8
 
-        for {set f 0} {$f<$numTables} {incr f} {
-            #list is 'checksum offset length'
+        for {set f 0} {$f < $numTables} {incr f} {
+            # list is 'checksum offset length'
             binary scan $ttfdata "@${ttfpos}a4Iu3" tag rlist
             incr ttfpos 16
             set ttftables($tag) $rlist
             if {[lsearch -exact $NT $tag] >= 0} {# 8.5
                 foreach {cksum offset len} $rlist break
-                set last [expr {$offset+$len-1}]
+                set last [expr {$offset + $len - 1}]
                 set BFP($ttfname,$tag) [string range $ttfdata $offset $last]
                 lappend BFA($ttfname,tables) $tag
             }
         }
-        if {$validate} checksumTables
-        return
+        if {$validate} ChecksumTables
     }
 
     # Check the checksums for all tables
-    proc checksumTables {} {
+    proc ChecksumTables {} {
         variable ttftables
         variable ttfdata
 
@@ -292,18 +289,17 @@ namespace eval pdf4tcl {
             if {$t eq "head"} {
                 incr offset 8
                 binary scan $ttfdata "@${offset}Iu" adjustment
-                set RCkSum [expr {($RCkSum-$adjustment) & 0xFFFFFFFF}]
+                set RCkSum [expr {($RCkSum - $adjustment) & 0xFFFFFFFF}]
             }
             if {$RCkSum != $checksum} {
                 error "TTF: invalid checksum of table $t"
             }
         }
-        return
     }
 
-    #Extract typographic information from the loaded font file.
+    # Extract typographic information from the loaded font file.
     #
-    #The following attributes will be set::
+    # The following attributes will be set::
     #
     #    name         PostScript font name
     #    flags        Font flags
@@ -316,16 +312,16 @@ namespace eval pdf4tcl {
     #    ItalicAngle  Italic angle in degrees ccw
     #    stemV        stem weight in 1/1000ths of a point (approximate)
     #
-    #If charInfo is true, the following will also be set::
+    # If charInfo is true, the following will also be set::
     #
     #    defaultWidth   default glyph width in 1/1000ths of a point
     #    charWidths     dictionary of character widths for every supported UCS
     #                   character code
     #
-    #This will only work if the font has a Unicode cmap (platform 3,
-    #encoding 1, format 4 or platform 0 any encoding format 4).  Setting
-    #charInfo to false avoids this requirement
-    proc extractInfo {{charInfo 1}} {
+    # This will only work if the font has a Unicode cmap (platform 3,
+    # encoding 1, format 4 or platform 0 any encoding format 4).  Setting
+    # charInfo to false avoids this requirement
+    proc ExtractInfo {{charInfo 1}} {
         variable ttfdata
         variable ttftables
         variable ttfpos
@@ -336,40 +332,42 @@ namespace eval pdf4tcl {
         set name_pos [lindex $ttftables(name) 1]
         set ttfpos $name_pos
         binary scan $ttfdata "@${ttfpos}SuSuSu" fmt NumRecords SDoffset
-        if {$fmt!=0} {error "TTF: Unknown name table format $fmt"}
+        if {$fmt != 0} {error "TTF: Unknown name table format $fmt"}
         incr ttfpos 6
-        set SDoffset [expr {$name_pos+$SDoffset}]
+        set SDoffset [expr {$name_pos + $SDoffset}]
         array set names {1 "" 2 "" 3 "" 4 "" 6 ""}
         set NIDS [array names names]
         set nameCount [llength $NIDS]
 
-        for {set f 0} {$f<$NumRecords} {incr f} {
+        for {set f 0} {$f < $NumRecords} {incr f} {
             binary scan $ttfdata "@${ttfpos}SuSuSuSuSuSu" PlId EncId LangId \
                     nameId length offset
             incr ttfpos 12
             if {[lsearch -exact $NIDS $nameId] < 0} {# 8.5
                 continue
             }
-            set npos [expr {$SDoffset+$offset}]
-            set Nstr [string range $ttfdata $npos $npos+$length]
+            set npos [expr {$SDoffset + $offset}]
+            set Nstr [string range $ttfdata $npos $npos+$length] ;# 8.5
             set N ""
 
-            if {$PlId==3 && $EncId==1 && $LangId==0x409} {
+            if {$PlId == 3 && $EncId == 1 && $LangId == 0x409} {
                 # Microsoft, Unicode, US English, PS Name
-                if {$length&1} {error "PostScript name is UTF-16 string of odd length"}
-                #Try to read a string of unicode chars:
+                if {$length & 1} {
+                    error "PostScript name is UTF-16 string of odd length"
+                }
+                # Try to read a string of unicode chars:
                 set N [encoding convertfrom unicode $Nstr]
-            } elseif {$PlId==1 && $EncId==0 && $LangId==0} {
+            } elseif {$PlId == 1 && $EncId == 0 && $LangId == 0} {
                 # Macintosh, Roman, English, PS Name
                 # According to OpenType spec, if PS name exists, it must exist
                 # both in MS Unicode and Macintosh Roman formats. Apparently,
                 # you can find live TTF fonts which only have Macintosh format.
                 set N [encoding convertfrom iso8859-1 $Nstr]
             }
-            if {[string length $N] && $names($nameId)==""} {
+            if {[string length $N] && $names($nameId) == ""} {
                 set names($nameId) $N
                 incr nameCount -1
-                if {$nameCount==0} break
+                if {$nameCount == 0} break
             }
         }
 
@@ -386,11 +384,11 @@ namespace eval pdf4tcl {
                 BFA($ttfname,unitsPerEm) xMin yMin xMax yMax \
                 indexToLocFormat glyphDataFormat
 
-        if {$ver_maj!=1} {error "Unknown head table version $ver_maj"}
-        if {$magic!=0x5F0F3CF5} {error "Invalid head table magic $magic"}
+        if {$ver_maj != 1} {error "Unknown head table version $ver_maj"}
+        if {$magic != 0x5F0F3CF5} {error "Invalid head table magic $magic"}
 
-        set BFA($ttfname,bbox) \
-                [list [rescale $xMin] [rescale $yMin] [rescale $xMax] [rescale $yMax]]
+        set BFA($ttfname,bbox) [list \
+                [Rescale $xMin] [Rescale $yMin] [Rescale $xMax] [Rescale $yMax]]
 
         # OS/2 - OS/2 and Windows metrics table (needs data from head table)
         if {[info exists ttftables(OS/2)]} {
@@ -399,12 +397,12 @@ namespace eval pdf4tcl {
                     version usWeightClass fsType sTypoAscender sTypoDescender
             incr ttfpos 88
 
-            set BFA($ttfname,ascent) [rescale $sTypoAscender]
-            set BFA($ttfname,descent) [rescale $sTypoDescender]
+            set BFA($ttfname,ascent) [Rescale $sTypoAscender]
+            set BFA($ttfname,descent) [Rescale $sTypoDescender]
 
-            if {$version>1} {
+            if {$version > 1} {
                 binary scan $ttfdata "@${ttfpos}Su" sCapHeight
-                set BFA($ttfname,CapHeight) [rescale $sCapHeight]
+                set BFA($ttfname,CapHeight) [Rescale $sCapHeight]
             } else {
                 set BFA($ttfname,CapHeight) $BFA($ttfname,ascent)
             }
@@ -412,8 +410,8 @@ namespace eval pdf4tcl {
             # Microsoft TTFs require an OS/2 table; Apple ones do not.  Try to
             # cope. The data is not very important anyway.
             set usWeightClass 500
-            set BFA($ttfname,ascent) [rescale $yMax]
-            set BFA($ttfname,descent) [rescale $yMin]
+            set BFA($ttfname,ascent) [Rescale $yMax]
+            set BFA($ttfname,descent) [Rescale $yMin]
             set BFA($ttfname,CapHeight) $BFA($ttfname,ascent)
         }
 
@@ -425,12 +423,12 @@ namespace eval pdf4tcl {
         binary scan $ttfdata "@${ttfpos}SuSuSuSuSuSuIu" \
                 ver_maj ver_min itan0 itan1 ulpos ulthick isFixedPitch
 
-        set BFA($ttfname,ItalicAngle) [expr {$itan0+$itan1/65536.0}]
+        set BFA($ttfname,ItalicAngle) [expr {$itan0 + $itan1 / 65536.0}]
 
         set flags 4 ; # "symbolic".
-        if {$BFA($ttfname,ItalicAngle)!=0} {set flags [expr {$flags|32}]}
-        if {$usWeightClass >= 600} {set flags [expr {$flags|(1<<18)}]}
-        if {$isFixedPitch} {set flags [expr {$flags|1}]}
+        if {$BFA($ttfname,ItalicAngle) != 0} {set flags [expr {$flags | 32}]}
+        if {$usWeightClass >= 600} {set flags [expr {$flags | (1 << 18)}]}
+        if {$isFixedPitch} {set flags [expr {$flags | 1}]}
         set BFA($ttfname,flags) $flags
         set BFA($ttfname,fixed) $isFixedPitch
 
@@ -449,7 +447,7 @@ namespace eval pdf4tcl {
         if {$ver_maj != 1} {error "Unknown maxp table version"}
         if {!$charInfo} return
 
-        #We don't care of this earlier:
+        # We don't care of this earlier:
         if {$glyphDataFormat != 0} {error "Unknown glyph data format"}
 
         # cmap - Character to glyph index mapping table
@@ -458,22 +456,22 @@ namespace eval pdf4tcl {
         binary scan $ttfdata "@${ttfpos}x2Su" cmapTableCount
         incr ttfpos 4
 
-        for {set f 0} {$f<$cmapTableCount} {incr f} {
+        for {set f 0} {$f < $cmapTableCount} {incr f} {
             binary scan $ttfdata "@${ttfpos}SuSuIu" platformID encodingID offset
             incr ttfpos 8
-            if {($platformID==3 && $encodingID == 1) || ($platformID==0)} {
+            if {($platformID == 3 && $encodingID == 1) || ($platformID == 0)} {
                 # Microsoft, Unicode OR just Unicode
                 binary scan $ttfdata "@[expr {$cmap_offset+$offset}]Su" format
-                if {$format==4} {
-                    set unicode_cmap_offset [expr {$cmap_offset+$offset}]
+                if {$format == 4} {
+                    set unicode_cmap_offset [expr {$cmap_offset + $offset}]
                     break
                 }
             }
-            #This SHOULD NOT exit loop:
-            if {($platformID==3 && $encodingID == 0)} {
+            # This SHOULD NOT exit loop:
+            if {($platformID == 3 && $encodingID == 0)} {
                 binary scan $ttfdata "@[expr {$cmap_offset+$offset}]Su" format
-                if {$format==4} {
-                    set unicode_cmap_offset [expr {$cmap_offset+$offset}]
+                if {$format == 4} {
+                    set unicode_cmap_offset [expr {$cmap_offset + $offset}]
                     break
                 }
             }
@@ -485,36 +483,37 @@ namespace eval pdf4tcl {
         incr unicode_cmap_offset 2
         binary scan $ttfdata "@${unicode_cmap_offset}Sux2Su" length segCount
 
-        set segCount [expr {$segCount/2}]
-        set limit [expr {$unicode_cmap_offset+$length}]
-        set ttfpos [expr {$unicode_cmap_offset+12}]
+        set segCount [expr {$segCount / 2}]
+        set limit [expr {$unicode_cmap_offset + $length}]
+        set ttfpos [expr {$unicode_cmap_offset + 12}]
         binary scan $ttfdata "@${ttfpos}Su$segCount" endCount
-        set ttfpos [expr {$ttfpos+2*$segCount+2}]
+        set ttfpos [expr {$ttfpos + 2*$segCount + 2}]
         binary scan $ttfdata "@${ttfpos}Su$segCount" startCount
-        set ttfpos [expr {$ttfpos+2*$segCount}]
+        set ttfpos [expr {$ttfpos + 2*$segCount}]
         binary scan $ttfdata "@${ttfpos}S$segCount" idDelta
-        set ttfpos [expr {$ttfpos+2*$segCount}]
+        set ttfpos [expr {$ttfpos + 2*$segCount}]
         set idRangeOffset_start $ttfpos
         binary scan $ttfdata "@${ttfpos}Su$segCount" idRangeOffset
 
         # Now it gets tricky.
-        for {set f 0} {$f<$segCount} {incr f} {
-            set r_start [lindex $startCount $f]; set r_end [lindex $endCount $f]
-            for {set unichar $r_start} {$unichar<=$r_end} {incr unichar} {
+        for {set f 0} {$f < $segCount} {incr f} {
+            set r_start [lindex $startCount $f]
+            set r_end   [lindex $endCount   $f]
+            for {set unichar $r_start} {$unichar <= $r_end} {incr unichar} {
                 set r_offset [lindex $idRangeOffset $f]
                 set r_delta [lindex $idDelta $f]
-                if {$r_offset==0} {
-                    set glyph [expr {($unichar+$r_delta)&0xFFFF}]
+                if {$r_offset == 0} {
+                    set glyph [expr {($unichar + $r_delta) & 0xFFFF}]
                 } else {
-                    set offset [expr {($unichar-$r_start)*2+$r_offset}]
-                    set offset [expr {$idRangeOffset_start+2*$f+$offset}]
-                    if {$offset>$limit} {
+                    set offset [expr {($unichar - $r_start) * 2 + $r_offset}]
+                    set offset [expr {$idRangeOffset_start + 2 * $f + $offset}]
+                    if {$offset > $limit} {
                         # workaround for broken fonts (like Thryomanes)
                         set glyph 0
                     } else {
                         binary scan $ttfdata "@${offset}Su" glyph
-                        if {$glyph!=0} {
-                            set glyph [expr {($glyph+$r_delta) & 0xFFFF}]
+                        if {$glyph != 0} {
+                            set glyph [expr {($glyph + $r_delta) & 0xFFFF}]
                         }
                     }
                 }
@@ -527,14 +526,14 @@ namespace eval pdf4tcl {
         # hmtx - Horizontal metrics table
         # (needs data from hhea, maxp, and cmap tables)
         set ttfpos [lindex $ttftables(hmtx) 1]
-        for {set glyph 0} {$glyph<$numberOfHMetrics} {incr glyph} {
+        for {set glyph 0} {$glyph < $numberOfHMetrics} {incr glyph} {
             # advance width and left side bearing. lsb is actually signed
             # short, but we don't need it anyway (except for subsetting)
             binary scan $ttfdata "@${ttfpos}SuSu" aw lsb
             incr ttfpos 4
             lappend BFA($ttfname,hmetrics) [list $aw $lsb]
-            set aws [rescale $aw]
-            if {$glyph==0} {set BFA($ttfname,defaultWidth) $aws}
+            set aws [Rescale $aw]
+            if {$glyph == 0} {set BFA($ttfname,defaultWidth) $aws}
             if {[info exists glyphToChar($glyph)]} {
                 foreach char $glyphToChar($glyph) {
                     dict set BFA($ttfname,charWidths) $char $aws
@@ -546,7 +545,7 @@ namespace eval pdf4tcl {
         # so we reuse aw set by the last iteration of the previous loop.
         # -- BUG (in reportlab) fixed here: aw used scaled in hmetrics,
         # -- i.e. float (must be int)
-        for {set glyph $numberOfHMetrics} {$glyph<$numGlyphs} {incr glyph} {
+        for {set glyph $numberOfHMetrics} {$glyph < $numGlyphs} {incr glyph} {
             binary scan $ttfdata "@${ttfpos}Su" lsb
             incr ttfpos 2
             lappend BFA($ttfname,hmetrics) [list $aw $lsb]
@@ -560,27 +559,26 @@ namespace eval pdf4tcl {
         # loca - Index to location
         set ttfpos [lindex $ttftables(loca) 1]
         incr numGlyphs
-        if {$indexToLocFormat==0} {
+        if {$indexToLocFormat == 0} {
             binary scan $ttfdata "@${ttfpos}Su$numGlyphs" glyphPositions
             foreach el $glyphPositions {
-                lappend BFA($ttfname,glyphPos) [expr {$el<<1}]
+                lappend BFA($ttfname,glyphPos) [expr {$el << 1}]
             }
-        } elseif {$indexToLocFormat==1} {
+        } elseif {$indexToLocFormat == 1} {
             binary scan $ttfdata "@${ttfpos}Iu$numGlyphs" BFA($ttfname,glyphPos)
         } else {
             error "Unknown location table format $indexToLocFormat"
         }
-        return
     }
 
-    proc rescale {x} {
+    proc Rescale {x} {
         variable BFA
         variable ttfname
-        expr {$x*1000.0/$BFA($ttfname,unitsPerEm)}
+        return [expr {$x * 1000.0 / $BFA($ttfname,unitsPerEm)}]
     }
 
     # Creates a ToUnicode CMap for a given subset.
-    proc makeToUnicodeCMap {fontname subset} {
+    proc MakeToUnicodeCMap {fontname subset} {
         set len [llength $subset]
         set cmap "/CIDInit /ProcSet findresource begin\n"
         append cmap "12 dict begin\n"
@@ -609,8 +607,8 @@ namespace eval pdf4tcl {
         return $cmap
     }
 
-    #Create a subset of a TrueType font. Subset is a list of unicode values.
-    proc makeTTFSubset {bfname fontname subset} {
+    # Create a subset of a TrueType font. Subset is a list of unicode values.
+    proc MakeTTFSubset {bfname fontname subset} {
         variable BFA
         variable BFP
         variable FontsAttrs
@@ -644,14 +642,14 @@ namespace eval pdf4tcl {
 
         # Also include glyphs that are parts of composite glyphs
         set n 0
-        while {$n<[llength $glyphMap]} {
+        while {$n < [llength $glyphMap]} {
             set originalGlyphIdx [lindex $glyphMap $n]
             set glyphPos [lindex $BFA($bfname,glyphPos) $originalGlyphIdx]
-            set glyphLen \
-                    [expr {[lindex $BFA($bfname,glyphPos) $originalGlyphIdx+1]-$glyphPos}]
+            set glyphEnd [lindex $BFA($bfname,glyphPos) $originalGlyphIdx+1]
+            set glyphLen [expr {$glyphEnd - $glyphPos}]
             set cpos $glyphPos
             binary scan $BFP($bfname,glyf) "@${cpos}S" numberOfContours
-            if {$numberOfContours<0} {
+            if {$numberOfContours < 0} {
                 # composite glyph
                 incr cpos 10
                 set flags $GF_MORE_COMPONENTS
@@ -684,8 +682,8 @@ namespace eval pdf4tcl {
         set n [llength $glyphMap]
         set numGlyphs $n
 
-        while {$n>1 && \
-                [lindex $BFA($bfname,hmetrics) $n 0]== \
+        while {$n > 1 && \
+                [lindex $BFA($bfname,hmetrics) $n 0] == \
                 [lindex $BFA($bfname,hmetrics) $n-1 0]} {
             incr n -1
         }
@@ -708,16 +706,16 @@ namespace eval pdf4tcl {
 
         # cmap - Character to glyph mapping
         set entryCount [llength $subset]
-        set length [expr {10+$entryCount*2}]
+        set length [expr {10 + $entryCount * 2}]
         foreach char $subset {lappend tlist $codeToGlyph($char)}
         set t(cmap) [binary format "SuSuSuSuSuSuSuSuSuSuSuSu*" 0 1 1 0 0 12 6 \
                 $length 0 0 $entryCount $tlist]
 
         # hmtx - Horizontal Metrics
-        for {set f 0} {$f<$numGlyphs} {incr f} {
+        for {set f 0} {$f < $numGlyphs} {incr f} {
             set originalGlyphIdx [lindex $glyphMap $f]
             foreach {aw lsb} [lindex $BFA($bfname,hmetrics) $originalGlyphIdx] break
-            if {$f<$numberOfHMetrics} {
+            if {$f < $numberOfHMetrics} {
                 append t(hmtx) [binary format Su $aw]
             }
             append t(hmtx) [binary format Su $lsb]
@@ -725,18 +723,18 @@ namespace eval pdf4tcl {
 
         # glyf - Glyph data
         set pos 0
-        for {set f 0} {$f<$numGlyphs} {incr f} {
+        for {set f 0} {$f < $numGlyphs} {incr f} {
             lappend offsets $pos
             set originalGlyphIdx [lindex $glyphMap $f]
             set glyphPos [lindex $BFA($bfname,glyphPos) $originalGlyphIdx]
-            set glyphLen \
-                    [expr {[lindex $BFA($bfname,glyphPos) $originalGlyphIdx+1]-$glyphPos}]
-            set glyphEndPos [expr {$glyphPos+$glyphLen-1}]
+            set glyphEnd [lindex $BFA($bfname,glyphPos) $originalGlyphIdx+1]
+            set glyphLen [expr {$glyphEnd - $glyphPos}]
+            set glyphEndPos [expr {$glyphPos + $glyphLen - 1}]
             set data [string range $BFP($bfname,glyf) $glyphPos $glyphEndPos]
             # Fix references in composite glyphs
-            if {$glyphLen>2} {
+            if {$glyphLen > 2} {
                 binary scan $data "S" compos
-                if {$compos<0} {
+                if {$compos < 0} {
                     set pos_in_glyph 10
                     set flags $GF_MORE_COMPONENTS
                     while {$flags & $GF_MORE_COMPONENTS} {
@@ -761,7 +759,7 @@ namespace eval pdf4tcl {
             append t(glyf) $data
             incr pos $glyphLen
             if {$pos % 4 != 0}  {
-                set padding [expr {4 - $pos%4}]
+                set padding [expr {4 - $pos % 4}]
                 append t(glyf) [string repeat "\0" $padding]
                 incr pos $padding
             }
@@ -770,13 +768,13 @@ namespace eval pdf4tcl {
         lappend offsets $pos
 
         # loca - Index to location
-        if {(($pos+1)>>1) > 0xFFFF} {
+        if {(($pos + 1) >> 1) > 0xFFFF} {
             set indexToLocFormat 1 ; # long format
             set t(loca) [binary format "Iu*" $offsets]
         } else {
             set indexToLocFormat 0 ; # short format
             foreach offset $offsets {
-                append t(loca) [binary format "Su" [expr {$offset>>1}]]
+                append t(loca) [binary format "Su" [expr {$offset >> 1}]]
             }
         }
 
@@ -793,11 +791,11 @@ namespace eval pdf4tcl {
         set searchRange 1
         set entrySelector 0
 
-        while {$searchRange*2 <= $numTables} {
-            set searchRange [expr {$searchRange*2}]
+        while {$searchRange * 2 <= $numTables} {
+            set searchRange [expr {$searchRange * 2}]
             incr entrySelector
         }
-        set searchRange [expr {$searchRange*16}]
+        set searchRange [expr {$searchRange * 16}]
         set rangeShift [expr {$numTables * 16 - $searchRange}]
 
         # Header
@@ -816,7 +814,7 @@ namespace eval pdf4tcl {
                 set checksum [CalcTTFCheckSum $BFP($bfname,$tag) 0 $len]
             }
             append res [binary format a4IuIuIu $tag $checksum $offset $len]
-            incr offset [expr {($len+3)&~3}]
+            incr offset [expr {($len + 3) & ~3}]
         }
 
         # Table data.
@@ -828,30 +826,29 @@ namespace eval pdf4tcl {
                 set len [string length $BFP($bfname,$tag)]
                 append res $BFP($bfname,$tag)
             }
-            append res [string repeat "\0" [expr {(4-($len&3))&3}]]
+            append res [string repeat "\0" [expr {(4 - ($len & 3)) & 3}]]
         }
 
         set len [string length $res]
         set checksum [CalcTTFCheckSum $res 0 $len]
         incr head_start 7
 
-        set checksum [expr {(0xB1B0AFBA-$checksum) & 0xFFFFFFFF}]
+        set checksum [expr {(0xB1B0AFBA - $checksum) & 0xFFFFFFFF}]
         set res "[string range $res 0 $head_start][binary format Iu $checksum][string range $res $head_start+5 end]"
 
         set FontsAttrs($fontname,data) $res
         set FontsAttrs($fontname,SubFontIdx) $BFA($bfname,SubFontIdx)
         incr BFA($bfname,SubFontIdx)
-        return
     }
 
-    #make subfont name
-    proc mkSFNamePrefix {idx} {
+    # make subfont name
+    proc MakeSFNamePrefix {idx} {
         string map {0 A 1 B 2 C 3 D 4 E 5 F 6 G 7 H 8 I 9 J} [format %06d $idx]
     }
 
     # ----- General font support -----
-    #Create Font from BaseFont:
-    proc CreateFont {bfname fontname enc_name} {
+    # Create Font from BaseFont:
+    proc createFont {bfname fontname enc_name} {
         variable FontsAttrs
         variable BFA
         variable Fonts
@@ -864,8 +861,8 @@ namespace eval pdf4tcl {
         }
 
         if {$BFA($bfname,FontType) eq "TTF"} {
-            #Create TTF subset here:
-            makeTTFSubset $bfname $fontname $subset
+            # Create TTF subset here:
+            MakeTTFSubset $bfname $fontname $subset
             set FontsAttrs($fontname,type) TTF
         } else {
             set FontsAttrs($fontname,type) Type1
@@ -876,18 +873,17 @@ namespace eval pdf4tcl {
         set FontsAttrs($fontname,uniset) $subset
         set FontsAttrs($fontname,specialencoding) 0
         set FontsAttrs($fontname,encoding) $enc_name
-        return
     }
 
-    #subset must be a list of unicode values:
-    proc CreateFont_SpecEnc {bfname fontname subset} {
+    # subset must be a list of unicode values:
+    proc createFontSpecEnc {bfname fontname subset} {
         variable FontsAttrs
         variable BFA
         variable Fonts
 
         if {$BFA($bfname,FontType) eq "TTF"} {
-            #Create TTF subset here:
-            makeTTFSubset $bfname $fontname $subset
+            # Create TTF subset here:
+            MakeTTFSubset $bfname $fontname $subset
             set FontsAttrs($fontname,type) TTF
         } else {
             set FontsAttrs($fontname,type) Type1
@@ -901,29 +897,30 @@ namespace eval pdf4tcl {
         set symcode 0
         foreach ucode $subset {
             set uchar [format %c $ucode]
-            dict set FontsAttrs($fontname,encoding) $uchar [binary format cu $symcode]
+            dict set FontsAttrs($fontname,encoding) $uchar \
+                    [binary format cu $symcode]
             incr symcode
         }
-        return
     }
 
     # ===== Procs for Type1 fonts processing =====
 
     # Create encoding differences list:
-    proc makeEncDiff {BFN fontname} {
+    proc MakeEncDiff {BFN fontname} {
         variable BFA
 
-        #get WinAnsiEncoding unicodes:
-        for {set f 0} {$f<256} {incr f} {lappend bcodes $f}
+        # get WinAnsiEncoding unicodes:
+        for {set f 0} {$f < 256} {incr f} {lappend bcodes $f}
         set bchars [encoding convertfrom cp1252 [binary format cu* $bcodes]]
         foreach unichar [split $bchars {}]  {
             lappend bset [scan $unichar %c]
         }
 
-        set f 0 ; set res [list]
+        set f 0
+        set res [list]
         set eqflag 1
         foreach ucode $::pdf4tcl::FontsAttrs($fontname,uniset) bcode $bset {
-            if {$ucode!=$bcode} {
+            if {$ucode != $bcode} {
                 if {$eqflag} {lappend res $f}
                 if {[dict exists $BFA($BFN,uni2glyph) $ucode]} {
                     lappend res "/[dict get $BFA($BFN,uni2glyph) $ucode]"
@@ -939,32 +936,31 @@ namespace eval pdf4tcl {
         return $res
     }
 
-    proc pfbCheck {pos data mark} {
+    proc PfbCheck {pos data mark} {
         binary scan $data "@${pos}cucu" d0 d1
-        if {($d0!=0x80) || ($d1!=$mark)} {error "Bad pfb data at $pos"}
-        if {$mark==3} return; #PFB_EOF
+        if {($d0 != 0x80) || ($d1 != $mark)} {error "Bad pfb data at $pos"}
+        if {$mark == 3} return; #PFB_EOF
         incr pos 2
         binary scan $data "@${pos}iu" l
         incr pos 4
-        set npos [expr {$pos+$l}]
-        if {$npos>[string length $data]} {error "pfb data is too short"}
+        set npos [expr {$pos + $l}]
+        if {$npos > [string length $data]} {error "pfb data is too short"}
         return $npos
     }
 
-    #There's no need to create NEW binary stream, use font as is:
+    # There's no need to create NEW binary stream, use font as is:
     proc ParsePFB {} {
         variable type1PFB
         variable type1name
         variable BFA
-        set p1 [pfbCheck 0 $type1PFB 1]
-        set p2 [pfbCheck $p1 $type1PFB 2]
-        set p3 [pfbCheck $p2 $type1PFB 1]
-        pfbCheck $p3 $type1PFB 3
+        set p1 [PfbCheck 0 $type1PFB 1]
+        set p2 [PfbCheck $p1 $type1PFB 2]
+        set p3 [PfbCheck $p2 $type1PFB 1]
+        PfbCheck $p3 $type1PFB 3
         set BFA($type1name,Length1) $p1
         set BFA($type1name,Length2) [expr {$p2-$p1+7}]
         set BFA($type1name,Length3) [expr {$p3-$p2-5}]
         set BFA($type1name,data) $type1PFB
-        return
     }
 
     # Creates charWidths and mapping 'unicode=>glyph_name' for this font.
@@ -983,13 +979,13 @@ namespace eval pdf4tcl {
         set BFA($type1name,bbox) [list 0 0 1000 1000]
 
         set lineslst [split $type1AFM "\n"]
-        if {[llength $lineslst]<2} {error "AFM hasn't enough data"}
+        if {[llength $lineslst] < 2} {error "AFM hasn't enough data"}
 
         set InMetrics 0
         set InHeader 0
         foreach line $lineslst {
             if {[string equal -nocase -length 7 $line comment]} continue
-            #StartCharMetrics terminates header:
+            # StartCharMetrics terminates header:
             switch -nocase -glob -- $line {
                 "StartCharMetrics*" {set InMetrics 1; continue}
                 "StartFontMetrics*" {set InHeader 1; continue}
@@ -997,21 +993,24 @@ namespace eval pdf4tcl {
             }
 
             if {$InMetrics} {
-                set toklst [list] ; set reslst [list]
-                #Create toklst -- list of needed tokens (only starting three):
+                set toklst [list]
+                set reslst [list]
+                # Create toklst -- list of needed tokens (only starting three):
                 foreach chunk [lrange [split $line ";"] 0 2] {
                     foreach el $chunk {
                         lappend toklst $el
                     }
                 }
-                #Convert and store tokens:
+                # Convert and store tokens:
                 foreach {l r} $toklst {et ss} [list C %d WX %d N %s] {
-                    if {$l!=$et} {error "Bad line in font AFM ($et)"}
-                    if {![scan $r $ss val]} {error "Incorrect '$et' value in font AFM"}
+                    if {$l != $et} {error "Bad line in font AFM ($et)"}
+                    if {![scan $r $ss val]} {
+                        error "Incorrect '$et' value in font AFM"
+                    }
                     lappend reslst $val
                 }
-                #Must create charWidths and font's Uni2Glyph here:
-                set N [lindex $reslst 2]
+                # Must create charWidths and font's Uni2Glyph here:
+                set N  [lindex $reslst 2]
                 set WX [lindex $reslst 1]
 
                 set ucode -1
@@ -1020,16 +1019,16 @@ namespace eval pdf4tcl {
                 } else {
                     set ucode 0
                 }
-                if {($ucode==-1) && ([string equal -length 3 $N "uni"])} {
+                if {($ucode == -1) && [string equal -length 3 $N "uni"]} {
                     scan $N "uni%x" ucode
                 }
 
-                if {$ucode!=-1} {
+                if {$ucode != -1} {
                     dict set BFA($type1name,charWidths) $ucode $WX
                     dict set BFA($type1name,uni2glyph) $ucode $N
                 }
             } elseif {$InHeader} {
-                #Split into 2 parts on first space:
+                # Split into 2 parts on first space:
                 set idx [string first " " $line]
                 set l [string range $line 0 $idx-1]
                 set r [string range $line $idx+1 end]
@@ -1039,17 +1038,16 @@ namespace eval pdf4tcl {
                 set BFA($type1name,$l) $r
             }
         }
-        return
     }
 
-    proc CreateBaseType1Font {basefontname afm_data pfb_data} {
+    proc createBaseType1Font {basefontname afm_data pfb_data} {
         variable type1name $basefontname
         variable type1AFM $afm_data
         variable type1PFB $pfb_data
         InitBaseType1
     }
 
-    proc LoadBaseType1Font {basefontname AFMfilename PFBfilename} {
+    proc loadBaseType1Font {basefontname AFMfilename PFBfilename} {
         variable type1name $basefontname
         variable type1AFM
         variable type1PFB
@@ -2022,7 +2020,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 # Add truetype font objectS:
                 set BFN $::pdf4tcl::FontsAttrs($fontname,basefontname)
                 set SFI $::pdf4tcl::FontsAttrs($fontname,SubFontIdx)
-                set BaseFN "[mkSFNamePrefix $SFI]+$BFN"
+                set BaseFN "[MakeSFNamePrefix $SFI]+$BFN"
                 # 1. Font subset binary data.
                 set lc [string length $::pdf4tcl::FontsAttrs($fontname,data)]
                 set dictv "<<\n/Length1 $lc"
@@ -2045,7 +2043,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set foid [$self AddObject $body]
                 # 3. ToUnicode Cmap for subset.
                 set body [MakeStream "<<" \
-                        [makeToUnicodeCMap $BaseFN \
+                        [MakeToUnicodeCMap $BaseFN \
                         $::pdf4tcl::FontsAttrs($fontname,uniset)] \
                         $pdf(compress)]
                 set uoid [$self AddObject $body]
@@ -2099,7 +2097,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 }
                 # 3. ToUnicode Cmap.
                 set body [MakeStream "<<" \
-                        [makeToUnicodeCMap $BFN \
+                        [MakeToUnicodeCMap $BFN \
                         $::pdf4tcl::FontsAttrs($fontname,uniset)] \
                         $pdf(compress)]
                 set uoid [$self AddObject $body]
@@ -2121,7 +2119,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 append body "/Subtype /Type1\n"
                 append body "/Widths \[$Widths\]\n"
                 append body "/Type /Font\n"
-                set diffs [makeEncDiff $BFN $fontname]
+                set diffs [MakeEncDiff $BFN $fontname]
                 append body "/Encoding <<\n/Type /Encoding\n"
                 append body "/BaseEncoding /WinAnsiEncoding\n"
                 append body "/Differences \[$diffs\]\n>>\n>>"

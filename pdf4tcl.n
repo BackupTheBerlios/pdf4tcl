@@ -25,17 +25,17 @@ package require \fBpdf4tcl  ?0.6?\fR
 .sp
 \fB::pdf4tcl::getPoints\fR \fIval\fR
 .sp
-\fB::pdf4tcl::LoadBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_file_name\fR
+\fB::pdf4tcl::loadBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_file_name\fR
 .sp
-\fB::pdf4tcl::CreateBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_data\fR
+\fB::pdf4tcl::createBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_data\fR
 .sp
-\fB::pdf4tcl::LoadBaseType1Font\fR \fIbasefontname\fR \fIAFM_file_name\fR \fIPFB_file_name\fR
+\fB::pdf4tcl::loadBaseType1Font\fR \fIbasefontname\fR \fIAFM_file_name\fR \fIPFB_file_name\fR
 .sp
-\fB::pdf4tcl::CreateBaseType1Font\fR \fIbasefontname\fR \fIAFM_data\fR \fIPFB_data\fR
+\fB::pdf4tcl::createBaseType1Font\fR \fIbasefontname\fR \fIAFM_data\fR \fIPFB_data\fR
 .sp
-\fB::pdf4tcl::CreateFont\fR \fIbasefontname\fR \fIfontname\fR \fIencoding_name\fR
+\fB::pdf4tcl::createFont\fR \fIbasefontname\fR \fIfontname\fR \fIencoding_name\fR
 .sp
-\fB::pdf4tcl::CreateFont_SpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
+\fB::pdf4tcl::createFontSpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
 .sp
 \fBobjectName\fR \fBmethod\fR ?\fIarg arg ...\fR?
 .sp
@@ -188,32 +188,32 @@ The format of \fIval\fR is '\fInum\fR ?\fIunit\fR?' where
 \fIunit\fRs.  If no \fIunit\fR is given, the value is interpreted
 as points.
 .TP
-\fB::pdf4tcl::LoadBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_file_name\fR
-This call loads TTF font from file to be used by all pdf4tcl objects.
+\fB::pdf4tcl::loadBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_file_name\fR
+This call loads a TTF font from file to be used by any pdf4tcl objects.
 The \fIbasefontname\fR is used to reference this font.
-To use this base font in documents, font with some encoding must be
-created from it using CreateFont.
+To use this base font in documents, a font with some encoding must be
+created from it using createFont.
 .TP
-\fB::pdf4tcl::CreateBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_data\fR
-This call creates base font from TTF binary data.
+\fB::pdf4tcl::createBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_data\fR
+This call creates a base font from TTF binary data.
 .TP
-\fB::pdf4tcl::LoadBaseType1Font\fR \fIbasefontname\fR \fIAFM_file_name\fR \fIPFB_file_name\fR
-This call loads Type1 font from two files (.afm and .pfb) to be used by
-all pdf4tcl objects. The \fIbasefontname\fR is used to reference this font.
-To use this base font in documents, font with some encoding must be
-created from it using CreateFont.
+\fB::pdf4tcl::loadBaseType1Font\fR \fIbasefontname\fR \fIAFM_file_name\fR \fIPFB_file_name\fR
+This call loads a Type1 font from two files (.afm and .pfb) to be used by
+any pdf4tcl objects. The \fIbasefontname\fR is used to reference this font.
+To use this base font in documents, a font with some encoding must be
+created from it using createFont.
 .TP
-\fB::pdf4tcl::CreateBaseType1Font\fR \fIbasefontname\fR \fIAFM_data\fR \fIPFB_data\fR
-This call creates base font from AFM text and PFB binary data.
+\fB::pdf4tcl::createBaseType1Font\fR \fIbasefontname\fR \fIAFM_data\fR \fIPFB_data\fR
+This call creates a base font from AFM text and PFB binary data.
 .TP
-\fB::pdf4tcl::CreateFont\fR \fIbasefontname\fR \fIfontname\fR \fIencoding_name\fR
-This call creates font that can be used in documents from base font.
+\fB::pdf4tcl::createFont\fR \fIbasefontname\fR \fIfontname\fR \fIencoding_name\fR
+This call creates a font that can be used in documents from a base font.
 .nf
 
-pdf4tcl::LoadBaseTrueTypeFont BaseArial "arial.ttf"
-pdf4tcl::CreateFont BaseArial MyArial cp1251
-pdf4tcl::LoadBaseType1Font BaseType1 "a010013l.afm" "a010013l.pfb"
-pdf4tcl::CreateFont BaseType1 MyType1 cp1251
+pdf4tcl::loadBaseTrueTypeFont BaseArial "arial.ttf"
+pdf4tcl::createFont BaseArial MyArial cp1251
+pdf4tcl::loadBaseType1Font BaseType1 "a010013l.afm" "a010013l.pfb"
+pdf4tcl::createFont BaseType1 MyType1 cp1251
 pdf4tcl::new mypdf -paper a4 -compress 1
 mypdf startPage
 mypdf setFont 10 MyArial
@@ -226,8 +226,8 @@ mypdf destroy
 
 .fi
 .TP
-\fB::pdf4tcl::CreateFont_SpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
-This call creates font that can be used in documents from base font.
+\fB::pdf4tcl::createFontSpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
+This call creates a font that can be used in documents from a base font.
 The \fIsubset\fR must be a list of unicode values.
 .PP
 .SS "OBJECT COMMAND"
