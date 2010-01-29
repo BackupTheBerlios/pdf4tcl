@@ -9,8 +9,6 @@
 # full path name of this file's directory.
 
 package ifneeded pdf4tcl 0.6 [list source [file join $dir pdf4tcl.tcl]]
-package ifneeded pdf4tcl::metrics 0.3 [list source [file join $dir metrics.tcl]]
-package ifneeded pdf4tcl::glyphnames 0.1 [list source [file join $dir glyphnames.tcl]]
 package ifneeded pdf4tcl::stdmetrics 0.1 [list source [file join $dir stdmetrics.tcl]]
 package ifneeded pdf4tcl::glyph2unicode 0.1 [list source [file join $dir glyph2uni.tcl]]
 
