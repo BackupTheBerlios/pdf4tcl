@@ -396,10 +396,8 @@ Draw text.
 .TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 Get information about current font. The available \fImetric\fRs are
-\fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxy\fR and
-\fBheight\fR.
-Get information about current font. The available \fImetric\fRs are
-\fBbboxt\fR and \fBbboxb\fR.
+\fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxb\fR,
+\fBbboxt\fR and \fBheight\fR.
 .PP
 .SS "OBJECT METHODS, IMAGES"
 A limited set of image formats are directly understood by pdf4tcl, currently

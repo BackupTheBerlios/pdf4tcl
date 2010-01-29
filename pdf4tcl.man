@@ -357,11 +357,8 @@ Draw text.
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
 
 Get information about current font. The available [arg "metric"]s are
-[option ascend], [option descend], [option fixed], [option bboxy] and
-[option height].
-
-Get information about current font. The available [arg "metric"]s are
-[option bboxt] and [option bboxb].
+[option ascend], [option descend], [option fixed], [option bboxb],
+[option bboxt] and [option height].
 
 [list_end]
 [subsection {OBJECT METHODS, IMAGES}]

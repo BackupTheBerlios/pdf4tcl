@@ -2140,10 +2140,10 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set bbox $::pdf4tcl::BFA($BFN,bbox)
         switch $metric {
             bboxy   {set val [expr {[lindex $bbox 1] * 0.001}]}
-            bboxt   {set val [expr {[lindex $bbox 1] * 0.001}]}
-            bboxb   {set val [expr {[lindex $bbox 3] * 0.001}]}
+            bboxb   {set val [expr {[lindex $bbox 1] * 0.001}]}
+            bboxt   {set val [expr {[lindex $bbox 3] * 0.001}]}
             fixed   {return $::pdf4tcl::BFA($BFN,fixed)}
-            height  {set val 1.0}
+            height  {set val [expr {([lindex $bbox 3] - [lindex $bbox 1])* 0.001}]}
             ascend - descend {
                 set val [expr {$::pdf4tcl::BFA($BFN,$metric) * 0.001}]
             }
@@ -2444,9 +2444,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {[llength $bg] > 1 || $bg} {
             set bboxb [$self getFontMetric bboxb 1]
             set bboxt [$self getFontMetric bboxt 1]
-            set db [expr {$y + $bboxb}]
-            set dt [expr {$y + $bboxt}]
-            set dh [expr {$bboxb - $bboxt}]
+            set ytop [expr {$y + $bboxt}]
+            set ybot [expr {$y + $bboxb}]
+            set dh [expr {$bboxt - $bboxb}]
             $self EndTextObj
             # Temporarily shift fill color
             $self Pdfoutcmd "q"
@@ -2476,14 +2476,14 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set ma [MulMxM $ma $mtb]
                 # Four points must be translated:
                 set x2 [expr {$x+$strWidth}]
-                set y2 $dt
-                set p1 [MulVxM [list $x $db] $ma]
-                set p2 [MulVxM [list $x2 $db] $ma]
+                set y2 $ybot
+                set p1 [MulVxM [list $x $ytop] $ma]
+                set p2 [MulVxM [list $x2 $ytop] $ma]
                 set p3 [MulVxM [list $x2 $y2] $ma]
                 set p4 [MulVxM [list $x $y2] $ma]
                 eval \$self DrawPoly 0 1 $p1 $p2 $p3 $p4
             } else {
-                $self DrawRect $x $dt $strWidth $dh 0 1
+                $self DrawRect $x $ybot $strWidth $dh 0 1
             }
             $self Pdfoutcmd "Q"
             # Position needs to be set since we left the text object
@@ -2562,9 +2562,9 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         set space_width [$self getCharWidth " " 1]
 
         # Displace y to put the first line within the box
-        set bboxt [$self getFontMetric bboxt 1]
+        set bboxb [$self getFontMetric bboxb 1]
         set ystart $y
-        set y [expr {$y - $pdf(font_size) - $bboxt}]
+        set y [expr {$y - $pdf(font_size) - $bboxb}]
 
         set len [string length $txt]
 
@@ -2634,7 +2634,7 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
                 set lastbp $start
 
                 # Will another line fit?
-                if {($ystart - ($y + $bboxt)) > $height} {
+                if {($ystart - ($y + $bboxb)) > $height} {
                     return [string range $txt $start end]
                 }
             } else {

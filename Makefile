@@ -2,10 +2,11 @@
 #
 # $Id$
 
-VERSION = 05
+VERSION = 06
 #TCLSH = $(HOME)/tcl/bin/tclsh8.5
 #TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
 TCLSH = tclsh
+TCLSH85 = tclsh8.5
 TCLKIT84 = $(HOME)/tclkit/v84/tclkit-linux-x86
 
 # TOOL paths
@@ -30,12 +31,14 @@ web/mypdf.pdf: mkweb.tcl web/index.html
 
 # Helpers
 
-metrics:
-	tclsh tools/extract-metrics.tcl metrics.tcl
+#metrics:
+#	tclsh tools/extract-metrics.tcl metrics.tcl
 
 # Tests
 test: cleancc
 	$(TCLSH) tests/all.tcl
+test85: cleancc
+	$(TCLSH85) tests/all.tcl
 
 check:
 	$(TCLKIT84) `which $(NAGELFAR)` pdf4tcl.tcl -filter '*Unknown variable*'

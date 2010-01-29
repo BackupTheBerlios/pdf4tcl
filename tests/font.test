@@ -8,14 +8,14 @@ test font-1.1 {font metrics} -body {
     set pdf [pdf4tcl::new %AUTO%]
     $pdf setFont 10 Courier
     set res {}
-    lappend res [$pdf getFontMetric bboxy]
+    lappend res [$pdf getFontMetric bboxb]
     lappend res [$pdf getFontMetric fixed]
     lappend res [$pdf getFontMetric ascend]
     lappend res [$pdf getFontMetric descend]
     lappend res [$pdf getFontMetric height]
 
     $pdf setFont 20
-    lappend res [$pdf getFontMetric bboxy]
+    lappend res [$pdf getFontMetric bboxb]
     lappend res [$pdf getFontMetric fixed]
     lappend res [$pdf getFontMetric ascend]
     lappend res [$pdf getFontMetric descend]
@@ -23,7 +23,7 @@ test font-1.1 {font metrics} -body {
 
     $pdf destroy
     set res
-} -result {-2.5 1 6.29 -1.57 10.0 -5.0 1 12.58 -3.14 20.0}
+} -result {-2.5 1 6.29 -1.57 10.55 -5.0 1 12.58 -3.14 21.1}
 
 test font-2.1 {font size, units works} -body {
     mytest {setFont 10 Courier} {setFont 20mm Courier} {
@@ -54,4 +54,28 @@ test font-3.1 {font, unicode} -body {
     }
 
     eval mytest $cmds [list "*20AC '\u0080' Euro*"]
+} -result 1
+
+test font-4.1 {font, truetype} -constraints runin85 -body {
+    pdf4tcl::loadBaseTrueTypeFont BaseArial "../examples/FreeSans.ttf"
+    # "1" "euro" and "!" maps to 0 1 end 2
+    set subset [list 49 [expr 0x20AC] 33]
+    pdf4tcl::createFontSpecEnc BaseArial MyArial $subset
+
+    mytest {setFont 16 MyArial} {text 1\u20ac!} *\x00\x01\x02*
+} -result 1
+
+test font-4.2 {font, truetype} -constraints runin85 -body {
+    #pdf4tcl::loadBaseTrueTypeFont BaseArial "../examples/FreeSans.ttf"
+    pdf4tcl::createFont BaseArial MyArial cp1252
+
+    mytest {setFont 16 MyArial} {text 1\u20ac!} *1\x80!*
+} -result 1
+
+test font-5.1 {font, type1} -constraints runin85 -body {
+    pdf4tcl::loadBaseType1Font BaseFont1 \
+            ../examples/a010013l.afm ../examples/a010013l.pfb
+    pdf4tcl::createFont BaseFont1 MyArial cp1252
+
+    mytest {setFont 16 MyArial} {text 1\u20ac!} *1\x80!*
 } -result 1

@@ -20,6 +20,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
+testConstraint runin85 [expr {![catch {list {*}{hej}}]}]
 
 set tmp [file join [pwd] ..]
 set ::auto_path [concat [list $tmp] $::auto_path]
