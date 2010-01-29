@@ -33,7 +33,7 @@ test errors-1.3 {setFont errors} -body {
     set res {}
 
     lappend res [catch {apa setFont 10 "no_such_font"} msg] $msg
-} -result {1 {Could not load font metrics for no_such_font}} \
+} -result {1 {Font no_such_font doesn't exist}} \
         -cleanup {apa destroy}
 
 test errors-1.4 {misc option errors} -body {

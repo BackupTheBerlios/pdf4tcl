@@ -32,6 +32,10 @@ test font-2.1 {font size, units works} -body {
 } -result 1
 
 test font-3.1 {font, unicode} -body {
+    foreach {glyph uni} [array get ::pdf4tcl::GlName2Uni] {
+        set glyph_names([format %04X $uni]) $glyph
+    }
+    
     set cmds [list [list setFont 10 Courier]]
     for {set code 32} {$code <= 255} {incr code} {
         set l [expr {($code-32) % 4}]
@@ -40,8 +44,8 @@ test font-3.1 {font, unicode} -body {
         set cpchar [encoding convertfrom cp1252 $char]
         set cpcode [scan $cpchar %c]
         set hex  [format %04X $cpcode]
-        if {[info exists ::pdf4tcl::glyph_names($hex)]} {
-            set glyph $::pdf4tcl::glyph_names($hex)
+        if {[info exists glyph_names($hex)]} {
+            set glyph $glyph_names($hex)
         } else {
             set glyph "---"
         }
@@ -49,5 +53,5 @@ test font-3.1 {font, unicode} -body {
                 -x [expr {$l * 130}] -y [expr {$h * 14}]]
     }
 
-    eval mytest $cmds [list "*20AC '\u0080' euro*"]
+    eval mytest $cmds [list "*20AC '\u0080' Euro*"]
 } -result 1

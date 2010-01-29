@@ -15,24 +15,15 @@ package provide pdf4tcl 0.6
 
 package require pdf4tcl::stdmetrics
 package require pdf4tcl::glyph2unicode
-package require pdf4tcl::metrics
-package require pdf4tcl::glyphnames
 package require snit
 
 namespace eval pdf4tcl {
     # helper variables (constants) packaged into arrays to minimize
     # variable import statements
     variable g
-    variable font_widths
-    variable font_metrics
-    variable glyph_names
     variable paper_sizes
     variable units
     variable dir [file dirname [file join [pwd] [info script]]]
-
-    # font width array
-    array set font_widths {}
-    array set font_metrics {}
 
     # Known papersizes. These are always in points.
     array set paper_sizes {
@@ -58,7 +49,24 @@ namespace eval pdf4tcl {
             i  72.0                 \
             p  1.0                  \
            ]
+ 
+    # Font Variables
 
+    variable ttfpos 0
+    variable ttfdata
+    # Base font attributes:
+    variable BFA
+    # BaseFontParts for TTF fonts:
+    variable BFP
+    # List of all created fonts:
+    variable Fonts
+    variable FontsAttrs
+    # For currently processed font:
+    variable ttfname ""
+    variable ttftables
+    variable type1AFM
+    variable type1PFB
+ 
     if {[catch {package require zlib} err]} {
         set g(haveZlib) 0
         if {[info commands zlib] eq "zlib"} {
@@ -424,6 +432,7 @@ namespace eval pdf4tcl {
         if {$usWeightClass >= 600} {set flags [expr {$flags|(1<<18)}]}
         if {$isFixedPitch} {set flags [expr {$flags|1}]}
         set BFA($ttfname,flags) $flags
+        set BFA($ttfname,fixed) $isFixedPitch
 
         # hhea - Horizontal header table
         set ttfpos [lindex $ttftables(hhea) 1]
@@ -1063,6 +1072,17 @@ namespace eval pdf4tcl {
         unset -nocomplain type1PFB
         unset -nocomplain type1AFM
         unset -nocomplain type1name
+    }
+
+    # 8.4 compatiblity patch for some functionality.
+    if {[llength [info commands dict]] == 0} {
+        proc ::dict {subC d i} {
+            if {$subC eq "get"} {
+                array set x $d
+                return $x($i)
+            }
+            return -code error "No support for dict $subC"
+        }
     }
 }
 
@@ -1949,17 +1969,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # Set current font
     method setFont {size {fontname ""} {internal 0}} {
-        variable ::pdf4tcl::font_widths
-
         if {$fontname eq ""} {
             if {$pdf(current_font) eq ""} {
                 return -code error "No font family set"
             }
             set fontname $pdf(current_font)
         }
-        # font width already loaded?
-        if {! [info exists font_widths($fontname)]} {
-            return -code error "Could not load font metrics for $fontname"
+
+        # Font already loaded?
+        if {[lsearch -exact $::pdf4tcl::Fonts $fontname] < 0} { #8.5
+            return -code error "Font $fontname doesn't exist"
         }
 
         if {!$internal} {
@@ -1978,6 +1997,8 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     # Set the current font on the page
     method SetupFont {} {
         variable fonts
+        variable ::pdf4tcl::BFA
+        variable type1basefonts
 
         if {$pdf(current_font) eq ""} {
             return -code error "No font set"
@@ -1989,12 +2010,122 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
         # Make sure a font object exists
         if {![info exists fonts($fontname)]} {
-            set body    "<<\n/Type /Font\n"
-            append body "/Subtype /Type1\n"
-            append body "/Encoding /WinAnsiEncoding\n"
-            append body "/Name /$fontname\n"
-            append body "/BaseFont /$fontname\n"
-            append body ">>"
+            set fonttype $::pdf4tcl::FontsAttrs($fontname,type)
+            if {$fonttype eq "std"} {
+                set body    "<<\n/Type /Font\n"
+                append body "/Subtype /Type1\n"
+                append body "/Encoding /WinAnsiEncoding\n"
+                append body "/Name /$fontname\n"
+                append body "/BaseFont /$fontname\n"
+                append body ">>"
+           } elseif {$fonttype eq "TTF"} {
+                # Add truetype font objectS:
+                set BFN $::pdf4tcl::FontsAttrs($fontname,basefontname)
+                set SFI $::pdf4tcl::FontsAttrs($fontname,SubFontIdx)
+                set BaseFN "[mkSFNamePrefix $SFI]+$BFN"
+                # 1. Font subset binary data.
+                set lc [string length $::pdf4tcl::FontsAttrs($fontname,data)]
+                set dictv "<<\n/Length1 $lc"
+                set body [MakeStream $dictv \
+                        $::pdf4tcl::FontsAttrs($fontname,data) \
+                        $pdf(compress)]
+                set fsoid [$self AddObject $body]
+                # 2. Font subset descriptor.
+                set    body "<<\n/FontName /$BaseFN\n"
+                append body "/StemV [Nf $BFA($BFN,stemV)]\n"
+                append body "/FontFile2 $fsoid 0 R\n"
+                append body "/Ascent [Nf $BFA($BFN,ascent)]\n"
+                append body "/Flags $BFA($BFN,flags)\n"
+                append body "/Descent [Nf $BFA($BFN,descent)]\n"
+                append body "/ItalicAngle [Nf $BFA($BFN,ItalicAngle)]\n"
+                foreach n $BFA($BFN,bbox) {lappend fbbox [Nf $n]}
+                append body "/FontBBox \[$fbbox\]\n"
+                append body "/Type /FontDescriptor\n"
+                append body "/CapHeight [Nf $BFA($BFN,CapHeight)]\n>>"
+                set foid [$self AddObject $body]
+                # 3. ToUnicode Cmap for subset.
+                set body [MakeStream "<<" \
+                        [makeToUnicodeCMap $BaseFN \
+                        $::pdf4tcl::FontsAttrs($fontname,uniset)] \
+                        $pdf(compress)]
+                set uoid [$self AddObject $body]
+                # 4. Font object.
+                # Make array of widths here:
+                set Widths [list]
+                foreach ucode $::pdf4tcl::FontsAttrs($fontname,uniset) {
+                    set res 0.0
+                    if {[dict exists $BFA($BFN,charWidths) $ucode]} {
+                        set res [dict get $::pdf4tcl::BFA($BFN,charWidths) $ucode]
+                    }
+                    lappend Widths [Nf $res]
+                }
+                set body    "<<\n/FirstChar 0\n"
+                append body "/LastChar [expr {[llength $Widths]-1}]\n"
+                append body "/ToUnicode $uoid 0 R\n"
+                append body "/FontDescriptor $foid 0 R\n"
+                append body "/Name /$fontname\n"
+                append body "/BaseFont /$BaseFN\n"
+                append body "/Subtype /TrueType\n"
+                append body "/Widths \[$Widths\]\n"
+                append body "/Type /Font\n"
+                append body ">>"
+            } else {
+                # Add type1 font objects:
+                set BFN $::pdf4tcl::FontsAttrs($fontname,basefontname)
+                # Font data & descriptor if not already included in PDF file:
+                if {![info exists type1basefonts($BFN)]} {
+                    #1. Font data:
+                    set    dictv "<<\n/Length1 $BFA($BFN,Length1)"
+                    append dictv "\n/Length2 $BFA($BFN,Length2)"
+                    append dictv "\n/Length3 $BFA($BFN,Length3)"
+                    set body [MakeStream $dictv $BFA($BFN,data) $pdf(compress)]
+                    set fsoid [$self AddObject $body]
+                    #2. Font descriptor:
+                    set    body "<<\n/FontName /$BFN\n"
+                    append body "/StemV [Nf $BFA($BFN,stemV)]\n"
+                    append body "/FontFile $fsoid 0 R\n"
+                    append body "/Ascent [Nf $BFA($BFN,ascent)]\n"
+                    append body "/Flags 34\n"
+                    append body "/Descent [Nf $BFA($BFN,descent)]\n"
+                    append body "/ItalicAngle [Nf $BFA($BFN,ItalicAngle)]\n"
+                    foreach n $BFA($BFN,bbox) {lappend fbbox [Nf $n]}
+                    append body "/FontBBox \[$fbbox\]\n"
+                    append body "/Type /FontDescriptor\n"
+                    append body "/CapHeight [Nf $BFA($BFN,CapHeight)]\n>>"
+                    set foid [$self AddObject $body]
+                    set type1basefonts($BFN) $foid
+                } else {
+                    set foid $type1basefonts($BFN)
+                }
+                # 3. ToUnicode Cmap.
+                set body [MakeStream "<<" \
+                        [makeToUnicodeCMap $BFN \
+                        $::pdf4tcl::FontsAttrs($fontname,uniset)] \
+                        $pdf(compress)]
+                set uoid [$self AddObject $body]
+                # 4. Font object:
+                set Widths [list]
+                foreach ucode $::pdf4tcl::FontsAttrs($fontname,uniset) {
+                    set res 0.0
+                    if {[dict exists $BFA($BFN,charWidths) $ucode]} {
+                        set res [dict get $::pdf4tcl::BFA($BFN,charWidths) $ucode]
+                    }
+                    lappend Widths [Nf $res]
+                }
+                set body    "<<\n/FirstChar 0\n"
+                append body "/LastChar [expr {[llength $Widths]-1}]\n"
+                append body "/ToUnicode $uoid 0 R\n"
+                append body "/FontDescriptor $foid 0 R\n"
+                append body "/Name /$fontname\n"
+                append body "/BaseFont /$BFN\n"
+                append body "/Subtype /Type1\n"
+                append body "/Widths \[$Widths\]\n"
+                append body "/Type /Font\n"
+                set diffs [makeEncDiff $BFN $fontname]
+                append body "/Encoding <<\n/Type /Encoding\n"
+                append body "/BaseEncoding /WinAnsiEncoding\n"
+                append body "/Differences \[$diffs\]\n>>\n>>"
+            }
             set oid [$self AddObject $body]
             set fonts($fontname) $oid
         }
@@ -2007,14 +2138,23 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         if {$pdf(current_font) eq ""} {
             return -code error "No font set"
         }
-        array set tmp $::pdf4tcl::font_metrics($pdf(current_font))
+        set BFN $::pdf4tcl::FontsAttrs($pdf(current_font),basefontname)
+        set bbox $::pdf4tcl::BFA($BFN,bbox)
         switch $metric {
-            bboxy   {set val [expr {[lindex $tmp(bbox) 1] * 0.001}]}
-            bboxt   {set val [expr {[lindex $tmp(bbox) 1] * 0.001}]}
-            bboxb   {set val [expr {[lindex $tmp(bbox) 3] * 0.001}]}
-            fixed   {return $tmp(fixed)}
+            bboxy   {set val [expr {[lindex $bbox 1] * 0.001}]}
+            bboxt   {set val [expr {[lindex $bbox 1] * 0.001}]}
+            bboxb   {set val [expr {[lindex $bbox 3] * 0.001}]}
+            fixed   {return $::pdf4tcl::BFA($BFN,fixed)}
             height  {set val 1.0}
-            default {set val [expr {$tmp($metric) * 0.001}]}
+            ascend - descend {
+                set val [expr {$::pdf4tcl::BFA($BFN,$metric) * 0.001}]
+            }
+            default {
+                if {![info exists ::pdf4tcl::BFA($BFN,$metric)]} {
+                    return -code error "Metric $metric doesn't exist"
+                }
+                return $::pdf4tcl::BFA($BFN,$metric)
+            }
         }
         # Translate to current unit
         if {!$internal} {
@@ -2076,6 +2216,19 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
         ###puts stderr "ch: $ch  n: $n  ucs2: $ucs2  glyphname: $glyph_name  width: $w"
         set res [expr {$w * 0.001}]
         set ::pdf4tcl::FontWidthsCh($font,$ch) $res
+        return $res
+    }
+
+    # Get the width of a character. "ch" must be exacly one char long.
+    proc GetCharWidth {font ch} {
+        if {$ch eq "\n"} {
+            return 0.0
+        }
+        scan $ch %c n
+        set BFN $::pdf4tcl::FontsAttrs($font,basefontname)
+        set res 0.0
+        catch {set res [dict get $::pdf4tcl::BFA($BFN,charWidths) $n]}
+        set res [expr {$res*0.001}]
         return $res
     }
 
@@ -4531,9 +4684,16 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
 
     # helper function: mask parentheses and backslash
     proc CleanText {in fn} {
-        # Since the font is set up as WinAnsiEncoding, we get as close
-        # as possible by using cp1252
-        set out [encoding convertto cp1252 $in]
+        variable ::pdf4tcl::FontsAttrs
+        if {$FontsAttrs($fn,specialencoding)} {
+            # Convert using special encoding of font subset:
+            set out ""
+            foreach uchar [split $in {}] {
+                append out [dict get $FontsAttrs($fn,encoding) $uchar]
+            }
+        } else {
+            set out [encoding convertto $FontsAttrs($fn,encoding) $in]
+        }
         return [string map {( \\( ) \\) \\ \\\\} $out]
     }
 
