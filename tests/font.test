@@ -12,18 +12,18 @@ test font-1.1 {font metrics} -body {
     lappend res [$pdf getFontMetric fixed]
     lappend res [$pdf getFontMetric ascend]
     lappend res [$pdf getFontMetric descend]
-    lappend res [$pdf getFontMetric height]
+    lappend res [format %.2f [$pdf getFontMetric height]]
 
     $pdf setFont 20
     lappend res [$pdf getFontMetric bboxb]
     lappend res [$pdf getFontMetric fixed]
     lappend res [$pdf getFontMetric ascend]
     lappend res [$pdf getFontMetric descend]
-    lappend res [$pdf getFontMetric height]
+    lappend res [format %.2f [$pdf getFontMetric height]]
 
     $pdf destroy
     set res
-} -result {-2.5 1 6.29 -1.57 10.55 -5.0 1 12.58 -3.14 21.1}
+} -result {-2.5 1 6.29 -1.57 10.55 -5.0 1 12.58 -3.14 21.10}
 
 test font-2.1 {font size, units works} -body {
     mytest {setFont 10 Courier} {setFont 20mm Courier} {

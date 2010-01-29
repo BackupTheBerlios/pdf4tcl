@@ -4,7 +4,7 @@
 '\" Copyright (c) 2009 Yaroslav Schekin
 '\"
 .so man.macros
-.TH "pdf4tcl" n 0.6 pdf4tcl "Pdf document generation"
+.TH "pdf4tcl" n 0.7 pdf4tcl "Pdf document generation"
 .BS
 .SH NAME
 pdf4tcl \- Pdf document generation
@@ -15,7 +15,7 @@ package require \fBdict \fR
 .sp
 package require \fBsnit \fR
 .sp
-package require \fBpdf4tcl  ?0.6?\fR
+package require \fBpdf4tcl  ?0.7?\fR
 .sp
 \fB::pdf4tcl::new\fR \fIobjectName\fR ?\fIoption value\fR...?
 .sp

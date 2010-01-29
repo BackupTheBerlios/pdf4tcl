@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
-# Copyright (c) 2006-2008 by Peter Spjuth <peter.spjuth@gmail.com>
+# Copyright (c) 2006-2010 by Peter Spjuth <peter.spjuth@gmail.com>
 # Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
 #
 # See the file "licence.terms" for information on usage and redistribution
@@ -11,7 +11,7 @@
 #
 # $Id$
 
-package provide pdf4tcl 0.6
+package provide pdf4tcl 0.7
 
 package require pdf4tcl::stdmetrics
 package require pdf4tcl::glyph2unicode
@@ -2177,56 +2177,17 @@ snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
     }
 
     # Get the width of a character. "ch" must be exacly one char long.
-    # This is a proc for performance reasons since it is called a lot.
-    # Currently this is four times slower as a method.
-    # With a method it would be preferable to keep the cache in
-    # the instance to clean things up.
-    proc GetCharWidth {font ch} {
-        if {[info exists ::pdf4tcl::FontWidthsCh($font,$ch)]} {
-            return $::pdf4tcl::FontWidthsCh($font,$ch)
-        }
-
-        if {$ch eq "\n"} {
-            set res 0.0
-            set ::pdf4tcl::FontWidthsCh($font,$ch) $res
-            return $res
-        }
-
-        if {![info exists ::pdf4tcl::FontWidthsCurrent] || \
-                $::pdf4tcl::FontWidthsCurrent ne $font} {
-            array unset ::pdf4tcl::FontWidths
-            array set ::pdf4tcl::FontWidths $::pdf4tcl::font_widths($font)
-            set ::pdf4tcl::FontWidthsCurrent $font
-        }
-
-        # This can't fail since ch is always 1 char long
-        scan $ch %c n
-
-        set ucs2 [format "%04.4X" $n]
-
-        set glyph_name zero
-        set w 0
-        catch {set w $::pdf4tcl::FontWidths(zero)}
-        catch {set glyph_name $::pdf4tcl::glyph_names($ucs2)}
-        if {$glyph_name eq "spacehackarabic"} {set glyph_name "space"}
-
-        catch {set w $::pdf4tcl::FontWidths($glyph_name)}
-        ###puts stderr "ch: $ch  n: $n  ucs2: $ucs2  glyphname: $glyph_name  width: $w"
-        set res [expr {$w * 0.001}]
-        set ::pdf4tcl::FontWidthsCh($font,$ch) $res
-        return $res
-    }
-
-    # Get the width of a character. "ch" must be exacly one char long.
     proc GetCharWidth {font ch} {
         if {$ch eq "\n"} {
             return 0.0
         }
+        # This can't fail since ch is always 1 char long
         scan $ch %c n
+
         set BFN $::pdf4tcl::FontsAttrs($font,basefontname)
         set res 0.0
         catch {set res [dict get $::pdf4tcl::BFA($BFN,charWidths) $n]}
-        set res [expr {$res*0.001}]
+        set res [expr {$res * 0.001}]
         return $res
     }
 
