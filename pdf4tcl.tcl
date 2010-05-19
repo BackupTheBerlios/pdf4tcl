@@ -1085,7 +1085,7 @@ namespace eval pdf4tcl {
 }
 
 # Object used for generating pdf
-snit::type pdf4tcl::pdf4tcl { ##nagelfar nocover
+snit::type pdf4tcl::pdf4tcl {
     variable pdf
 
     #######################################################################
