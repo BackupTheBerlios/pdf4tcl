@@ -221,7 +221,7 @@ namespace eval pdf4tcl {
         variable ttfpos
         variable ttfdata
         variable BFA
-        variable ttfsubfontOffsets
+        variable ttfSubFontOffsets
         set ttcVersions [list 65536 131072]
 
         binary scan $ttfdata "@${ttfpos}IuIu" \
@@ -1186,12 +1186,13 @@ snit::type pdf4tcl::pdf4tcl {
     #######################################################################
 
     constructor {args} {
+        # In 8.5 recode these as dicts within the pdf array
         variable images
         variable fonts
         variable bitmaps
         variable patterns
         variable metadata
-        #Array of type1 base fonts already included in this PDF file:
+        # Array of type1 base fonts already included in this PDF file:
         variable type1basefonts
 
         set pdf(bookmarks) {}
@@ -2683,7 +2684,7 @@ snit::type pdf4tcl::pdf4tcl {
         $self DrawLine $x1 $y1 $x2 $y2
     }
 
-    ###>2004-11-03 jpo
+    # qCurve is deprecated in favor of curve
     method qCurve {x1 y1 xc yc x2 y2} {
         $self EndTextObj
         $self Trans $x1 $y1 x1 y1
@@ -2699,7 +2700,32 @@ snit::type pdf4tcl::pdf4tcl {
                 $y2 "c"
         $self Pdfoutcmd "S"
     }
-    ###<jpo
+
+    # Draw a quadratic or cubic bezier curve
+    method curve {x1 y1 x2 y2 x3 y3 args} {
+        if {[llength $args] != 2 && [llength $args] != 0} {
+            return -code error "wrong # args: should be curve x1 y1 x2 y2 x3 y3 ?x4 y4?"
+        }
+        $self EndTextObj
+        $self Trans $x1 $y1 x1 y1
+        $self Trans $x2 $y2 x2 y2
+        $self Trans $x3 $y3 x3 y3
+        if {[llength $args] == 2} {
+            # Cubic curve
+            $self Trans [lindex $args 0] [lindex $args 1] x4 y4 ;# 8.5
+        } else {
+            # Quadratic curve
+            set x4 $x3
+            set y4 $y3
+            set x3 [expr {($x4+2.0*$x2)/3.0}]
+            set y3 [expr {($y4+2.0*$y2)/3.0}]
+            set x2 [expr {($x1+2.0*$x2)/3.0}]
+            set y2 [expr {($y1+2.0*$y2)/3.0}]
+        }
+        $self Pdfoutcmd $x1 $y1 "m"
+        $self Pdfoutcmd $x2 $y2 $x3 $y3 $x4 $y4 "c"
+        $self Pdfoutcmd "S"
+    }
 
     # Draw a polygon
     method polygon {args} {

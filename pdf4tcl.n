@@ -115,7 +115,7 @@ package require \fBpdf4tcl  ?0.7?\fR
 .sp
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
 .sp
-\fIobjectName\fR \fBqCurve\fR \fIx1\fR \fIy1\fR \fIxc\fR \fIyc\fR \fIx2\fR \fIy2\fR
+\fIobjectName\fR \fBcurve\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIx3\fR \fIy3\fR ?\fIx4 y4\fR?
 .sp
 \fIobjectName\fR \fBpolygon\fR ?\fIx y\fR...? ?\fIoption value\fR...?
 .sp
@@ -486,7 +486,8 @@ Sets the stroke color for graphics operations.
 .TP
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
 .TP
-\fIobjectName\fR \fBqCurve\fR \fIx1\fR \fIy1\fR \fIxc\fR \fIyc\fR \fIx2\fR \fIy2\fR
+\fIobjectName\fR \fBcurve\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIx3\fR \fIy3\fR ?\fIx4 y4\fR?
+Draw a quadratic (if three coordinates are given) or cubic bezier curve.
 .TP
 \fIobjectName\fR \fBpolygon\fR ?\fIx y\fR...? ?\fIoption value\fR...?
 .TP

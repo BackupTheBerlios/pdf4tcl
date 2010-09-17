@@ -112,3 +112,27 @@ test graphics-5.3 {oval} -body {
         f
     }
 } -result 1
+
+test graphics-6.1 {curve} -body {
+    mytest {curve 100 100 110 120 130 140 150 150} {
+         200 300 m 210 320 230 340 250 350 c S
+    }
+} -result 1
+
+test graphics-6.2 {curve} -body {
+    mytest {curve 100 100 130 160 250 250} {
+        200 300 m 220 340 270 390 350 450 c S
+    }
+} -result 1
+
+test graphics-6.3 {curve} -body {
+    mytest {curve 100 100 130 160 250} {}
+} -returnCodes 1 -result "wrong # args: should be *curve * x1 y1 x2 y2 x3 y3 *" -match glob
+
+test graphics-6.4 {curve} -body {
+    mytest {curve 100 100 130 160 250 10 20} {}
+} -returnCodes 1 -result "wrong # args: should be curve x1 y1 x2 y2 x3 y3 ?x4 y4?"
+
+test graphics-6.5 {curve} -body {
+    mytest {curve 100 100 130 160 250 10 20 10 20} {}
+} -returnCodes 1 -result "wrong # args: should be curve x1 y1 x2 y2 x3 y3 ?x4 y4?"

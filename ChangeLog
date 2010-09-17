@@ -1,4 +1,9 @@
-2009-01-29 Peter Spjuth   <peter.spjuth@gmail.com>
+2010-09-17 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added curve method to draw quadratic and cubic beziers.
+	  (Ian Gay) [FR 5106]
+	* Deprecated qCurve.
+
+2010-01-29 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Release 0.7 (skipping 0.6 to not confuse with other 0.6)
 
 2010-01-29 Peter Spjuth   <peter.spjuth@gmail.com>
