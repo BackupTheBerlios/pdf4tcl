@@ -2401,11 +2401,12 @@ snit::type pdf4tcl::pdf4tcl {
 
         set strWidth [$self getStringWidth $str 1]
         if {$align == "right"} {
-            set x [expr {$x - $strWidth}]
+            set x [expr {$x - $strWidth * cos($angle*3.1415926/180.0)}]
+            set y [expr {$y + $strWidth * sin($angle*3.1415926/180.0)}]
             set posSet 1
         } elseif {$align == "center"} {
             set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
-            set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
+            set y [expr {$y + $strWidth / 2 * sin($angle*3.1415926/180.0)}]
             set posSet 1
         }
         # Draw a background box if needed.

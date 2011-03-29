@@ -1,4 +1,8 @@
 2011-03-29 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Corrected combination of angle and align in text.
+	  (Jeff Godfrey) [Bug 18027]
+
+2011-03-29 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Locate built-in zlib before package. [FR 5261]
 
 2010-09-17 Peter Spjuth   <peter.spjuth@gmail.com>
