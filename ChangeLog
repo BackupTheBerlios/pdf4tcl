@@ -1,3 +1,6 @@
+2011-03-29 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Locate built-in zlib before package. [FR 5261]
+
 2010-09-17 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added curve method to draw quadratic and cubic beziers.
 	  (Ian Gay) [FR 5106]

@@ -67,8 +67,14 @@ namespace eval pdf4tcl {
     variable type1AFM
     variable type1PFB
 
-    if {[catch {package require zlib} err]} {
+    # Locating zlib.
+    # 1. Look for existing, e.g. in Tcl 8.6
+    # 2. Try to get package zlib
+    if {[info commands zlib] eq "zlib"} {
+        set g(haveZlib) 1
+    } elseif {[catch {package require zlib} err]} {
         set g(haveZlib) 0
+        # Check for command just in case
         if {[info commands zlib] eq "zlib"} {
             set g(haveZlib) 1
         }
