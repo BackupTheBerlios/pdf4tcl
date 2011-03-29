@@ -2253,7 +2253,7 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(ypos) $y
 
         if {$xangle == 0 && $yangle == 0} {
-            $self Pdfoutcmd $c [expr {-$s}] $s $c $x $y "Tm"
+            $self Pdfoutcmd $c $s [expr {-$s}] $c $x $y "Tm"
             return
         }
 
@@ -2261,7 +2261,7 @@ snit::type pdf4tcl::pdf4tcl {
         set tx [expr {tan($xangle*3.1415926/180.0)}]
         set ty [expr {tan($yangle*3.1415926/180.0)}]
 
-        set mr [list $c [expr {-$s}] $s $c 0 0]
+        set mr [list $c $s [expr {-$s}] $c 0 0]
         set ms [list 1 $tx $ty 1 0 0]
         set ma [MulMxM $mr $ms]
         lset ma 4 $x
@@ -2402,11 +2402,11 @@ snit::type pdf4tcl::pdf4tcl {
         set strWidth [$self getStringWidth $str 1]
         if {$align == "right"} {
             set x [expr {$x - $strWidth * cos($angle*3.1415926/180.0)}]
-            set y [expr {$y + $strWidth * sin($angle*3.1415926/180.0)}]
+            set y [expr {$y - $strWidth * sin($angle*3.1415926/180.0)}]
             set posSet 1
         } elseif {$align == "center"} {
             set x [expr {$x - $strWidth / 2 * cos($angle*3.1415926/180.0)}]
-            set y [expr {$y + $strWidth / 2 * sin($angle*3.1415926/180.0)}]
+            set y [expr {$y - $strWidth / 2 * sin($angle*3.1415926/180.0)}]
             set posSet 1
         }
         # Draw a background box if needed.
@@ -2429,7 +2429,7 @@ snit::type pdf4tcl::pdf4tcl {
                 # Translation from x,y to origin matrix:
                 set mt [list 1 0 0 1 [expr {-$x}] [expr {-$y}]]
                 # Rotation matrix:
-                set r1 [expr {(360.0-$angle)*3.1415926/180.0}]
+                set r1 [expr {$angle*3.1415926/180.0}]
                 set c [expr {cos($r1)}]
                 set s [expr {sin($r1)}]
                 set mr [list $c $s [expr {-$s}] $c 0 0]

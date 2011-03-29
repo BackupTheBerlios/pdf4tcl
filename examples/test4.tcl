@@ -23,7 +23,7 @@ p1 text "Dies ist ein etwas längerer Satz in einer kleineren Schriftart." \
         -x 100 -y 242
 p1 setFont 12 "Courier-Bold"
 for {set w 0} {$w<360} {incr w 15} {
- 	p1 text "   rotierter Text" -angle $w -x 200 -y 400 
+ 	p1 text "   rotierter Text" -angle -$w -x 200 -y 400 
 }
 p1 circle 200 400 130
 p1 setFillColor 1 1 1
@@ -62,7 +62,7 @@ p1 text "Dies ist ein etwas längerer Satz in einer kleineren Schriftart." \
         -x 100 -y 242
 p1 setFont 12 "Courier-Bold"
 for {set w 0} {$w<360} {incr w 15} {
- 	p1 text "   rotierter Text" -angle $w -x 200 -y 400
+ 	p1 text "   rotierter Text" -angle -$w -x 200 -y 400
 }
 p1 circle 200 400 130
 p1 setFillColor 1 1 1
