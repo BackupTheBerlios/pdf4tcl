@@ -738,23 +738,74 @@ Sets the stroke color for graphics operations.
 .SS "OBJECT METHODS, GRAPHICS"
 .TP
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
+Set up the line width and optionally a dash pattern for line drawing.
 .TP
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
+Draw a line.
 .TP
 \fIobjectName\fR \fBcurve\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIx3\fR \fIy3\fR ?\fIx4 y4\fR?
 Draw a quadratic (if three coordinates are given) or cubic bezier curve.
 .TP
 \fIobjectName\fR \fBpolygon\fR ?\fIx y\fR...? ?\fIoption value\fR...?
+Draw a polygon. The polygon is closed back to the first coordinate.
+.RS
+.TP
+\fB-filled\fR \fIbool\fR
+Fill the polygon.
+.TP
+\fB-stroke\fR \fIbool\fR
+Draw an outline of the polygon. Default is true.
+.RE
 .TP
 \fIobjectName\fR \fBcircle\fR \fIx\fR \fIy\fR \fIradius\fR ?\fIoption value\fR...?
+Draw a circle at the given center coordinates.
+.RS
+.TP
+\fB-filled\fR \fIbool\fR
+Fill the circle.
+.TP
+\fB-stroke\fR \fIbool\fR
+Draw an outline of the circle. Default is true.
+.RE
 .TP
 \fIobjectName\fR \fBoval\fR \fIx\fR \fIy\fR \fIradiusx\fR \fIradiusy\fR ?\fIoption value\fR...?
+Draw an oval at the given center coordinates.
+.RS
+.TP
+\fB-filled\fR \fIbool\fR
+Fill the oval.
+.TP
+\fB-stroke\fR \fIbool\fR
+Draw an outline of the oval. Default is true.
+.RE
 .TP
 \fIobjectName\fR \fBarc\fR \fIx\fR \fIy\fR \fIradiusx\fR \fIradiusy\fR \fIphi\fR \fIextend\fR ?\fIoption value\fR...?
+Draw an arc, following the given oval. The arc starts at angle \fIphi\fR, given in degrees starting in the "east" direction, counting counter clockwise. The arc extends \fIextend\fR degrees.
+.RS
+.TP
+\fB-filled\fR \fIbool\fR
+Fill the arc.
+.TP
+\fB-stroke\fR \fIbool\fR
+Draw an outline of the arc. Default is true.
+.TP
+\fB-style\fR \fIvalue\fR
+Defines the style of the arc. An \fIarc\fR draws the perimeter of the arc and is never filled. A \fIpieslice\fR closes the arc with lines to the center of the oval. A \fIchord\fR closes the arc directly. Default is \fIarc\fR.
+.RE
 .TP
 \fIobjectName\fR \fBarrow\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIsize\fR ?\fIangle\fR?
+Draw an arrow. Default \fIangle\fR is 20 degrees.
 .TP
 \fIobjectName\fR \fBrectangle\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR ?\fIoption value\fR...?
+Draw a rectangle.
+.RS
+.TP
+\fB-filled\fR \fIbool\fR
+Fill the rectangle.
+.TP
+\fB-stroke\fR \fIbool\fR
+Draw an outline of the rectangle. Default is true.
+.RE
 .PP
 .SS "OBJECT CONFIGURATION"
 All pdf4tcl objects understand the options from \fBPAGE CONFIGURATION\fR,

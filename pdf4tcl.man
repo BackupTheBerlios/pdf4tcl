@@ -475,16 +475,63 @@ Sets the stroke color for graphics operations.
 [list_begin definitions]
 
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
+Set up the line width and optionally a dash pattern for line drawing.
+
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
+Draw a line.
+
 [call [arg objectName] [method curve] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "x3"] [arg "y3"] [opt [arg "x4 y4"]]]
 Draw a quadratic (if three coordinates are given) or cubic bezier curve.
+
 [call [arg objectName] [method polygon] [opt [arg "x y"]...] [opt [arg "option value"]...]]
+Draw a polygon. The polygon is closed back to the first coordinate.
+[list_begin opt]
+[opt_def -filled [arg bool]]
+Fill the polygon.
+[opt_def -stroke [arg bool]]
+Draw an outline of the polygon. Default is true.
+[list_end]
+
 [call [arg objectName] [method circle] [arg "x"] [arg "y"] [arg "radius"] [opt [arg "option value"]...]]
+Draw a circle at the given center coordinates.
+[list_begin opt]
+[opt_def -filled [arg bool]]
+Fill the circle.
+[opt_def -stroke [arg bool]]
+Draw an outline of the circle. Default is true.
+[list_end]
+
 [call [arg objectName] [method oval] [arg "x"] [arg "y"] [arg "radiusx"] [arg "radiusy"] [opt [arg "option value"]...]]
+Draw an oval at the given center coordinates.
+[list_begin opt]
+[opt_def -filled [arg bool]]
+Fill the oval.
+[opt_def -stroke [arg bool]]
+Draw an outline of the oval. Default is true.
+[list_end]
+
 [call [arg objectName] [method arc] [arg "x"] [arg "y"] [arg "radiusx"] [arg "radiusy"] [arg "phi"] [arg "extend"] [opt [arg "option value"]...]]
+Draw an arc, following the given oval. The arc starts at angle [arg "phi"], given in degrees starting in the "east" direction, counting counter clockwise. The arc extends [arg "extend"] degrees.
+[list_begin opt]
+[opt_def -filled [arg bool]]
+Fill the arc.
+[opt_def -stroke [arg bool]]
+Draw an outline of the arc. Default is true.
+[opt_def -style [arg value]]
+Defines the style of the arc. An [arg "arc"] draws the perimeter of the arc and is never filled. A [arg "pieslice"] closes the arc with lines to the center of the oval. A [arg "chord"] closes the arc directly. Default is [arg "arc"].
+[list_end]
+
 [call [arg objectName] [method arrow] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "size"] [opt [arg "angle"]]]
+Draw an arrow. Default [arg "angle"] is 20 degrees.
 
 [call [arg objectName] [method rectangle] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [opt [arg "option value"]...]]
+Draw a rectangle.
+[list_begin opt]
+[opt_def -filled [arg bool]]
+Fill the rectangle.
+[opt_def -stroke [arg bool]]
+Draw an outline of the rectangle. Default is true.
+[list_end]
 
 [list_end]
 
