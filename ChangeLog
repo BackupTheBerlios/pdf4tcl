@@ -1,3 +1,8 @@
+2011-10-05 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Cleaned up to name ascend/descend font metrics consistently.
+	* Text from canvas was displaced one line due to a incorrect
+	  cleanup 2010-01 (auriocus) [Bug 18361]
+
 2011-03-29 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Corrected text angle to be counterclockwise like other
 	  angles. (Ian Gay) [Bug 17515]
@@ -8,7 +13,7 @@
 	  (Jeff Godfrey) [Bug 18027]
 
 2011-03-29 Peter Spjuth   <peter.spjuth@gmail.com>
-	* Locate built-in zlib before package. [FR 5261]
+	* Locate built-in zlib before package. [FR 5261] [Bug 18353]
 
 2010-09-17 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added curve method to draw quadratic and cubic beziers.

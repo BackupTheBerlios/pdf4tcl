@@ -309,11 +309,11 @@ namespace eval pdf4tcl {
     #
     #    name         PostScript font name
     #    flags        Font flags
-    #    ascent       Typographic ascender in 1/1000ths of a point
-    #    descent      Typographic descender in 1/1000ths of a point
+    #    ascend       Typographic ascender in 1/1000ths of a point
+    #    descend      Typographic descender in 1/1000ths of a point
     #    CapHeight    Cap height in 1/1000ths of a point (0 if not available)
-    #    bbox         Glyph bounding box [l,t,r,b] in 1/1000ths of a point
-    #    _bbox        Glyph bounding box [l,t,r,b] in unitsPerEm
+    #    bbox         Glyph bounding box [l,b,r,t] in 1/1000ths of a point
+    #    _bbox        Glyph bounding box [l,b,r,t] in unitsPerEm
     #    unitsPerEm   Glyph units per em
     #    ItalicAngle  Italic angle in degrees ccw
     #    stemV        stem weight in 1/1000ths of a point (approximate)
@@ -403,22 +403,22 @@ namespace eval pdf4tcl {
                     version usWeightClass fsType sTypoAscender sTypoDescender
             incr ttfpos 88
 
-            set BFA($ttfname,ascent) [Rescale $sTypoAscender]
-            set BFA($ttfname,descent) [Rescale $sTypoDescender]
+            set BFA($ttfname,ascend) [Rescale $sTypoAscender]
+            set BFA($ttfname,descend) [Rescale $sTypoDescender]
 
             if {$version > 1} {
                 binary scan $ttfdata "@${ttfpos}Su" sCapHeight
                 set BFA($ttfname,CapHeight) [Rescale $sCapHeight]
             } else {
-                set BFA($ttfname,CapHeight) $BFA($ttfname,ascent)
+                set BFA($ttfname,CapHeight) $BFA($ttfname,ascend)
             }
         } else {
             # Microsoft TTFs require an OS/2 table; Apple ones do not.  Try to
             # cope. The data is not very important anyway.
             set usWeightClass 500
-            set BFA($ttfname,ascent) [Rescale $yMax]
-            set BFA($ttfname,descent) [Rescale $yMin]
-            set BFA($ttfname,CapHeight) $BFA($ttfname,ascent)
+            set BFA($ttfname,ascend) [Rescale $yMax]
+            set BFA($ttfname,descend) [Rescale $yMin]
+            set BFA($ttfname,CapHeight) $BFA($ttfname,ascend)
         }
 
         set BFA($ttfname,stemV) [expr {50 + int(pow($usWeightClass / 65.0, 2))}] ;# 8.5
@@ -976,9 +976,9 @@ namespace eval pdf4tcl {
         variable BFA
         variable GlName2Uni
 
-        array set nmap {Ascender ascent Descender descent FontBBox bbox}
-        set BFA($type1name,ascent) 1000
-        set BFA($type1name,descent) 0
+        array set nmap {Ascender ascend Descender descend FontBBox bbox}
+        set BFA($type1name,ascend) 1000
+        set BFA($type1name,descend) 0
         set BFA($type1name,CapHeight) 1000
         set BFA($type1name,ItalicAngle) 0
         set BFA($type1name,stemV) 0
@@ -2039,9 +2039,9 @@ snit::type pdf4tcl::pdf4tcl {
                 set    body "<<\n/FontName /$BaseFN\n"
                 append body "/StemV [Nf $BFA($BFN,stemV)]\n"
                 append body "/FontFile2 $fsoid 0 R\n"
-                append body "/Ascent [Nf $BFA($BFN,ascent)]\n"
+                append body "/Ascent [Nf $BFA($BFN,ascend)]\n"
                 append body "/Flags $BFA($BFN,flags)\n"
-                append body "/Descent [Nf $BFA($BFN,descent)]\n"
+                append body "/Descent [Nf $BFA($BFN,descend)]\n"
                 append body "/ItalicAngle [Nf $BFA($BFN,ItalicAngle)]\n"
                 foreach n $BFA($BFN,bbox) {lappend fbbox [Nf $n]}
                 append body "/FontBBox \[$fbbox\]\n"
@@ -2089,9 +2089,9 @@ snit::type pdf4tcl::pdf4tcl {
                     set    body "<<\n/FontName /$BFN\n"
                     append body "/StemV [Nf $BFA($BFN,stemV)]\n"
                     append body "/FontFile $fsoid 0 R\n"
-                    append body "/Ascent [Nf $BFA($BFN,ascent)]\n"
+                    append body "/Ascent [Nf $BFA($BFN,ascend)]\n"
                     append body "/Flags 34\n"
-                    append body "/Descent [Nf $BFA($BFN,descent)]\n"
+                    append body "/Descent [Nf $BFA($BFN,descend)]\n"
                     append body "/ItalicAngle [Nf $BFA($BFN,ItalicAngle)]\n"
                     foreach n $BFA($BFN,bbox) {lappend fbbox [Nf $n]}
                     append body "/FontBBox \[$fbbox\]\n"
@@ -2139,6 +2139,16 @@ snit::type pdf4tcl::pdf4tcl {
 
     # Get metrics from current font.
     # Supported metrics are ascend, descend, fixed, bboxy, height
+    # height = height of font's Bounding Box. 
+    # bboxy = Bottom of Bounding Box displacement from anchor point. Typically a negative number since
+    # it is below the anchor point.
+    # ascend = top of typical glyph, displacement from anchor point. Typically positive.
+    # descend = bottom of typical glyph, displacement from anchor point. Typically positive.
+    # fixed = Boolean which is true if this is a fixed width font.
+    # Non-official metrics as of now:
+    # bboxb = Bottom of Bounding Box displacement from anchor point. Typically a negative number since
+    # it is below the anchor point.
+    # bboxt = Top of Bounding Box displacement from anchor point. Typically a positive number.
     method getFontMetric {metric {internal 0}} {
         if {$pdf(current_font) eq ""} {
             return -code error "No font set"
@@ -4142,7 +4152,14 @@ snit::type pdf4tcl::pdf4tcl {
                 # Move x/y to point nw/n/ne depending on anchor
                 # and justification
                 set width $widest
-                set height [expr {$fontsize * [llength $lines]}]
+                # First line is assumed to be height of bounding box.
+                # Add font size for each new line.
+                # Thus it is assumed that:
+                #  line spacing = font size
+                #  canvas coordinate = corner of bounding box
+                set height [expr {$fontsize * [llength $lines] + \
+                        [$self getFontMetric height 1] - $fontsize}]
+
                 if {[string match "s*" $opts(-anchor)]} {
                     set y [expr {$y - $height}]
                 } elseif {![string match "n*" $opts(-anchor)]} {
@@ -4159,15 +4176,17 @@ snit::type pdf4tcl::pdf4tcl {
                 set x [expr {$x + ($xjustify - $xanchor) * $width / 2.0}]
 
                 # Displace y to base line of font
+                # Since canvas coordinates are assumed to point to corner of
+                # bounding box, we use bboxt to displace.
                 set bboxt [$self getFontMetric bboxt 1]
-                set y [expr {$y + $bboxt + $fontsize}]
+                set y [expr {$y + $bboxt}]
                 set lineNo 0
                 set ulcoords {}
                 foreach line $lines {
                     set width [$self getStringWidth $line 1]
                     set x0 [expr {$x - $xjustify * $width / 2.0}]
 
-                    # Since we have put the coordinate system  upside
+                    # Since we have put the coordinate system upside
                     # down to follow canvas coordinates we need a
                     # negative y scale here to get the text correct.
 
