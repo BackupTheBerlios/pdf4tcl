@@ -3,13 +3,11 @@
 #
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
-# Copyright (c) 2006-2010 by Peter Spjuth <peter.spjuth@gmail.com>
+# Copyright (c) 2006-2011 by Peter Spjuth <peter.spjuth@gmail.com>
 # Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
 #
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# $Id$
 
 package provide pdf4tcl 0.7
 
@@ -2138,17 +2136,18 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # Get metrics from current font.
-    # Supported metrics are ascend, descend, fixed, bboxy, height
-    # height = height of font's Bounding Box. 
-    # bboxy = Bottom of Bounding Box displacement from anchor point. Typically a negative number since
-    # it is below the anchor point.
-    # ascend = top of typical glyph, displacement from anchor point. Typically positive.
-    # descend = bottom of typical glyph, displacement from anchor point. Typically positive.
-    # fixed = Boolean which is true if this is a fixed width font.
-    # Non-official metrics as of now:
-    # bboxb = Bottom of Bounding Box displacement from anchor point. Typically a negative number since
-    # it is below the anchor point.
-    # bboxt = Top of Bounding Box displacement from anchor point. Typically a positive number.
+    # Supported metrics are:
+    # height  = height of font's Bounding Box. 
+    # ascend  = top of typical glyph, displacement from anchor point.
+    #           Typically positive.
+    # descend = bottom of typical glyph, displacement from anchor point.
+    #           Typically positive.
+    # fixed   = Boolean which is true if this is a fixed width font.
+    # bboxb   = Bottom of Bounding Box displacement from anchor point.
+    #           Typically a negative number since it is below the anchor point.
+    # bboxt   = Top of Bounding Box displacement from anchor point.
+    #           Typically a positive number.
+    # bboxy   = bboxb, kept for backward compatibility
     method getFontMetric {metric {internal 0}} {
         if {$pdf(current_font) eq ""} {
             return -code error "No font set"

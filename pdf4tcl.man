@@ -1,6 +1,6 @@
 [comment {-*- tcl -*- doctools manpage}]
 [manpage_begin pdf4tcl n 0.7]
-[copyright {2007 Peter Spjuth}]
+[copyright {2007-2011 Peter Spjuth}]
 [copyright {2009 Yaroslav Schekin}]
 [moddesc   {Pdf document generation}]
 [titledesc {Pdf document generation}]
@@ -359,6 +359,23 @@ Draw text.
 Get information about current font. The available [arg "metric"]s are
 [option ascend], [option descend], [option fixed], [option bboxb],
 [option bboxt] and [option height].
+
+[list_begin opt]
+
+[opt_def ascend]
+Top of typical glyph, displacement from anchor point. Typically a positive number since it is above the anchor point.
+[opt_def descend]
+Bottom of typical glyph, displacement from anchor point. Typically a negative number since it is below the anchor point.
+[opt_def fixed]
+Boolean which is true if this is a fixed width font.
+[opt_def bboxb]
+Bottom of Bounding Box, displacement from anchor point. Typically a negative number since it is below the anchor point.
+[opt_def bboxt]
+Top of Bounding Box, displacement from anchor point. Typically a positive number since it is above the anchor point.
+[opt_def height]
+Height of font's Bounding Box.
+
+[list_end]
 
 [list_end]
 [subsection {OBJECT METHODS, IMAGES}]

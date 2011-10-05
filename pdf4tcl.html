@@ -94,7 +94,7 @@
 </head>
 <! -- Generated from file 'pdf4tcl.man' by tcllib/doctools with format 'html'
    -->
-<! -- Copyright &copy; 2007 Peter Spjuth   -- Copyright &copy; 2009 Yaroslav Schekin
+<! -- Copyright &copy; 2007-2011 Peter Spjuth   -- Copyright &copy; 2009 Yaroslav Schekin
    -->
 <! -- CVS: $Id$ pdf4tcl.n
    -->
@@ -428,7 +428,21 @@ the spacing is 1.</p></dd>
 <dt><a name="37"><i class="arg">objectName</i> <b class="method">getFontMetric</b> <i class="arg">metric</i></a></dt>
 <dd><p>Get information about current font. The available <i class="arg">metric</i>s are
 <b class="option">ascend</b>, <b class="option">descend</b>, <b class="option">fixed</b>, <b class="option">bboxb</b>,
-<b class="option">bboxt</b> and <b class="option">height</b>.</p></dd>
+<b class="option">bboxt</b> and <b class="option">height</b>.</p>
+<dl class="options">
+<dt><b class="option">ascend</b></dt>
+<dd><p>Top of typical glyph, displacement from anchor point. Typically a positive number since it is above the anchor point.</p></dd>
+<dt><b class="option">descend</b></dt>
+<dd><p>Bottom of typical glyph, displacement from anchor point. Typically a negative number since it is below the anchor point.</p></dd>
+<dt><b class="option">fixed</b></dt>
+<dd><p>Boolean which is true if this is a fixed width font.</p></dd>
+<dt><b class="option">bboxb</b></dt>
+<dd><p>Bottom of Bounding Box, displacement from anchor point. Typically a negative number since it is below the anchor point.</p></dd>
+<dt><b class="option">bboxt</b></dt>
+<dd><p>Top of Bounding Box, displacement from anchor point. Typically a positive number since it is above the anchor point.</p></dd>
+<dt><b class="option">height</b></dt>
+<dd><p>Height of font's Bounding Box.</p></dd>
+</dl></dd>
 </dl>
 </div>
 <div id="subsection6" class="subsection"><h3><a name="subsection6">OBJECT METHODS, IMAGES</a></h3>
@@ -590,7 +604,7 @@ Allowed values are multiples of 90.</p>
 <p>document, pdf</p>
 </div>
 <div id="copyright" class="section"><h2><a name="copyright">Copyright</a></h2>
-<p>Copyright &copy; 2007 Peter Spjuth<br>
+<p>Copyright &copy; 2007-2011 Peter Spjuth<br>
 Copyright &copy; 2009 Yaroslav Schekin</p>
 </div>
 </div></body></html>

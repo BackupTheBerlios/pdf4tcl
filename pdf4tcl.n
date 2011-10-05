@@ -1,6 +1,6 @@
 '\"
 '\" Generated from file 'pdf4tcl.man' by tcllib/doctools with format 'nroff'
-'\" Copyright (c) 2007 Peter Spjuth
+'\" Copyright (c) 2007-2011 Peter Spjuth
 '\" Copyright (c) 2009 Yaroslav Schekin
 '\"
 '\" The definitions below are for supplemental macros used in Tcl/Tk
@@ -633,6 +633,26 @@ Draw text.
 Get information about current font. The available \fImetric\fRs are
 \fBascend\fR, \fBdescend\fR, \fBfixed\fR, \fBbboxb\fR,
 \fBbboxt\fR and \fBheight\fR.
+.RS
+.TP
+\fBascend\fR
+Top of typical glyph, displacement from anchor point. Typically a positive number since it is above the anchor point.
+.TP
+\fBdescend\fR
+Bottom of typical glyph, displacement from anchor point. Typically a negative number since it is below the anchor point.
+.TP
+\fBfixed\fR
+Boolean which is true if this is a fixed width font.
+.TP
+\fBbboxb\fR
+Bottom of Bounding Box, displacement from anchor point. Typically a negative number since it is below the anchor point.
+.TP
+\fBbboxt\fR
+Top of Bounding Box, displacement from anchor point. Typically a positive number since it is above the anchor point.
+.TP
+\fBheight\fR
+Height of font's Bounding Box.
+.RE
 .PP
 .SS "OBJECT METHODS, IMAGES"
 A limited set of image formats are directly understood by pdf4tcl, currently
@@ -811,7 +831,7 @@ doctools
 document, pdf
 .SH COPYRIGHT
 .nf
-Copyright (c) 2007 Peter Spjuth
+Copyright (c) 2007-2011 Peter Spjuth
 Copyright (c) 2009 Yaroslav Schekin
 
 .fi
