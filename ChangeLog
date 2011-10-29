@@ -1,3 +1,7 @@
+2011-10-30 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added a fudge factor to text placement from canvas to get a nicer
+	  result.
+
 2011-10-05 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Cleaned up to name ascend/descend font metrics consistently.
 	* Text from canvas was displaced one line due to a incorrect

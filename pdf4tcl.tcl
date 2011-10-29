@@ -2141,7 +2141,7 @@ snit::type pdf4tcl::pdf4tcl {
     # ascend  = top of typical glyph, displacement from anchor point.
     #           Typically positive.
     # descend = bottom of typical glyph, displacement from anchor point.
-    #           Typically positive.
+    #           Typically negative.
     # fixed   = Boolean which is true if this is a fixed width font.
     # bboxb   = Bottom of Bounding Box displacement from anchor point.
     #           Typically a negative number since it is below the anchor point.
@@ -4156,8 +4156,9 @@ snit::type pdf4tcl::pdf4tcl {
                 # Thus it is assumed that:
                 #  line spacing = font size
                 #  canvas coordinate = corner of bounding box
+                set bboxHeight [$self getFontMetric height 1]
                 set height [expr {$fontsize * [llength $lines] + \
-                        [$self getFontMetric height 1] - $fontsize}]
+                        $bboxHeight - $fontsize}]
 
                 if {[string match "s*" $opts(-anchor)]} {
                     set y [expr {$y - $height}]
@@ -4178,7 +4179,9 @@ snit::type pdf4tcl::pdf4tcl {
                 # Since canvas coordinates are assumed to point to corner of
                 # bounding box, we use bboxt to displace.
                 set bboxt [$self getFontMetric bboxt 1]
-                set y [expr {$y + $bboxt}]
+                # The -1 is a fudge factor that has given better results in
+                # practice. I do not understand why it is needed.
+                set y [expr {$y + $bboxt - 1.0}]
                 set lineNo 0
                 set ulcoords {}
                 foreach line $lines {
@@ -4661,7 +4664,7 @@ snit::type pdf4tcl::pdf4tcl {
                     append family -BoldOblique
                 }
             }
-            *times* {
+            *times* - {*nimbus roman*} {
                 if {$bold && $italic} {
                     set family Times-BoldItalic
                 } elseif {$bold} {
@@ -4672,7 +4675,7 @@ snit::type pdf4tcl::pdf4tcl {
                     set family Times-Roman
                 }
             }
-            *helvetica* - *arial* - default {
+            *helvetica* - *arial* - {*nimbus sans*} - default {
                 set family Helvetica
                 if {$bold && $italic} {
                     append family -BoldOblique
