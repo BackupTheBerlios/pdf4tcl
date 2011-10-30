@@ -8,6 +8,11 @@
 
 # 'getFontMetric height' from pdf4tcl 0.7 returns different (larger) numbers than 0.5. now table is also uglier.
 
+# Example of a way to load from the contrib dir for experimentation:
+#package require pdf4tcl
+#interp alias {} method {} snit::method ::pdf4tcl::pdf4tcl
+#source contrib/table.tcl
+
 namespace eval pdf4tcl::pdf4tcl {
 
     method html2table { str } {
