@@ -1,0 +1,174 @@
+%PDF-1.4
+%едц
+4 0 obj
+<</Type /Page
+/Parent 2 0 R
+/Resources 3 0 R
+/MediaBox [0 0 595 842]
+/Contents [5 0 R]
+>>
+endobj
+
+5 0 obj
+<<
+/Length 6 0 R
+>>
+stream
+/Helvetica 12 Tf
+0 Tr
+12 TL
+50 742 m
+150 742 l
+S
+100 792 m
+100 692 l
+S
+q
+1 0 0 rg
+103.821 752.498 m
+158.985 732.42 l
+154.24 719.385 l
+99.077 739.463 l
+f
+Q
+BT
+0.94 -0.342 0.342 0.94 100 742 Tm
+(Lean down) Tj
+ET
+250 542 m
+350 542 l
+S
+300 592 m
+300 492 l
+S
+q
+0 1 0 rg
+275.803 545.082 m
+316.555 559.915 l
+321.3 546.879 l
+280.547 532.046 l
+f
+Q
+BT
+0.94 0.342 -0.342 0.94 279.624 534.584 Tm
+(Lean up) Tj
+ET
+450 342 m
+550 342 l
+S
+500 392 m
+500 292 l
+S
+q
+0.3 0.3 1 rg
+510.951 279.249 m
+489.502 338.179 l
+502.537 342.923 l
+523.986 283.993 l
+f
+Q
+BT
+-0.342 0.94 -0.94 -0.342 521.449 283.07 Tm
+(Lean up left) Tj
+ET
+50 342 m
+150 342 l
+S
+100 392 m
+100 292 l
+S
+q
+0.3 0.3 1 rg
+70.671 317.246 m
+177.857 381.116 l
+181.002 372.199 l
+73.816 308.33 l
+f
+Q
+BT
+1.286 0.766 -0.227 0.643 73.203 310.065 Tm
+(Lean up, yskew) Tj
+0.643 0.766 -0.766 0.643 100.843 307.252 Tm
+(Lean up, noskew) Tj
+ET
+450 742 m
+550 742 l
+S
+500 792 m
+500 692 l
+S
+q
+0.3 0.3 1 rg
+476.833 794.171 m
+540.284 771.795 l
+529.657 753.962 l
+466.206 776.338 l
+f
+Q
+BT
+0.643 -0.227 0.766 1.286 468.275 779.809 Tm
+(Lean down, xskew) Tj
+0.643 -0.766 0.766 0.643 435.914 782.622 Tm
+(Lean down, noskew) Tj
+
+ET
+
+endstream
+endobj
+
+6 0 obj
+1143
+endobj
+
+7 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/Name /Helvetica
+/BaseFont /Helvetica
+>>
+endobj
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Count 1
+/Kids [4 0 R ]
+>>
+endobj
+
+3 0 obj
+<<
+/ProcSet[/PDF /Text /ImageC]
+/Font <<
+/Helvetica 7 0 R
+>>
+>>
+endobj
+
+xref
+0 8
+0000000000 65535 f 
+0000001451 00000 n 
+0000001501 00000 n 
+0000001560 00000 n 
+0000000014 00000 n 
+0000000120 00000 n 
+0000001316 00000 n 
+0000001337 00000 n 
+trailer
+<<
+/Size 8
+/Root 1 0 R
+>>
+
+startxref
+1640
+%%EOF
