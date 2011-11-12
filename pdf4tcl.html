@@ -258,7 +258,8 @@ as points.</p></dd>
 <dd><p>This call loads a TTF font from file to be used by any pdf4tcl objects.
 The <i class="arg">basefontname</i> is used to reference this font.
 To use this base font in documents, a font with some encoding must be
-created from it using createFont.</p></dd>
+created from it using createFont.
+Note that the type loading functions require Tcl 8.5.</p></dd>
 <dt><a name="6"><b class="cmd">::pdf4tcl::createBaseTrueTypeFont</b> <i class="arg">basefontname</i> <i class="arg">ttf_data</i></a></dt>
 <dd><p>This call creates a base font from TTF binary data.</p></dd>
 <dt><a name="7"><b class="cmd">::pdf4tcl::loadBaseType1Font</b> <i class="arg">basefontname</i> <i class="arg">AFM_file_name</i> <i class="arg">PFB_file_name</i></a></dt>

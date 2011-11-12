@@ -91,6 +91,7 @@ This call loads a TTF font from file to be used by any pdf4tcl objects.
 The [arg "basefontname"] is used to reference this font.
 To use this base font in documents, a font with some encoding must be
 created from it using createFont.
+Note that the type loading functions require Tcl 8.5.
 
 
 [call [cmd ::pdf4tcl::createBaseTrueTypeFont] [arg "basefontname"] [arg "ttf_data"]]

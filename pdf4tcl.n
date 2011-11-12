@@ -428,6 +428,7 @@ This call loads a TTF font from file to be used by any pdf4tcl objects.
 The \fIbasefontname\fR is used to reference this font.
 To use this base font in documents, a font with some encoding must be
 created from it using createFont.
+Note that the type loading functions require Tcl 8.5.
 .TP
 \fB::pdf4tcl::createBaseTrueTypeFont\fR \fIbasefontname\fR \fIttf_data\fR
 This call creates a base font from TTF binary data.
