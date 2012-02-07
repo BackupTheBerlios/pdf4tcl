@@ -78,12 +78,17 @@ test canvas-3.1 {text} -constraints runin85 -body {
     canvas .c
     .c create rectangle 0 0 500 500 -outline black
     # Needs 8.5 since underline is 8.5 feature
+    set font "Helvetica -10"
     .c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw \
-            -font "Helvetica -14" -tag apa
-    puts "[.c bbox apa]"
-    puts "[font actual "Helvetica -14"]"
-    puts "[font metric "Helvetica -14"]"
-    # On a system where text's bbox is 9 10 45 73, I get this instead
+            -font $font -tag apa
+    #puts "[.c bbox apa]"
+    #puts "[font actual $font]"
+    #puts "[font metric $font]"
+    # TODO: On a system where output is this:
+    #9 10 45 73
+    #-family {Nimbus Sans L} -size -14 -weight normal -slant roman -underline 0 -overstrike 0
+    #-ascent 17 -descent 4 -linespace 21 -fixed 0
+    # I get this instead:
     # 20.047 24.063 m 28.422 24.063 l S
     mytest {canvas .c} {
         20.047 40.126 m 28.422 40.126 l S
