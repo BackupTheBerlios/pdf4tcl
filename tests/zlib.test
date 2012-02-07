@@ -64,3 +64,5 @@ test zlib-2.2 {zlib not used} -body {
 } -result {0 0 0} \
         -errorOutput "Package zlib not available. Sorry, no compression.\n" \
         -cleanup {apa destroy}
+
+::tcltest::cleanupTests

@@ -4,6 +4,9 @@
 
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 
+testConstraint FreeSans [file exists ../examples/FreeSans.ttf]
+testConstraint a010013l [file exists ../examples/a010013l.afm]
+
 test font-1.1 {font metrics} -body {
     set pdf [pdf4tcl::new %AUTO%]
     $pdf setFont 10 Courier
@@ -35,7 +38,7 @@ test font-3.1 {font, unicode} -body {
     foreach {glyph uni} [array get ::pdf4tcl::GlName2Uni] {
         set glyph_names([format %04X $uni]) $glyph
     }
-    
+
     set cmds [list [list setFont 10 Courier]]
     for {set code 32} {$code <= 255} {incr code} {
         set l [expr {($code-32) % 4}]
@@ -56,7 +59,7 @@ test font-3.1 {font, unicode} -body {
     eval mytest $cmds [list "*20AC '\u0080' Euro*"]
 } -result 1
 
-test font-4.1 {font, truetype} -constraints runin85 -body {
+test font-4.1 {font, truetype} -constraints {runin85 FreeSans} -body {
     pdf4tcl::loadBaseTrueTypeFont BaseArial "../examples/FreeSans.ttf"
     # "1" "euro" and "!" maps to 0 1 end 2
     set subset [list 49 [expr 0x20AC] 33]
@@ -65,17 +68,19 @@ test font-4.1 {font, truetype} -constraints runin85 -body {
     mytest {setFont 16 MyArial} {text 1\u20ac!} *\x00\x01\x02*
 } -result 1
 
-test font-4.2 {font, truetype} -constraints runin85 -body {
+test font-4.2 {font, truetype} -constraints {runin85 FreeSans} -body {
     #pdf4tcl::loadBaseTrueTypeFont BaseArial "../examples/FreeSans.ttf"
     pdf4tcl::createFont BaseArial MyArial cp1252
 
     mytest {setFont 16 MyArial} {text 1\u20ac!} *1\x80!*
 } -result 1
 
-test font-5.1 {font, type1} -constraints runin85 -body {
+test font-5.1 {font, type1} -constraints {runin85 a010013l} -body {
     pdf4tcl::loadBaseType1Font BaseFont1 \
             ../examples/a010013l.afm ../examples/a010013l.pfb
     pdf4tcl::createFont BaseFont1 MyArial cp1252
 
     mytest {setFont 16 MyArial} {text 1\u20ac!} *1\x80!*
 } -result 1
+
+::tcltest::cleanupTests

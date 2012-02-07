@@ -46,3 +46,4 @@ test examples-1.6 {example test6} -body {
 # Cleanup
 eval file delete [glob test*.pdf]
 file delete tcl.jpg
+::tcltest::cleanupTests

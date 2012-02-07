@@ -74,13 +74,17 @@ test canvas-2.2 {bitmap} -body {
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-3.1 {text} -body {
+test canvas-3.1 {text} -constraints runin85 -body {
     canvas .c
     .c create rectangle 0 0 500 500 -outline black
     # Needs 8.5 since underline is 8.5 feature
-    if {[catch {.c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw -font "Helvetica -14"}]} {
-        return 1
-    }
+    .c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw \
+            -font "Helvetica -14" -tag apa
+    puts "[.c bbox apa]"
+    puts "[font actual "Helvetica -14"]"
+    puts "[font metric "Helvetica -14"]"
+    # On a system where text's bbox is 9 10 45 73, I get this instead
+    # 20.047 24.063 m 28.422 24.063 l S
     mytest {canvas .c} {
         20.047 40.126 m 28.422 40.126 l S
     }
@@ -291,6 +295,8 @@ test canvas-20.1 {demo} -constraints "apa" -body {
         *
     }
 } -cleanup {destroy .items .goldberg} -result 1
+
+::tcltest::cleanupTests
 
 # To make sure we exit even though Tk is loaded
 exit

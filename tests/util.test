@@ -114,3 +114,5 @@ test util-5.3 {getStringWidth method, with unit} -body {
     }
     set res2
 } -result {0.694 0.524 0.185}
+
+::tcltest::cleanupTests

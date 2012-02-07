@@ -123,5 +123,7 @@ test png-1.4 {png, bad file} -body {
             miffo_not_exist.png
 } -result {}
 
+::tcltest::cleanupTests
+
 # To make sure we exit even though Tk is loaded
 exit

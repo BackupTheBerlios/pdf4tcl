@@ -80,3 +80,4 @@ test errors-1.7 {misc option errors} -body {
     lappend res [catch {pdf4tcl::new apa -unit gurka}]
 } -result {1}
 
+::tcltest::cleanupTests

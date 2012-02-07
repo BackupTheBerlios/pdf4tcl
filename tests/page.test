@@ -118,3 +118,5 @@ test page-2.4 {misc page handling, rotate} -body {
     string match *Rotate* [apa get]
 } -cleanup {apa destroy} -match glob \
         -result 0
+
+::tcltest::cleanupTests

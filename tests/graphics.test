@@ -127,7 +127,7 @@ test graphics-6.2 {curve} -body {
 
 test graphics-6.3 {curve} -body {
     mytest {curve 100 100 130 160 250} {}
-} -returnCodes 1 -result "wrong # args: should be *curve * x1 y1 x2 y2 x3 y3 *" -match glob
+} -returnCodes 1 -result "wrong # args: should be *curve *x1 y1 x2 y2 x3 y3 *" -match glob
 
 test graphics-6.4 {curve} -body {
     mytest {curve 100 100 130 160 250 10 20} {}
@@ -136,3 +136,5 @@ test graphics-6.4 {curve} -body {
 test graphics-6.5 {curve} -body {
     mytest {curve 100 100 130 160 250 10 20 10 20} {}
 } -returnCodes 1 -result "wrong # args: should be curve x1 y1 x2 y2 x3 y3 ?x4 y4?"
+
+::tcltest::cleanupTests
