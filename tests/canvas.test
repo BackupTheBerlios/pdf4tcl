@@ -289,6 +289,22 @@ test canvas-8.1 {dash} -body {
     }
 } -cleanup {destroy .c} -result 1
 
+test canvas-8.2 {dash} -body {
+    canvas .c
+    .c create line 10 10 80 80 -dash "..." -width 5
+    mytest {canvas .c} {
+        0 0 0 RG 0 0 0 rg 5 w \[10 20 10 20 10 20\] 0 d 1 j 10 10 m 80 80 l S
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-8.3 {dash} -body {
+    canvas .c
+    .c create line 10 10 80 80 -dash ". - "
+    mytest {canvas .c} {
+        0 0 0 RG 0 0 0 rg 1 w \[2 8 6 8\] 0 d 1 j 10 10 m 80 80 l S
+    }
+} -cleanup {destroy .c} -result 1
+
 test canvas-20.1 {demo} -constraints "demo" -body {
     # Find the demo for canvas
     set dir $::tk_library/demos

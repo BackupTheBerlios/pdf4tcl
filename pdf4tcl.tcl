@@ -4455,33 +4455,41 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # Utility for translating dash patterns - if needed
-    # TODO: Adapt pattern to line width?
-    proc CanvasMakeDashPattern {pattern} {
+    proc CanvasMakeDashPattern {pattern linewidth} {
         # If numeric, return the same
         if { ! [regexp {[.,-_]} $pattern] } {
             return $pattern
         }
+        # A pattern adapts to line width
+        set linewidth [expr {int($linewidth + 0.5)}]
+        if {$linewidth < 1} {
+            set linewidth 1
+        }
+        set lw2 [expr {2 * $linewidth}]
+        set lw4 [expr {4 * $linewidth}]
+        set lw6 [expr {6 * $linewidth}]
+        set lw8 [expr {8 * $linewidth}]
         # Translate each character
         set newPattern {}
         foreach c [split $pattern ""] {
             switch $c {
                 " " {
                     if { [llength $newPattern] > 0 } {
-                        set lastNumber [expr {4+[lindex $newPattern end]}]
+                        set lastNumber [expr {$lw4 + [lindex $newPattern end]}]
                         set newPattern [lreplace $newPattern end end $lastNumber]
                     }
                 }
                 "." {
-                    lappend newPattern 2 4
+                    lappend newPattern $lw2 $lw4
                 }
                 "," {
-                    lappend newPattern 4 4
+                    lappend newPattern $lw4 $lw4
                 }
                 "-" {
-                    lappend newPattern 6 4
+                    lappend newPattern $lw6 $lw4
                 }
                 "_" {
-                    lappend newPattern 8 4
+                    lappend newPattern $lw8 $lw4
                 }
             }
         }
@@ -4526,7 +4534,7 @@ snit::type pdf4tcl::pdf4tcl {
         }
         # Dash pattern and offset
         if {[info exists opts(-dash)] && $opts(-dash) ne ""} {
-            set dashPattern [CanvasMakeDashPattern $opts(-dash)]
+            set dashPattern [CanvasMakeDashPattern $opts(-dash) $opts(-width)]
             $self Pdfout "\[$dashPattern\] $opts(-dashoffset) d\n"
         }
         # Cap style
