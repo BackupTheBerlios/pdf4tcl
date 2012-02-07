@@ -1,0 +1,7 @@
+These files need to be changed when bumping revisions:
+
+pdf4tcl.tcl (package provide)
+tests/init.tcl (package require)
+pkgIndex.tcl (package ifneeded)
+Makefile (VERSION)
+pdf4tcl.man (two places) (regenerate doc)

@@ -1,5 +1,5 @@
 [comment {-*- tcl -*- doctools manpage}]
-[manpage_begin pdf4tcl n 0.7]
+[manpage_begin pdf4tcl n 0.7.1]
 [copyright {2007-2011 Peter Spjuth}]
 [copyright {2009 Yaroslav Schekin}]
 [moddesc   {Pdf document generation}]
@@ -7,7 +7,7 @@
 [require Tcl 8.4]
 [require dict]
 [require snit]
-[require pdf4tcl [opt 0.7]]
+[require pdf4tcl [opt 0.7.1]]
 [description]
 
 This package provides a container class for generating [term {pdf}] documents.

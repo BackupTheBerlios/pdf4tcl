@@ -1,4 +1,7 @@
 2012-02-07 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Bumped revision to 0.7.1
+
+2012-02-07 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Support patterns for canvas dashes. (arjen) [Bug 18501]
 	
 2011-10-30 Peter Spjuth   <peter.spjuth@gmail.com>
