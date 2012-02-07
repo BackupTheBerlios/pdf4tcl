@@ -4454,6 +4454,40 @@ snit::type pdf4tcl::pdf4tcl {
         return $id
     }
 
+    # Utility for translating dash patterns - if needed
+    # TODO: Adapt pattern to line width?
+    proc CanvasMakeDashPattern {pattern} {
+        # If numeric, return the same
+        if { ! [regexp {[.,-_]} $pattern] } {
+            return $pattern
+        }
+        # Translate each character
+        set newPattern {}
+        foreach c [split $pattern ""] {
+            switch $c {
+                " " {
+                    if { [llength $newPattern] > 0 } {
+                        set lastNumber [expr {4+[lindex $newPattern end]}]
+                        set newPattern [lreplace $newPattern end end $lastNumber]
+                    }
+                }
+                "." {
+                    lappend newPattern 2 4
+                }
+                "," {
+                    lappend newPattern 4 4
+                }
+                "-" {
+                    lappend newPattern 6 4
+                }
+                "_" {
+                    lappend newPattern 8 4
+                }
+            }
+        }
+        return $newPattern
+    }
+
     # Setup the graphics state from standard options
     method CanvasStdOpts {optsName} {
         upvar 1 $optsName opts
@@ -4492,8 +4526,8 @@ snit::type pdf4tcl::pdf4tcl {
         }
         # Dash pattern and offset
         if {[info exists opts(-dash)] && $opts(-dash) ne ""} {
-            # FIXA: Support "..." and such
-            $self Pdfout "\[$opts(-dash)\] $opts(-dashoffset) d\n"
+            set dashPattern [CanvasMakeDashPattern $opts(-dash)]
+            $self Pdfout "\[$dashPattern\] $opts(-dashoffset) d\n"
         }
         # Cap style
         if {[info exists opts(-capstyle)] && $opts(-capstyle) ne "butt"} {

@@ -7,6 +7,13 @@ source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 package require Tk
 wm withdraw .
 
+proc DebugShowCanvas {} {
+    wm deiconify .
+    pack .c -fill both -expand 1
+    tk_messageBox -message "Waiting to close"
+    wm withdraw .
+}
+
 test canvas-1.1 {basic} -body {
     canvas .c
     .c create line 10 10 80 80
@@ -274,7 +281,15 @@ test canvas-7.2 {oval} -body {
     }
 } -cleanup {destroy .c} -result 1
 
-test canvas-20.1 {demo} -constraints "apa" -body {
+test canvas-8.1 {dash} -body {
+    canvas .c
+    .c create line 10 10 80 80 -dash "..."
+    mytest {canvas .c} {
+        0 0 0 RG 0 0 0 rg 1 w \[2 4 2 4 2 4\] 0 d 1 j 10 10 m 80 80 l S
+    }
+} -cleanup {destroy .c} -result 1
+
+test canvas-20.1 {demo} -constraints "demo" -body {
     # Find the demo for canvas
     set dir $::tk_library/demos
     source $dir/widget

@@ -108,7 +108,7 @@ proc mytest {args} {
     set pattern *[string trim $pattern]*
     regsub -all {\s+} $pattern " " pattern
 
-    if {[string match *[string trim $pattern]* $res]} {
+    if {[string match $pattern $res]} {
         return 1
     } else {
         return $res
