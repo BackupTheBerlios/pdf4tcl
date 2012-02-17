@@ -4,6 +4,8 @@
 
 source [file join [file dirname [file join [pwd] [info script]]] init.tcl]
 
+testConstraint FreeSans [file exists ../examples/FreeSans.ttf]
+
 package require Tk
 wm withdraw .
 
@@ -97,9 +99,30 @@ test canvas-3.1 {text} -constraints runin85 -body {
     #-ascent 17 -descent 4 -linespace 21 -fixed 0
     # I get this instead:
     # 20.047 24.063 m 28.422 24.063 l S
+    # And on this system:
+    #9 10 36 49
+    #-family {Nimbus Sans L} -size -10 -weight normal -slant roman -underline 0 -overstrike 0
+    #-ascent 10 -descent 3 -linespace 13 -fixed 0
+    # it is:
+    # 17.535 20.297 m 23.816 20.297 l S
     mytest {canvas .c} {
-        20.047 40.126 m 28.422 40.126 l S
+        17.535 20.297 m 23.816 20.297 l S
     }
+} -cleanup {destroy .c} -result 1
+
+test canvas-3.2 {text, font} -constraints {runin85 FreeSans} -body {
+    canvas .c
+    .c create rectangle 0 0 500 500 -outline black
+    set font "Helvetica -10"
+    .c create text 10 10 -text "1\u20ac!" -anchor nw \
+            -font $font
+
+    pdf4tcl::loadBaseTrueTypeFont BaseArial "../examples/FreeSans.ttf"
+    # "1" "euro" and "!" maps to 0 1 end 2
+    set subset [list 49 [expr 0x20AC] 33]
+    pdf4tcl::createFontSpecEnc BaseArial MyArial $subset
+
+    mytest {canvas .c -fontmap {"Helvetica -10" MyArial}} "*\x00\x01\x02*"
 } -cleanup {destroy .c} -result 1
 
 test canvas-4.1 {sticky} -body {

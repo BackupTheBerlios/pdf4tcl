@@ -1,9 +1,15 @@
+2012-02-17 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added -fontmap to canvas dump to control fonts of text items.
+
+2012-02-07 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Handle width in canvas dash patterns.
+
 2012-02-07 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Bumped revision to 0.7.1
 
 2012-02-07 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Support patterns for canvas dashes. (arjen) [Bug 18501]
-	
+
 2011-10-30 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added a fudge factor to text placement from canvas to get a nicer
 	  result.

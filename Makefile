@@ -19,7 +19,7 @@ all: doc
 doc : pdf4tcl.html pdf4tcl.n web/mypdf.pdf
 
 pdf4tcl.html pdf4tcl.n : pdf4tcl.man mkdoc.tcl
-	mkdoc.tcl
+	./mkdoc.tcl
 
 checkdoc:
 	@egrep 'method [a-z]' pdf4tcl.man | grep '\[call' | egrep -v 'method configure' | sed 's/[][]/ /g' | sort > docmeth

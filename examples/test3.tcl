@@ -43,6 +43,33 @@ p1 text "Lean down, xskew" -x 500 -y 100 -align center -angle -50 -bg {0.3 0.3 1
         -xangle 40
 p1 text "Lean down, noskew" -x 470 -y 100 -align center -angle -50
 
+# Second page is a canvas test
+p1 startPage
+
+package require Tk
+canvas .c
+.c create rectangle 0 0 500 500 -outline black
+
+# Control fonts using named fonts
+font create MyArial1 -family Arial -size 10
+font create MyArial2 -family Arial -size 10
+# Chars within iso8859-1
+.c create text 10 10 -text "Apa bepa \xe5 \xd5 cepa" -anchor nw \
+        -font MyArial1
+# Special chars needs a unique font to make an encoding mapping
+.c create text 10 30 -text "1\u20ac!" -anchor nw \
+        -font MyArial2
+
+pdf4tcl::loadBaseTrueTypeFont BaseArial "../examples/FreeSans.ttf"
+pdf4tcl::createFont BaseArial MyArial1 iso8859-1
+# "1" "euro" and "!" maps to 0 1 end 2
+set subset [list 49 [expr 0x20AC] 33]
+pdf4tcl::createFontSpecEnc BaseArial MyArial2 $subset
+
+.c create line 10 50 80 80 -dash "..."
+.c create line 10 60 80 90 -dash "..." -width 5
+
+p1 canvas .c -fontmap {MyArial1 MyArial1 MyArial2 MyArial2}
+
 p1 write -file test3.pdf
 p1 cleanup
-

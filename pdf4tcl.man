@@ -266,12 +266,20 @@ The area is always filled in one direction, preserving aspect ratio, unless
 [arg "-sticky"] is [arg "nw"].
 If option [arg "-bg"] is true, a background is drawn in the canvas' background
 color.  Otherwise only objects are drawn.  Default is false.
+Option [arg "-fontmap"] gives a dictionary mapping from Tk font names to PDF font names.
+[nl]
+Fonts:
+[nl]
+If no font mapping is given, fonts for text items are limited to PDF's
+builtins, i.e. Helvetica, Times and Courier. A guess is made to chose which
+one to use to get a reasonable display on the page.
+[nl]
+An element in a font mapping must exactly match the -font option in the
+text item. The corresponding mapping value is a PDF font family, e.g. one
+created by [cmd pdf4tcl::createFont]. It is recommended to use named fonts
+in Tk to control the font mapping in detail.
 [nl]
 Limitations:
-[nl]
-Fonts for text items are currently limited to PDF's builtins, i.e. Helvetica,
-Times and Courier. A guess is made to chose which one to use to get a reasonable
-display on the page.
 [nl]
 Option -splinesteps for lines/polygons is ignored.
 [nl]

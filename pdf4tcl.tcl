@@ -1,9 +1,9 @@
 # library of tcl procedures for generating portable document format files
-# this is a port of pdf4php from php to tcl
+# this began as a port of pdf4php from php to tcl
 #
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
 #                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
-# Copyright (c) 2006-2011 by Peter Spjuth <peter.spjuth@gmail.com>
+# Copyright (c) 2006-2012 by Peter Spjuth <peter.spjuth@gmail.com>
 # Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
 #
 # See the file "licence.terms" for information on usage and redistribution
@@ -3802,6 +3802,7 @@ snit::type pdf4tcl::pdf4tcl {
     #######################################################################
 
     method canvas {path args} {
+        variable canvasFontMapping
         $self EndTextObj
 
         set sticky "nw"
@@ -3810,6 +3811,8 @@ snit::type pdf4tcl::pdf4tcl {
         set height ""
         set bbox [$path bbox all]
         set bg 0
+        # A dict mapping from Tk font name to PDF font family name can be given
+        set canvasFontMapping {}
         foreach {arg value} $args {
             switch -- $arg {
                 "-width"  {set width  [pdf4tcl::getPoints $value $pdf(unit)]}
@@ -3819,6 +3822,7 @@ snit::type pdf4tcl::pdf4tcl {
                 "-x"      {$self Trans $value 0 x _}
                 "-bbox"   {set bbox $value}
                 "-bg"     {set bg $value}
+                "-fontmap" {set canvasFontMapping $value}
                 default {
                     return -code error "unknown option $arg"
                 }
@@ -3948,6 +3952,7 @@ snit::type pdf4tcl::pdf4tcl {
         upvar 1 $optsName opts
         variable images
         variable bitmaps
+        variable canvasFontMapping
 
         # Not implemented: line/polygon -splinesteps
         # Not implemented: stipple offset
@@ -4125,7 +4130,7 @@ snit::type pdf4tcl::pdf4tcl {
                 foreach {x y} $coords break
                 foreach {x1 y1 x2 y2} [$path bbox $id] break
 
-                $self CanvasSetFont $opts(-font)
+                $self CanvasSetFont $opts(-font) $canvasFontMapping
                 set fontsize $pdf(font_size)
                 # Next, figure out if the text fits within the bbox
                 # with the current font, or it needs to be scaled.
@@ -4683,8 +4688,8 @@ snit::type pdf4tcl::pdf4tcl {
 
     # Given a Tk font, figure out a reasonable font to use and set it
     # as current font.
-    # In the future we could give more user options for controlling this.
-    method CanvasSetFont {font} {
+    # A dict mapping from Tk font name to PDF font family name can be given
+    method CanvasSetFont {font {userMapping {}}} {
         array unset fontinfo
         array set fontinfo [font actual $font]
         array set fontinfo [font metrics $font]
@@ -4727,6 +4732,10 @@ snit::type pdf4tcl::pdf4tcl {
                     append family -BoldOblique
                 }
             }
+        }
+        array set userMappingArr $userMapping
+        if {[info exists userMappingArr($font)]} {
+           set family $userMappingArr($font)
         }
         set fontsize $fontinfo(-linespace)
         $self BeginTextObj
