@@ -484,7 +484,8 @@ Sets the stroke color for graphics operations.
 [list_begin definitions]
 
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
-Set up the line width and optionally a dash pattern for line drawing.
+Set up the line width and optionally a dash pattern for line drawing. Line
+width and any elements in the dash pattern must be non-negative numbers.
 
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
 Draw a line.

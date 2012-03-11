@@ -1078,7 +1078,7 @@ namespace eval pdf4tcl {
 
     # 8.4 compatiblity patch for some functionality.
     if {[llength [info commands dict]] == 0} {
-        proc ::dict {subC d i} {
+        proc ::dict {subC d i args} {
             if {$subC eq "get"} {
                 array set x $d
                 return $x($i)
@@ -1153,6 +1153,29 @@ snit::type pdf4tcl::pdf4tcl {
     method CheckRotation {option value} {
         if { $value % 90  } {
             return -code error "Rotation $value not a multiple of 90"
+        }
+    }
+
+    # Validator helper for numerics
+    # TODO: Fix nagelfar annotation to handle this nicely
+    ##nagelfar syntax snit::type::pdf4tcl::pdf4tcl::CheckNumeric x x o*
+    ##nagelfar option snit::type::pdf4tcl::pdf4tcl::CheckNumeric \
+            -nonnegative -positive -integer
+    proc CheckNumeric {val what args} {
+        if {![string is double -strict $val]} {
+            return -code error "Bad $what '$val', must be numeric"
+        }
+        set nonneg [lsearch -exact $args -nonnegative]
+        set pos    [lsearch -exact $args -positive]
+        set int    [lsearch -exact $args -integer]
+        if {$nonneg >= 0 && $val < 0} {
+            return -code error "Bad $what '$val', may not be negative"
+        }
+        if {$pos >= 0 && $val <= 0} {
+            return -code error "Bad $what '$val', must be positive"
+        }
+        if {$int >= 0 && ![string is integer -strict $val]} {
+            return -code error "Bad $what '$val', must be integer"
         }
     }
 
@@ -2333,8 +2356,8 @@ snit::type pdf4tcl::pdf4tcl {
     method newLine {{spacing {}}} {
         if {$spacing eq ""} {
             set spacing $pdf(line_spacing)
-        } elseif {![string is double -strict $spacing]} {
-            return -code error "Line spacing must be a number"
+        } else {
+            CheckNumeric $spacing "line spacing"
         }
         # Update to next line
         set y [expr {$pdf(ypos) - $pdf(font_size) * $spacing}]
@@ -2345,9 +2368,7 @@ snit::type pdf4tcl::pdf4tcl {
     # Set Line spacing factor (which is used by method newLine
     # if no explicit spacing is given)
     method setLineSpacing {spacing} {
-        if {![string is double -strict $spacing]} {
-            return -code error "Line spacing must be a number"
-        }
+        CheckNumeric $spacing "line spacing"
         set pdf(line_spacing) $spacing
     }
 
@@ -2677,6 +2698,16 @@ snit::type pdf4tcl::pdf4tcl {
     ###<jpo 2004-11-08: replaced "on off" by "args"
     ###                 to enable resetting dashed lines
     method setLineStyle {width args} {
+        CheckNumeric $width "line width" -nonnegative
+        # Validate dash pattern
+        set sum 0
+        foreach p $args {
+            CheckNumeric $p "dash pattern" -nonnegative
+            set sum [expr {$sum + $p}]
+        }
+        if {[llength $args] > 0 && $sum == 0} {
+            return -code error "Dash pattern may not be all zeroes"
+        }
         $self EndTextObj
         $self Pdfoutcmd $width "w"
         $self Pdfout "\[$args\] 0 d\n"

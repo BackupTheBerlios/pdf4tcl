@@ -747,7 +747,8 @@ Sets the stroke color for graphics operations.
 .SS "OBJECT METHODS, GRAPHICS"
 .TP
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
-Set up the line width and optionally a dash pattern for line drawing.
+Set up the line width and optionally a dash pattern for line drawing. Line
+width and any elements in the dash pattern must be non-negative numbers.
 .TP
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
 Draw a line.

@@ -80,6 +80,41 @@ test graphics-4.2 {line} -body {
     }
 } -result 1
 
+test graphics-4.3 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineStyle -1
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Bad line width '-1', may not be negative}
+
+test graphics-4.4 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineStyle 1 0 0
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Dash pattern may not be all zeroes}
+
+test graphics-4.5 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineStyle 1 -2.3
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Bad dash pattern '-2.3', may not be negative}
+
+test graphics-4.6 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineStyle 1 gurka
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Bad dash pattern 'gurka', must be numeric}
+
+test graphics-4.7 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineStyle gurka
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Bad line width 'gurka', must be numeric}
+
 test graphics-5.1 {oval} -body {
     mytest {oval 10 10 5 5} {
         115 210 m

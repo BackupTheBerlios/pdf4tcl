@@ -40,8 +40,11 @@ test: cleancc
 test85: cleancc
 	$(TCLSH85) tests/all.tcl
 
-check:
-	$(TCLKIT84) `which $(NAGELFAR)` pdf4tcl.tcl -filter '*Unknown variable*'
+pdf4tcl_h.syntax : pdf4tcl.tcl pdf4tcl.syntax
+	$(TCLKIT84) `which $(NAGELFAR)` -header pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
+
+check: pdf4tcl_h.syntax
+	$(TCLKIT84) `which $(NAGELFAR)` pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
 
 bench: cleancc
 	$(TCLSH) bench/all.tcl

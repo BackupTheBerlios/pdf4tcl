@@ -1,3 +1,6 @@
+2012-03-11 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added argument checks to setLineStyle.
+
 2012-02-17 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added -fontmap to canvas dump to control fonts of text items.
 
