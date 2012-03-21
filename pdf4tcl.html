@@ -115,7 +115,7 @@
 <li class="subsection"><a href="#subsection1">PACKAGE COMMANDS</a></li>
 <li class="subsection"><a href="#subsection2">OBJECT COMMAND</a></li>
 <li class="subsection"><a href="#subsection3">OBJECT METHODS</a></li>
-<li class="subsection"><a href="#subsection4">OBJECT METHODS</a></li>
+<li class="subsection"><a href="#subsection4">OBJECT METHODS, PAGE</a></li>
 <li class="subsection"><a href="#subsection5">OBJECT METHODS, TEXT</a></li>
 <li class="subsection"><a href="#subsection6">OBJECT METHODS, IMAGES</a></li>
 <li class="subsection"><a href="#subsection7">OBJECT METHODS, COLORS</a></li>
@@ -134,7 +134,7 @@
 <div class="synopsis">
 <ul class="requirements">
 <li>package require <b class="pkgname">Tcl 8.4</b></li>
-<li>package require <b class="pkgname">dict</b></li>
+<li>package require <b class="pkgname"><span class="opt">?dict?</span></b></li>
 <li>package require <b class="pkgname">snit</b></li>
 <li>package require <b class="pkgname">pdf4tcl <span class="opt">?0.7.1?</span></b></li>
 </ul>
@@ -204,10 +204,10 @@
 <div id="section2" class="section"><h2><a name="section2">COORDINATES</a></h2>
 <p>All coordinates and distances can be expressed with or without a unit. See
 <span class="sectref"><a href="#section3">UNITS</a></span> for valid units.
-When the page is configured with <b class="option">-orient</b> set to false, origo is in
-the bottom left corner. With <b class="option">-orient</b> true, origo is in the top left
+When the page is configured with <b class="option">-orient</b> set to false, origin is in
+the bottom left corner. With <b class="option">-orient</b> true, origin is in the top left
 corner.
-Origo is displaced to account for margins, i.e. if margins are 100,
+Origin is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
 Page option <b class="option">-orient</b> can also affect the anchor point for things like
 images.</p>
@@ -232,7 +232,7 @@ in the document's default unit.</p>
 <dd><p>This command creates a new pdf4tcl object with an associated Tcl
 command whose name is <i class="arg">objectName</i>. This <i class="term">object</i> command is
 explained in full detail in the sections <span class="sectref"><a href="#subsection2">OBJECT COMMAND</a></span>
-and <span class="sectref"><a href="#subsection4">OBJECT METHODS</a></span>. The object command will be created
+and <span class="sectref"><a href="#subsection3">OBJECT METHODS</a></span>. The object command will be created
 under the current namespace if the <i class="arg">objectName</i> is not fully
 qualified, and in the specified namespace otherwise.
 If <i class="arg">objectName</i> is %AUTO% a name will generated.
@@ -251,7 +251,7 @@ The return value is a list with width and height in points.</p></dd>
 <dt><a name="4"><b class="cmd">::pdf4tcl::getPoints</b> <i class="arg">val</i></a></dt>
 <dd><p>This call translates a measurement to points (1/72 inch).
 The format of <i class="arg">val</i> is '<i class="arg">num</i> <span class="opt">?<i class="arg">unit</i>?</span>' where
-<i class="arg">num</i> is a valid integer or double. See <b class="sectref">UNIT</b> for valid
+<i class="arg">num</i> is a valid integer or double. See <span class="sectref"><a href="#section3">UNITS</a></span> for valid
 <i class="arg">unit</i>s.  If no <i class="arg">unit</i> is given, the value is interpreted
 as points.</p></dd>
 <dt><a name="5"><b class="cmd">::pdf4tcl::loadBaseTrueTypeFont</b> <i class="arg">basefontname</i> <i class="arg">ttf_file_name</i></a></dt>
@@ -299,11 +299,11 @@ pdf object.</p>
 <dl class="definitions">
 <dt><a name="11"><b class="cmd">objectName</b> <b class="method">method</b> <span class="opt">?<i class="arg">arg arg ...</i>?</span></a></dt>
 <dd><p>The method <b class="method">method</b> and its <i class="arg">arg</i>'uments determine the exact
-behavior of the command. See section <span class="sectref"><a href="#subsection4">OBJECT METHODS</a></span> for
+behavior of the command. See section <span class="sectref"><a href="#subsection3">OBJECT METHODS</a></span> for
 the detailed specifications.</p></dd>
 </dl>
 </div>
-<div id="subsection4" class="subsection"><h3><a name="subsection4">OBJECT METHODS</a></h3>
+<div id="subsection3" class="subsection"><h3><a name="subsection3">OBJECT METHODS</a></h3>
 <dl class="definitions">
 <dt><a name="12"><i class="arg">objectName</i> <b class="method">configure</b></a></dt>
 <dd><p>The method returns a list of all known options and their current
@@ -356,7 +356,7 @@ If the <b class="option">-file</b> option was given at object creation, an empty
 is created.</p></dd>
 </dl>
 </div>
-<div id="subsection4" class="subsection"><h3><a name="subsection4">OBJECT METHODS</a></h3>
+<div id="subsection4" class="subsection"><h3><a name="subsection4">OBJECT METHODS, PAGE</a></h3>
 <dl class="definitions">
 <dt><a name="22"><i class="arg">objectName</i> <b class="method">getDrawableArea</b></a></dt>
 <dd><p>This method returns the size of the available area on the page,
@@ -367,7 +367,7 @@ in the document's default unit.</p></dd>
 Option <i class="arg">-bbox</i> gives the area of the canvas to be drawn. Default is
 the entire contents, i.e. the result of $path bbox all.
 Options <i class="arg">-x</i>, <i class="arg">-y</i>, <i class="arg">-width</i> and <i class="arg">-height</i> defines
-an area on the page where to place the contents. Default area starts at origo,
+an area on the page where to place the contents. Default area starts at origin,
 stretching over the drawable area of the page.
 Option <i class="arg">-sticky</i> defines how to place the contents within the area.
 The area is always filled in one direction, preserving aspect ratio, unless
@@ -593,7 +593,7 @@ This option can only be set at object creation.</p></dd>
 <dt><b class="option">-unit</b> <i class="arg">defaultunit</i></dt>
 <dd><p>Defines default unit for coordinates and distances.  Any value given without
 a unit is interpreted using this unit.  
-See <b class="sectref">UNIT</b> for valid units.
+See <span class="sectref"><a href="#section3">UNITS</a></span> for valid units.
 Default value is &quot;p&quot; as in points.
 This option can only be set at object creation.</p></dd>
 </dl>
@@ -611,8 +611,8 @@ Paper size may also be a two element list specifying width and height.</p>
 <p>The default value of this option is false.</p></dd>
 <dt><b class="option">-orient</b> <i class="arg">boolean</i></dt>
 <dd><p>This sets the orientation of the y axis of the coordinate system.
-With <b class="option">-orient</b> false, origo is in the bottom left corner.
-With <b class="option">-orient</b> true, origo is in the top left corner.</p>
+With <b class="option">-orient</b> false, origin is in the bottom left corner.
+With <b class="option">-orient</b> true, origin is in the top left corner.</p>
 <p>The default value of this option is true.</p></dd>
 <dt><b class="option">-margin</b> <i class="arg">values</i></dt>
 <dd><p>The margin is a one, two or four element list of margins.

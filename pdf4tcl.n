@@ -246,7 +246,7 @@ pdf4tcl \- Pdf document generation
 .SH SYNOPSIS
 package require \fBTcl  8.4\fR
 .sp
-package require \fBdict \fR
+package require \fB?dict? \fR
 .sp
 package require \fBsnit \fR
 .sp
@@ -370,10 +370,10 @@ This package provides a container class for generating \fIpdf\fR documents.
 .SH COORDINATES
 All coordinates and distances can be expressed with or without a unit. See
 \fBUNITS\fR for valid units.
-When the page is configured with \fB-orient\fR set to false, origo is in
-the bottom left corner. With \fB-orient\fR true, origo is in the top left
+When the page is configured with \fB-orient\fR set to false, origin is in
+the bottom left corner. With \fB-orient\fR true, origin is in the top left
 corner.
-Origo is displaced to account for margins, i.e. if margins are 100,
+Origin is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
 Page option \fB-orient\fR can also affect the anchor point for things like
 images.
@@ -419,7 +419,7 @@ This call returns the list of known paper types.
 \fB::pdf4tcl::getPoints\fR \fIval\fR
 This call translates a measurement to points (1/72 inch).
 The format of \fIval\fR is '\fInum\fR ?\fIunit\fR?' where
-\fInum\fR is a valid integer or double. See \fBUNIT\fR for valid
+\fInum\fR is a valid integer or double. See \fBUNITS\fR for valid
 \fIunit\fRs.  If no \fIunit\fR is given, the value is interpreted
 as points.
 .TP
@@ -444,7 +444,7 @@ This call creates a base font from AFM text and PFB binary data.
 .TP
 \fB::pdf4tcl::createFont\fR \fIbasefontname\fR \fIfontname\fR \fIencoding_name\fR
 This call creates a font that can be used in documents from a base font.
-.CS
+.nf
 
 pdf4tcl::loadBaseTrueTypeFont BaseArial "arial.ttf"
 pdf4tcl::createFont BaseArial MyArial cp1251
@@ -460,7 +460,7 @@ mypdf text $txt -x 50 -y 200
 mypdf write -file fonts.pdf
 mypdf destroy
 
-.CE
+.fi
 .TP
 \fB::pdf4tcl::createFontSpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
 This call creates a font that can be used in documents from a base font.
@@ -539,7 +539,7 @@ This will do \fBendPage\fR and \fBfinish\fR if needed.
 If the \fB-file\fR option was given at object creation, an empty file
 is created.
 .PP
-.SS "OBJECT METHODS"
+.SS "OBJECT METHODS, PAGE"
 .TP
 \fIobjectName\fR \fBgetDrawableArea\fR
 This method returns the size of the available area on the page,
@@ -551,7 +551,7 @@ Draws the contents of the canvas widget \fIpath\fR on the current page.
 Option \fI-bbox\fR gives the area of the canvas to be drawn. Default is
 the entire contents, i.e. the result of $path bbox all.
 Options \fI-x\fR, \fI-y\fR, \fI-width\fR and \fI-height\fR defines
-an area on the page where to place the contents. Default area starts at origo,
+an area on the page where to place the contents. Default area starts at origin,
 stretching over the drawable area of the page.
 Option \fI-sticky\fR defines how to place the contents within the area.
 The area is always filled in one direction, preserving aspect ratio, unless
@@ -687,13 +687,13 @@ the height is selected to preserve the aspect ratio of the image.
 .TP
 \fIobjectName\fR \fBputRawImage\fR \fIdata\fR \fIx\fR \fIy\fR ?\fIoption value\fR...?
 Put an image on the current page. Works like \fBputImage\fR except that the raw image data is given directly.
-.CS
+.nf
 
   image create photo img1 -file image.gif
   set imgdata [img1 data]
   mypdf putRawImage $imgdata 60 20 -height 40
 
-.CE
+.fi
 .TP
 \fIobjectName\fR \fBaddImage\fR \fIfilename\fR ?\fIoption value\fR...?
 Add an image to the document. Returns an id that can be used in subsequent
@@ -709,14 +709,14 @@ option helps when that is not possible.  This can be either "png" or "jpeg".
 .RE
 .TP
 \fIobjectName\fR \fBaddRawImage\fR \fIdata\fR ?\fIoption value\fR...?
-.CS
+.nf
 
   image create photo img1 -file image.gif
   set imgdata [img1 data]
   set id [mypdf addRawImage $imgdata]
   mypdf putImage $id 20 60 -width 100
 
-.CE
+.fi
 .TP
 \fIobjectName\fR \fBgetImageHeight\fR \fIid\fR
 This method returns the height of the image identified by \fIid\fR.
@@ -835,7 +835,7 @@ This option can only be set at object creation.
 \fB-unit\fR \fIdefaultunit\fR
 Defines default unit for coordinates and distances.  Any value given without
 a unit is interpreted using this unit.
-See \fBUNIT\fR for valid units.
+See \fBUNITS\fR for valid units.
 Default value is "p" as in points.
 This option can only be set at object creation.
 .PP
@@ -856,8 +856,8 @@ The default value of this option is false.
 .TP
 \fB-orient\fR \fIboolean\fR
 This sets the orientation of the y axis of the coordinate system.
-With \fB-orient\fR false, origo is in the bottom left corner.
-With \fB-orient\fR true, origo is in the top left corner.
+With \fB-orient\fR false, origin is in the bottom left corner.
+With \fB-orient\fR true, origin is in the top left corner.
 .sp
 The default value of this option is true.
 .TP
@@ -876,7 +876,7 @@ Allowed values are multiples of 90.
 The default value of this option is zero.
 .PP
 .SH EXAMPLES
-.CS
+.nf
 
   pdf4tcl::new mypdf -paper a3
   mypdf startPage
@@ -885,7 +885,7 @@ The default value of this option is zero.
   mypdf write -file mypdf.pdf
   mypdf destroy
 
-.CE
+.fi
 .SH "SEE ALSO"
 doctools
 .SH KEYWORDS
