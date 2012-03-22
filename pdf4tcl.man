@@ -511,6 +511,21 @@ Sets the stroke color for graphics operations.
 [subsection {OBJECT METHODS, GRAPHICS}]
 [list_begin definitions]
 
+[call [arg objectName] [method setLineWidth] [arg "width"]]
+   Sets the width for subsequent line drawing.
+   Line width must be a non-negative number.
+
+[call [arg objectName] [method setLineDash] [opt [arg "on off"]...] [opt [arg "offset"]]]
+   Sets the dash pattern for subsequent line drawing.
+   Offset and any elements in the dash pattern must be non-negative numbers.
+   [emph "on off"] is a series of pairs of numbers which define a 
+   dash pattern. The 1st, 3rd ... numbers give units to paint, 
+   the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have 
+   been used, the pattern is re-started from the beginning. 
+   An optional last argument sets the dash offset, which defaults to 0.
+   Calling [method setLineDash] with no arguments resets the dash pattern
+   to a solid line.
+
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
    Sets the width and dash pattern for subsequent line drawing.
    Line width and any elements in the dash pattern must be non-negative numbers.
@@ -518,7 +533,8 @@ Sets the stroke color for graphics operations.
    dash pattern. The 1st, 3rd ... numbers give units to paint, 
    the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have 
    been used, the pattern is re-started from the beginning. 
-   There is currently no support for offsetting the pattern.
+   This method do not support offsetting the pattern, see [method setLineDash]
+   for a more complete method.
 
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
    Draws a line from [emph "x1,"] [emph "y1"] to [emph "x2,"] [emph "y2"]

@@ -1,4 +1,7 @@
 2012-03-22 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added setLineWidth and setLineDash methods to replace setLineStyle.
+
+2012-03-22 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Updated documentation contributed by Ian Gay.
 
 2012-03-11 Peter Spjuth   <peter.spjuth@gmail.com>

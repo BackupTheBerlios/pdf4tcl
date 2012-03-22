@@ -2713,6 +2713,34 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfout "\[$args\] 0 d\n"
     }
 
+    method setLineWidth {width} {
+        CheckNumeric $width "line width" -nonnegative
+        $self EndTextObj
+        $self Pdfoutcmd $width "w"
+    }
+
+    # Arguments are pairs for dash pattern plus an optional offset
+    method setLineDash {args} {
+        if {([llength $args] % 2) == 1} {
+            set offset [lindex $args end]
+            set args [lrange $args 0 end-1]
+        } else {
+            set offset 0
+        }
+        CheckNumeric $offset "dash offset" -nonnegative
+        # Validate dash pattern
+        set sum 0
+        foreach p $args {
+            CheckNumeric $p "dash pattern" -nonnegative
+            set sum [expr {$sum + $p}]
+        }
+        if {[llength $args] > 0 && $sum == 0} {
+            return -code error "Dash pattern may not be all zeroes"
+        }
+        $self EndTextObj
+        $self Pdfout "\[$args\] $offset d\n"
+    }
+
     method DrawLine {args} {
         $self EndTextObj
         set cmd "m"

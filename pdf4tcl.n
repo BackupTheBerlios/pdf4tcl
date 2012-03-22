@@ -346,6 +346,10 @@ package require \fBpdf4tcl  ?0.7.1?\fR
 .sp
 \fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 .sp
+\fIobjectName\fR \fBsetLineWidth\fR \fIwidth\fR
+.sp
+\fIobjectName\fR \fBsetLineDash\fR ?\fIon off\fR...? ?\fIoffset\fR?
+.sp
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
 .sp
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
@@ -781,6 +785,21 @@ Sets the stroke color for graphics operations.
 .PP
 .SS "OBJECT METHODS, GRAPHICS"
 .TP
+\fIobjectName\fR \fBsetLineWidth\fR \fIwidth\fR
+Sets the width for subsequent line drawing.
+Line width must be a non-negative number.
+.TP
+\fIobjectName\fR \fBsetLineDash\fR ?\fIon off\fR...? ?\fIoffset\fR?
+Sets the dash pattern for subsequent line drawing.
+Offset and any elements in the dash pattern must be non-negative numbers.
+\fIon off\fR is a series of pairs of numbers which define a
+dash pattern. The 1st, 3rd ... numbers give units to paint,
+the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have
+been used, the pattern is re-started from the beginning.
+An optional last argument sets the dash offset, which defaults to 0.
+Calling \fBsetLineDash\fR with no arguments resets the dash pattern
+to a solid line.
+.TP
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
 Sets the width and dash pattern for subsequent line drawing.
 Line width and any elements in the dash pattern must be non-negative numbers.
@@ -788,7 +807,8 @@ Line width and any elements in the dash pattern must be non-negative numbers.
 dash pattern. The 1st, 3rd ... numbers give units to paint,
 the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have
 been used, the pattern is re-started from the beginning.
-There is currently no support for offsetting the pattern.
+This method do not support offsetting the pattern, see \fBsetLineDash\fR
+for a more complete method.
 .TP
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
 Draws a line from \fIx1,\fR \fIy1\fR to \fIx2,\fR \fIy2\fR
