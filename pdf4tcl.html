@@ -168,7 +168,7 @@
 <li><a href="#27"><i class="arg">objectName</i> <b class="method">getStringWidth</b> <i class="arg">str</i></a></li>
 <li><a href="#28"><i class="arg">objectName</i> <b class="method">getCharWidth</b> <i class="arg">char</i></a></li>
 <li><a href="#29"><i class="arg">objectName</i> <b class="method">setTextPosition</b> <i class="arg">x</i> <i class="arg">y</i></a></li>
-<li><a href="#30"><i class="arg">objectName</i> <b class="method">moveTextPosition</b> <i class="arg">x</i> <i class="arg">y</i></a></li>
+<li><a href="#30"><i class="arg">objectName</i> <b class="method">moveTextPosition</b> <i class="arg">dx</i> <i class="arg">dy</i></a></li>
 <li><a href="#31"><i class="arg">objectName</i> <b class="method">getTextPosition</b></a></li>
 <li><a href="#32"><i class="arg">objectName</i> <b class="method">newLine</b> <span class="opt">?<i class="arg">spacing</i>?</span></a></li>
 <li><a href="#33"><i class="arg">objectName</i> <b class="method">setLineSpacing</b> <i class="arg">spacing</i></a></li>
@@ -205,7 +205,7 @@
 <p>All coordinates and distances can be expressed with or without a unit. See
 <span class="sectref"><a href="#section3">UNITS</a></span> for valid units.
 When the page is configured with <b class="option">-orient</b> set to false, origin is in
-the bottom left corner. With <b class="option">-orient</b> true, origin is in the top left
+the bottom left corner. With <b class="option">-orient</b> true (the default), origin is in the top left
 corner.
 Origin is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
@@ -390,7 +390,9 @@ in Tk to control the font mapping in detail.</p>
 <p>Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.</p></dd>
 <dt><a name="24"><i class="arg">objectName</i> <b class="method">metadata</b> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
-<dd><p>This method sets metadata fields for this document.  Supported fields are...</p></dd>
+<dd><p>This method sets metadata fields for this document.  Supported field options are
+ <i class="arg">-author</i>, <i class="arg">-creator</i>, <i class="arg">-keywords</i>, <i class="arg">-producer</i>, <i class="arg">-subject</i>,
+  <i class="arg">-title</i>, <i class="arg">-creationdate</i> and <i class="arg">-format</i>.</p></dd>
 <dt><a name="25"><i class="arg">objectName</i> <b class="method">bookmarkAdd</b> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
 <dd><p>Add a bookmark on the current page.</p>
 <dl class="options">
@@ -414,8 +416,8 @@ is not provided, the previously set <i class="arg">fontname</i> is kept.</p></dd
 <dd><p>This method returns the width of a character under the current font.</p></dd>
 <dt><a name="29"><i class="arg">objectName</i> <b class="method">setTextPosition</b> <i class="arg">x</i> <i class="arg">y</i></a></dt>
 <dd><p>Set coordinate for next text command.</p></dd>
-<dt><a name="30"><i class="arg">objectName</i> <b class="method">moveTextPosition</b> <i class="arg">x</i> <i class="arg">y</i></a></dt>
-<dd><p>Move coordinate for next text command.</p></dd>
+<dt><a name="30"><i class="arg">objectName</i> <b class="method">moveTextPosition</b> <i class="arg">dx</i> <i class="arg">dy</i></a></dt>
+<dd><p>Increment position by <i class="arg">dx</i>, <i class="arg">dy</i> for the next text command.</p></dd>
 <dt><a name="31"><i class="arg">objectName</i> <b class="method">getTextPosition</b></a></dt>
 <dd><p>This method returns the current text coordinate.</p></dd>
 <dt><a name="32"><i class="arg">objectName</i> <b class="method">newLine</b> <span class="opt">?<i class="arg">spacing</i>?</span></a></dt>
@@ -429,9 +431,41 @@ the spacing is 1.</p></dd>
 <dt><a name="34"><i class="arg">objectName</i> <b class="method">getLineSpacing</b></a></dt>
 <dd><p>Get the current default line spacing.</p></dd>
 <dt><a name="35"><i class="arg">objectName</i> <b class="method">text</b> <i class="arg">str</i> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
-<dd><p>Draw text.</p></dd>
+<dd><p>Draw text at the position defined by setTextPosition using the font defined by 
+setFont.</p>
+<dl class="options">
+      
+<dt><b class="option">-align</b> <i class="arg">left|right|center</i>   (default left)</dt>
+<dd></dd>
+<dt><b class="option">-angle</b> <i class="arg">degrees</i>   (default 0) - Orient string at the specified angle.</dt>
+<dd></dd>
+<dt><b class="option">-xangle</b> <i class="arg">degrees</i>   (default 0)</dt>
+<dd></dd>
+<dt><b class="option">-yangle</b> <i class="arg">degrees</i>   (default 0) - Apply x or y shear to the text.</dt>
+<dd></dd>
+<dt><b class="option">-x</b> <i class="arg">x</i>   (default 0)</dt>
+<dd></dd>
+<dt><b class="option">-y</b> <i class="arg">y</i>   (default 0) - Allow the text to be positioned without setTextPosition.</dt>
+<dd></dd>
+<dt><b class="option">-bg</b> <i class="arg">bool</i>   (default 0)</dt>
+<dd></dd>
+<dt><b class="option">-background</b> <i class="arg">bool</i>   (default 0)</dt>
+<dd></dd>
+<dt><b class="option">-fill</b> <i class="arg">bool</i>   (default 0) </dt>
+<dd><p>Any of <b class="option">-bg</b>, <b class="option">-background</b> or <b class="option">-fill</b> cause the text to be drawn 
+         on a background whose colour is set by setBgColor.</p></dd>
+</dl></dd>
 <dt><a name="36"><i class="arg">objectName</i> <b class="method">drawTextBox</b> <i class="arg">x</i> <i class="arg">y</i> <i class="arg">width</i> <i class="arg">height</i> <i class="arg">str</i> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
-<dd><p>Draw text.</p></dd>
+<dd><p>Draw the text string <i class="arg">str</i> wrapping at blanks and tabs so that it fits within the box defined
+by <i class="arg">x</i>, <i class="arg">y</i>, <i class="arg">width</i> and <i class="arg">height</i>. An embedded newline in <i class="arg">str</i> causes
+a new line in the output. If <i class="arg">str</i> is too long to fit in the specified box, it is truncated and the unused remainder is returned.</p>
+<dl class="options">
+      
+<dt><b class="option">-align</b> <i class="arg">left|right|center|justify</i>)</dt>
+<dd><p>Specifies the justification. If not given, the text is left justified.</p></dd>
+<dt><b class="option">-linesvar</b> <i class="arg">var</i></dt>
+<dd><p>Gives the name of a variable which will be set to the number of lines written.</p></dd>
+</dl></dd>
 <dt><a name="37"><i class="arg">objectName</i> <b class="method">getFontMetric</b> <i class="arg">metric</i></a></dt>
 <dd><p>Get information about current font. The available <i class="arg">metric</i>s are
 <b class="option">ascend</b>, <b class="option">descend</b>, <b class="option">fixed</b>, <b class="option">bboxb</b>,
@@ -525,55 +559,70 @@ text operations.</p></dd>
 <div id="subsection8" class="subsection"><h3><a name="subsection8">OBJECT METHODS, GRAPHICS</a></h3>
 <dl class="definitions">
 <dt><a name="48"><i class="arg">objectName</i> <b class="method">setLineStyle</b> <i class="arg">width</i> <i class="arg">args</i></a></dt>
-<dd><p>Set up the line width and optionally a dash pattern for line drawing. Line
-width and any elements in the dash pattern must be non-negative numbers.</p></dd>
+<dd><p>Sets the width and dash pattern for subsequent line drawing.
+   Line width and any elements in the dash pattern must be non-negative numbers.
+   <em>args</em> is a series of numbers (not a tcl list) which define a 
+   dash pattern. The 1st, 3rd ... numbers give units to paint, 
+   the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have 
+   been used, the pattern is re-started from the beginning. 
+   There is currently no support for offsetting the pattern.</p></dd>
 <dt><a name="49"><i class="arg">objectName</i> <b class="method">line</b> <i class="arg">x1</i> <i class="arg">y1</i> <i class="arg">x2</i> <i class="arg">y2</i></a></dt>
-<dd><p>Draw a line.</p></dd>
+<dd><p>Draws a line from <em>x1,</em> <em>y1</em> to <em>x2,</em> <em>y2</em></p></dd>
 <dt><a name="50"><i class="arg">objectName</i> <b class="method">curve</b> <i class="arg">x1</i> <i class="arg">y1</i> <i class="arg">x2</i> <i class="arg">y2</i> <i class="arg">x3</i> <i class="arg">y3</i> <span class="opt">?<i class="arg">x4 y4</i>?</span></a></dt>
-<dd><p>Draw a quadratic (if three coordinates are given) or cubic bezier curve.</p></dd>
+<dd><p>If <em>x4,</em> <em>y4</em> are present, draws a cubic bezier from <em>x1,</em>
+   <em>y1</em> to <em>x4,</em> <em>y4</em> with control points <em>x2,</em> <em>y2</em> and
+   <em>x3,</em> <em>y3</em>. Otherwise draws a quadratic bezier from <em>x1,</em>
+   <em>y1</em> to <em>x3,</em> <em>y3</em>, with control point <em>x2,</em>
+   <em>y2</em></p></dd>
 <dt><a name="51"><i class="arg">objectName</i> <b class="method">polygon</b> <span class="opt">?<i class="arg">x y</i>...?</span> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
-<dd><p>Draw a polygon. The polygon is closed back to the first coordinate.</p>
+<dd><p>Draw a polygon. There must be at least 3 points.
+   The polygon is closed back to the first coordinate.</p>
 <dl class="options">
-<dt><b class="option">-filled</b> <i class="arg">bool</i></dt>
+      
+<dt><b class="option">-filled</b> <i class="arg">bool</i>   (default 0)</dt>
 <dd><p>Fill the polygon.</p></dd>
-<dt><b class="option">-stroke</b> <i class="arg">bool</i></dt>
-<dd><p>Draw an outline of the polygon. Default is true.</p></dd>
+<dt><b class="option">-stroke</b> <i class="arg">bool</i>   (default 1)</dt>
+<dd><p>Draw an outline of the polygon.</p></dd>
 </dl></dd>
 <dt><a name="52"><i class="arg">objectName</i> <b class="method">circle</b> <i class="arg">x</i> <i class="arg">y</i> <i class="arg">radius</i> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
 <dd><p>Draw a circle at the given center coordinates.</p>
 <dl class="options">
-<dt><b class="option">-filled</b> <i class="arg">bool</i></dt>
+      
+<dt><b class="option">-filled</b> <i class="arg">bool</i>   (default 0)</dt>
 <dd><p>Fill the circle.</p></dd>
-<dt><b class="option">-stroke</b> <i class="arg">bool</i></dt>
-<dd><p>Draw an outline of the circle. Default is true.</p></dd>
+<dt><b class="option">-stroke</b> <i class="arg">bool</i>   (default 1)</dt>
+<dd><p>Draw an outline of the circle.</p></dd>
 </dl></dd>
 <dt><a name="53"><i class="arg">objectName</i> <b class="method">oval</b> <i class="arg">x</i> <i class="arg">y</i> <i class="arg">radiusx</i> <i class="arg">radiusy</i> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
 <dd><p>Draw an oval at the given center coordinates.</p>
 <dl class="options">
-<dt><b class="option">-filled</b> <i class="arg">bool</i></dt>
+      
+<dt><b class="option">-filled</b> <i class="arg">bool</i>   (default 0)</dt>
 <dd><p>Fill the oval.</p></dd>
-<dt><b class="option">-stroke</b> <i class="arg">bool</i></dt>
-<dd><p>Draw an outline of the oval. Default is true.</p></dd>
+<dt><b class="option">-stroke</b> <i class="arg">bool</i>   (default 1)</dt>
+<dd><p>Draw an outline of the oval.</p></dd>
 </dl></dd>
 <dt><a name="54"><i class="arg">objectName</i> <b class="method">arc</b> <i class="arg">x</i> <i class="arg">y</i> <i class="arg">radiusx</i> <i class="arg">radiusy</i> <i class="arg">phi</i> <i class="arg">extend</i> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
 <dd><p>Draw an arc, following the given oval. The arc starts at angle <i class="arg">phi</i>, given in degrees starting in the &quot;east&quot; direction, counting counter clockwise. The arc extends <i class="arg">extend</i> degrees.</p>
 <dl class="options">
-<dt><b class="option">-filled</b> <i class="arg">bool</i></dt>
+      
+<dt><b class="option">-filled</b> <i class="arg">bool</i>   (default 0)</dt>
 <dd><p>Fill the arc.</p></dd>
-<dt><b class="option">-stroke</b> <i class="arg">bool</i></dt>
-<dd><p>Draw an outline of the arc. Default is true.</p></dd>
-<dt><b class="option">-style</b> <i class="arg">value</i></dt>
-<dd><p>Defines the style of the arc. An <i class="arg">arc</i> draws the perimeter of the arc and is never filled. A <i class="arg">pieslice</i> closes the arc with lines to the center of the oval. A <i class="arg">chord</i> closes the arc directly. Default is <i class="arg">arc</i>.</p></dd>
+<dt><b class="option">-stroke</b> <i class="arg">bool</i>   (default 1)</dt>
+<dd><p>Draw an outline of the arc.</p></dd>
+<dt><b class="option">-style</b> <i class="arg">arc|pieslice|chord</i>   (default <i class="arg">arc</i>)</dt>
+<dd><p>Defines the style of the arc. An <i class="arg">arc</i> draws the perimeter of the arc and is never filled. A <i class="arg">pieslice</i> closes the arc with lines to the center of the oval. A <i class="arg">chord</i> closes the arc directly.</p></dd>
 </dl></dd>
 <dt><a name="55"><i class="arg">objectName</i> <b class="method">arrow</b> <i class="arg">x1</i> <i class="arg">y1</i> <i class="arg">x2</i> <i class="arg">y2</i> <i class="arg">size</i> <span class="opt">?<i class="arg">angle</i>?</span></a></dt>
 <dd><p>Draw an arrow. Default <i class="arg">angle</i> is 20 degrees.</p></dd>
 <dt><a name="56"><i class="arg">objectName</i> <b class="method">rectangle</b> <i class="arg">x</i> <i class="arg">y</i> <i class="arg">width</i> <i class="arg">height</i> <span class="opt">?<i class="arg">option value</i>...?</span></a></dt>
 <dd><p>Draw a rectangle.</p>
 <dl class="options">
-<dt><b class="option">-filled</b> <i class="arg">bool</i></dt>
+      
+<dt><b class="option">-filled</b> <i class="arg">bool</i>   (default 0)</dt>
 <dd><p>Fill the rectangle.</p></dd>
-<dt><b class="option">-stroke</b> <i class="arg">bool</i></dt>
-<dd><p>Draw an outline of the rectangle. Default is true.</p></dd>
+<dt><b class="option">-stroke</b> <i class="arg">bool</i>   (default 1)</dt>
+<dd><p>Draw an outline of the rectangle.</p></dd>
 </dl></dd>
 </dl>
 </div>

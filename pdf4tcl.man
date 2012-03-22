@@ -1,4 +1,5 @@
 [comment {-*- tcl -*- doctools manpage}]
+[comment "Modifications by IDG, March 2012"]
 [manpage_begin pdf4tcl n 0.7.1]
 [copyright {2007-2011 Peter Spjuth}]
 [copyright {2009 Yaroslav Schekin}]
@@ -17,7 +18,7 @@ This package provides a container class for generating [term {pdf}] documents.
 All coordinates and distances can be expressed with or without a unit. See
 [sectref UNITS] for valid units.
 When the page is configured with [option -orient] set to false, origin is in
-the bottom left corner. With [option -orient] true, origin is in the top left
+the bottom left corner. With [option -orient] true (the default), origin is in the top left
 corner.
 Origin is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
@@ -290,7 +291,9 @@ the canvas is drawn.
 
 [call [arg objectName] [method metadata] [opt [arg "option value"]...]]
 
-This method sets metadata fields for this document.  Supported fields are...
+This method sets metadata fields for this document.  Supported field options are
+ [arg -author], [arg -creator], [arg -keywords], [arg -producer], [arg -subject],
+  [arg -title], [arg -creationdate] and [arg -format].
 
 [call [arg objectName] [method bookmarkAdd] [opt [arg "option value"]...]]
 
@@ -331,9 +334,9 @@ This method returns the width of a character under the current font.
 
 Set coordinate for next text command.
 
-[call [arg objectName] [method moveTextPosition] [arg "x"] [arg "y"]]
+[call [arg objectName] [method moveTextPosition] [arg "dx"] [arg "dy"]]
 
-Move coordinate for next text command.
+Increment position by [arg "dx"], [arg "dy"] for the next text command.
 
 [call [arg objectName] [method getTextPosition]]
 
@@ -357,11 +360,35 @@ Get the current default line spacing.
 
 [call [arg objectName] [method text] [arg "str"] [opt [arg "option value"]...]]
 
-Draw text.
+Draw text at the position defined by setTextPosition using the font defined by 
+setFont.
+   [list_begin options]
+      [opt_def -align "[arg left|right|center]   (default left)"]
+      [opt_def -angle "[arg degrees]   (default 0) - Orient string at the specified angle."]  
+      [opt_def -xangle "[arg degrees]   (default 0)"]
+      [opt_def -yangle "[arg degrees]   (default 0) - Apply x or y shear to the text."]
+      [opt_def -x "[arg x]   (default 0)"]
+      [opt_def -y "[arg y]   (default 0) - Allow the text to be positioned without setTextPosition."]
+      [opt_def -bg "[arg bool]   (default 0)"]
+      [opt_def -background "[arg bool]   (default 0)"]
+      [opt_def -fill "[arg bool]   (default 0) "]
+         Any of [option -bg], [option -background] or [option -fill] cause the text to be drawn 
+         on a background whose colour is set by setBgColor.
+   [list_end]
+
 
 [call [arg objectName] [method drawTextBox] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "str"] [opt [arg "option value"]...]]
 
-Draw text.
+Draw the text string [arg "str"] wrapping at blanks and tabs so that it fits within the box defined
+by [arg "x"], [arg "y"], [arg "width"] and [arg "height"]. An embedded newline in [arg "str"] causes
+a new line in the output. If [arg "str"] is too long to fit in the specified box, it is truncated and the unused remainder is returned.
+   [list_begin options]
+      [opt_def -align "[arg left|right|center|justify])"]
+         Specifies the justification. If not given, the text is left justified.
+      [opt_def -linesvar "[arg var]"]
+         Gives the name of a variable which will be set to the number of lines written.
+   [list_end]
+
 
 [call [arg objectName] [method getFontMetric] [arg "metric"]]
 
@@ -387,6 +414,7 @@ Height of font's Bounding Box.
 [list_end]
 
 [list_end]
+
 [subsection {OBJECT METHODS, IMAGES}]
 
 A limited set of image formats are directly understood by pdf4tcl, currently
@@ -484,64 +512,75 @@ Sets the stroke color for graphics operations.
 [list_begin definitions]
 
 [call [arg objectName] [method setLineStyle] [arg "width"] [arg "args"]]
-Set up the line width and optionally a dash pattern for line drawing. Line
-width and any elements in the dash pattern must be non-negative numbers.
+   Sets the width and dash pattern for subsequent line drawing.
+   Line width and any elements in the dash pattern must be non-negative numbers.
+   [emph "args"] is a series of numbers (not a tcl list) which define a 
+   dash pattern. The 1st, 3rd ... numbers give units to paint, 
+   the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have 
+   been used, the pattern is re-started from the beginning. 
+   There is currently no support for offsetting the pattern.
 
 [call [arg objectName] [method line] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]]
-Draw a line.
+   Draws a line from [emph "x1,"] [emph "y1"] to [emph "x2,"] [emph "y2"]
 
-[call [arg objectName] [method curve] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "x3"] [arg "y3"] [opt [arg "x4 y4"]]]
-Draw a quadratic (if three coordinates are given) or cubic bezier curve.
+[call [arg objectName] [method curve] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"]\
+   [arg "x3"] [arg "y3"] [opt [arg "x4 y4"]] ]
+   If [emph "x4,"] [emph "y4"] are present, draws a cubic bezier from [emph "x1,"]
+   [emph "y1"] to [emph "x4,"] [emph "y4"] with control points [emph "x2,"] [emph "y2"] and
+   [emph "x3,"] [emph "y3"]. Otherwise draws a quadratic bezier from [emph "x1,"]
+   [emph "y1"] to [emph "x3,"] [emph "y3"], with control point [emph "x2,"]
+   [emph "y2"]
 
 [call [arg objectName] [method polygon] [opt [arg "x y"]...] [opt [arg "option value"]...]]
-Draw a polygon. The polygon is closed back to the first coordinate.
-[list_begin options]
-[opt_def -filled [arg bool]]
-Fill the polygon.
-[opt_def -stroke [arg bool]]
-Draw an outline of the polygon. Default is true.
-[list_end]
+   Draw a polygon. There must be at least 3 points.
+   The polygon is closed back to the first coordinate.
+   [list_begin options]
+      [opt_def -filled "[arg bool]   (default 0)"]
+      Fill the polygon.
+      [opt_def -stroke "[arg bool]   (default 1)"]
+      Draw an outline of the polygon.
+   [list_end]
 
 [call [arg objectName] [method circle] [arg "x"] [arg "y"] [arg "radius"] [opt [arg "option value"]...]]
-Draw a circle at the given center coordinates.
-[list_begin options]
-[opt_def -filled [arg bool]]
-Fill the circle.
-[opt_def -stroke [arg bool]]
-Draw an outline of the circle. Default is true.
-[list_end]
+   Draw a circle at the given center coordinates.
+   [list_begin options]
+      [opt_def -filled "[arg bool]   (default 0)"]
+      Fill the circle.
+      [opt_def -stroke "[arg bool]   (default 1)"]
+      Draw an outline of the circle.
+   [list_end]
 
 [call [arg objectName] [method oval] [arg "x"] [arg "y"] [arg "radiusx"] [arg "radiusy"] [opt [arg "option value"]...]]
-Draw an oval at the given center coordinates.
-[list_begin options]
-[opt_def -filled [arg bool]]
-Fill the oval.
-[opt_def -stroke [arg bool]]
-Draw an outline of the oval. Default is true.
-[list_end]
+   Draw an oval at the given center coordinates.
+   [list_begin options]
+      [opt_def -filled "[arg bool]   (default 0)"]
+      Fill the oval.
+      [opt_def -stroke "[arg bool]   (default 1)"]
+      Draw an outline of the oval.
+   [list_end]
 
 [call [arg objectName] [method arc] [arg "x"] [arg "y"] [arg "radiusx"] [arg "radiusy"] [arg "phi"] [arg "extend"] [opt [arg "option value"]...]]
-Draw an arc, following the given oval. The arc starts at angle [arg "phi"], given in degrees starting in the "east" direction, counting counter clockwise. The arc extends [arg "extend"] degrees.
-[list_begin options]
-[opt_def -filled [arg bool]]
-Fill the arc.
-[opt_def -stroke [arg bool]]
-Draw an outline of the arc. Default is true.
-[opt_def -style [arg value]]
-Defines the style of the arc. An [arg "arc"] draws the perimeter of the arc and is never filled. A [arg "pieslice"] closes the arc with lines to the center of the oval. A [arg "chord"] closes the arc directly. Default is [arg "arc"].
-[list_end]
+   Draw an arc, following the given oval. The arc starts at angle [arg "phi"], given in degrees starting in the "east" direction, counting counter clockwise. The arc extends [arg "extend"] degrees.
+   [list_begin options]
+      [opt_def -filled "[arg bool]   (default 0)"]
+      Fill the arc.
+      [opt_def -stroke "[arg bool]   (default 1)"]
+      Draw an outline of the arc.
+      [opt_def -style "[arg arc|pieslice|chord]   (default [arg arc])"]
+      Defines the style of the arc. An [arg "arc"] draws the perimeter of the arc and is never filled. A [arg "pieslice"] closes the arc with lines to the center of the oval. A [arg "chord"] closes the arc directly.
+   [list_end]
 
 [call [arg objectName] [method arrow] [arg "x1"] [arg "y1"] [arg "x2"] [arg "y2"] [arg "size"] [opt [arg "angle"]]]
-Draw an arrow. Default [arg "angle"] is 20 degrees.
+   Draw an arrow. Default [arg "angle"] is 20 degrees.
 
 [call [arg objectName] [method rectangle] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [opt [arg "option value"]...]]
-Draw a rectangle.
-[list_begin options]
-[opt_def -filled [arg bool]]
-Fill the rectangle.
-[opt_def -stroke [arg bool]]
-Draw an outline of the rectangle. Default is true.
-[list_end]
+   Draw a rectangle.
+   [list_begin options]
+      [opt_def -filled "[arg bool]   (default 0)"]
+      Fill the rectangle.
+      [opt_def -stroke "[arg bool]   (default 1)"]
+      Draw an outline of the rectangle.
+   [list_end]
 
 [list_end]
 

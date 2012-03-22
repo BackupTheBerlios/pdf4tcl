@@ -310,7 +310,7 @@ package require \fBpdf4tcl  ?0.7.1?\fR
 .sp
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 .sp
-\fIobjectName\fR \fBmoveTextPosition\fR \fIx\fR \fIy\fR
+\fIobjectName\fR \fBmoveTextPosition\fR \fIdx\fR \fIdy\fR
 .sp
 \fIobjectName\fR \fBgetTextPosition\fR
 .sp
@@ -371,7 +371,7 @@ This package provides a container class for generating \fIpdf\fR documents.
 All coordinates and distances can be expressed with or without a unit. See
 \fBUNITS\fR for valid units.
 When the page is configured with \fB-orient\fR set to false, origin is in
-the bottom left corner. With \fB-orient\fR true, origin is in the top left
+the bottom left corner. With \fB-orient\fR true (the default), origin is in the top left
 corner.
 Origin is displaced to account for margins, i.e. if margins are 100,
 the user coordinate (0,0) corresponds to (100,100) on the paper.
@@ -582,7 +582,9 @@ Window items requires Img to be present and must be visible on-screen when
 the canvas is drawn.
 .TP
 \fIobjectName\fR \fBmetadata\fR ?\fIoption value\fR...?
-This method sets metadata fields for this document.  Supported fields are...
+This method sets metadata fields for this document.  Supported field options are
+\fI-author\fR, \fI-creator\fR, \fI-keywords\fR, \fI-producer\fR, \fI-subject\fR,
+\fI-title\fR, \fI-creationdate\fR and \fI-format\fR.
 .TP
 \fIobjectName\fR \fBbookmarkAdd\fR ?\fIoption value\fR...?
 Add a bookmark on the current page.
@@ -613,8 +615,8 @@ This method returns the width of a character under the current font.
 \fIobjectName\fR \fBsetTextPosition\fR \fIx\fR \fIy\fR
 Set coordinate for next text command.
 .TP
-\fIobjectName\fR \fBmoveTextPosition\fR \fIx\fR \fIy\fR
-Move coordinate for next text command.
+\fIobjectName\fR \fBmoveTextPosition\fR \fIdx\fR \fIdy\fR
+Increment position by \fIdx\fR, \fIdy\fR for the next text command.
 .TP
 \fIobjectName\fR \fBgetTextPosition\fR
 This method returns the current text coordinate.
@@ -633,10 +635,43 @@ the spacing is 1.
 Get the current default line spacing.
 .TP
 \fIobjectName\fR \fBtext\fR \fIstr\fR ?\fIoption value\fR...?
-Draw text.
+Draw text at the position defined by setTextPosition using the font defined by
+setFont.
+.RS
+.TP
+\fB-align\fR \fIleft|right|center\fR   (default left)
+.TP
+\fB-angle\fR \fIdegrees\fR   (default 0) - Orient string at the specified angle.
+.TP
+\fB-xangle\fR \fIdegrees\fR   (default 0)
+.TP
+\fB-yangle\fR \fIdegrees\fR   (default 0) - Apply x or y shear to the text.
+.TP
+\fB-x\fR \fIx\fR   (default 0)
+.TP
+\fB-y\fR \fIy\fR   (default 0) - Allow the text to be positioned without setTextPosition.
+.TP
+\fB-bg\fR \fIbool\fR   (default 0)
+.TP
+\fB-background\fR \fIbool\fR   (default 0)
+.TP
+\fB-fill\fR \fIbool\fR   (default 0)
+Any of \fB-bg\fR, \fB-background\fR or \fB-fill\fR cause the text to be drawn
+on a background whose colour is set by setBgColor.
+.RE
 .TP
 \fIobjectName\fR \fBdrawTextBox\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIstr\fR ?\fIoption value\fR...?
-Draw text.
+Draw the text string \fIstr\fR wrapping at blanks and tabs so that it fits within the box defined
+by \fIx\fR, \fIy\fR, \fIwidth\fR and \fIheight\fR. An embedded newline in \fIstr\fR causes
+a new line in the output. If \fIstr\fR is too long to fit in the specified box, it is truncated and the unused remainder is returned.
+.RS
+.TP
+\fB-align\fR \fIleft|right|center|justify\fR)
+Specifies the justification. If not given, the text is left justified.
+.TP
+\fB-linesvar\fR \fIvar\fR
+Gives the name of a variable which will be set to the number of lines written.
+.RE
 .TP
 \fIobjectName\fR \fBgetFontMetric\fR \fImetric\fR
 Get information about current font. The available \fImetric\fRs are
@@ -747,60 +782,70 @@ Sets the stroke color for graphics operations.
 .SS "OBJECT METHODS, GRAPHICS"
 .TP
 \fIobjectName\fR \fBsetLineStyle\fR \fIwidth\fR \fIargs\fR
-Set up the line width and optionally a dash pattern for line drawing. Line
-width and any elements in the dash pattern must be non-negative numbers.
+Sets the width and dash pattern for subsequent line drawing.
+Line width and any elements in the dash pattern must be non-negative numbers.
+\fIargs\fR is a series of numbers (not a tcl list) which define a
+dash pattern. The 1st, 3rd ... numbers give units to paint,
+the 2nd, 4th ... numbers specify unpainted gaps. When all numbers have
+been used, the pattern is re-started from the beginning.
+There is currently no support for offsetting the pattern.
 .TP
 \fIobjectName\fR \fBline\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR
-Draw a line.
+Draws a line from \fIx1,\fR \fIy1\fR to \fIx2,\fR \fIy2\fR
 .TP
 \fIobjectName\fR \fBcurve\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIx3\fR \fIy3\fR ?\fIx4 y4\fR?
-Draw a quadratic (if three coordinates are given) or cubic bezier curve.
+If \fIx4,\fR \fIy4\fR are present, draws a cubic bezier from \fIx1,\fR
+\fIy1\fR to \fIx4,\fR \fIy4\fR with control points \fIx2,\fR \fIy2\fR and
+\fIx3,\fR \fIy3\fR. Otherwise draws a quadratic bezier from \fIx1,\fR
+\fIy1\fR to \fIx3,\fR \fIy3\fR, with control point \fIx2,\fR
+\fIy2\fR
 .TP
 \fIobjectName\fR \fBpolygon\fR ?\fIx y\fR...? ?\fIoption value\fR...?
-Draw a polygon. The polygon is closed back to the first coordinate.
+Draw a polygon. There must be at least 3 points.
+The polygon is closed back to the first coordinate.
 .RS
 .TP
-\fB-filled\fR \fIbool\fR
+\fB-filled\fR \fIbool\fR   (default 0)
 Fill the polygon.
 .TP
-\fB-stroke\fR \fIbool\fR
-Draw an outline of the polygon. Default is true.
+\fB-stroke\fR \fIbool\fR   (default 1)
+Draw an outline of the polygon.
 .RE
 .TP
 \fIobjectName\fR \fBcircle\fR \fIx\fR \fIy\fR \fIradius\fR ?\fIoption value\fR...?
 Draw a circle at the given center coordinates.
 .RS
 .TP
-\fB-filled\fR \fIbool\fR
+\fB-filled\fR \fIbool\fR   (default 0)
 Fill the circle.
 .TP
-\fB-stroke\fR \fIbool\fR
-Draw an outline of the circle. Default is true.
+\fB-stroke\fR \fIbool\fR   (default 1)
+Draw an outline of the circle.
 .RE
 .TP
 \fIobjectName\fR \fBoval\fR \fIx\fR \fIy\fR \fIradiusx\fR \fIradiusy\fR ?\fIoption value\fR...?
 Draw an oval at the given center coordinates.
 .RS
 .TP
-\fB-filled\fR \fIbool\fR
+\fB-filled\fR \fIbool\fR   (default 0)
 Fill the oval.
 .TP
-\fB-stroke\fR \fIbool\fR
-Draw an outline of the oval. Default is true.
+\fB-stroke\fR \fIbool\fR   (default 1)
+Draw an outline of the oval.
 .RE
 .TP
 \fIobjectName\fR \fBarc\fR \fIx\fR \fIy\fR \fIradiusx\fR \fIradiusy\fR \fIphi\fR \fIextend\fR ?\fIoption value\fR...?
 Draw an arc, following the given oval. The arc starts at angle \fIphi\fR, given in degrees starting in the "east" direction, counting counter clockwise. The arc extends \fIextend\fR degrees.
 .RS
 .TP
-\fB-filled\fR \fIbool\fR
+\fB-filled\fR \fIbool\fR   (default 0)
 Fill the arc.
 .TP
-\fB-stroke\fR \fIbool\fR
-Draw an outline of the arc. Default is true.
+\fB-stroke\fR \fIbool\fR   (default 1)
+Draw an outline of the arc.
 .TP
-\fB-style\fR \fIvalue\fR
-Defines the style of the arc. An \fIarc\fR draws the perimeter of the arc and is never filled. A \fIpieslice\fR closes the arc with lines to the center of the oval. A \fIchord\fR closes the arc directly. Default is \fIarc\fR.
+\fB-style\fR \fIarc|pieslice|chord\fR   (default \fIarc\fR)
+Defines the style of the arc. An \fIarc\fR draws the perimeter of the arc and is never filled. A \fIpieslice\fR closes the arc with lines to the center of the oval. A \fIchord\fR closes the arc directly.
 .RE
 .TP
 \fIobjectName\fR \fBarrow\fR \fIx1\fR \fIy1\fR \fIx2\fR \fIy2\fR \fIsize\fR ?\fIangle\fR?
@@ -810,11 +855,11 @@ Draw an arrow. Default \fIangle\fR is 20 degrees.
 Draw a rectangle.
 .RS
 .TP
-\fB-filled\fR \fIbool\fR
+\fB-filled\fR \fIbool\fR   (default 0)
 Fill the rectangle.
 .TP
-\fB-stroke\fR \fIbool\fR
-Draw an outline of the rectangle. Default is true.
+\fB-stroke\fR \fIbool\fR   (default 1)
+Draw an outline of the rectangle.
 .RE
 .PP
 .SS "OBJECT CONFIGURATION"
