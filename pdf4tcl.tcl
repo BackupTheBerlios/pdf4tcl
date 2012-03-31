@@ -424,13 +424,13 @@ namespace eval pdf4tcl {
         #----------------------
         # post - PostScript table (needs data from OS/2 table)
         set ttfpos [lindex $ttftables(post) 1]
-        binary scan $ttfdata "@${ttfpos}SuSuSuSuSuSuIu" \
+        binary scan $ttfdata "@${ttfpos}SuSuSSuSSIu" \
                 ver_maj ver_min itan0 itan1 ulpos ulthick isFixedPitch
 
         set BFA($ttfname,ItalicAngle) [expr {$itan0 + $itan1 / 65536.0}]
 
         set flags 4 ; # "symbolic".
-        if {$BFA($ttfname,ItalicAngle) != 0} {set flags [expr {$flags | 32}]}
+        if {$BFA($ttfname,ItalicAngle) != 0} {set flags [expr {$flags | 64}]}
         if {$usWeightClass >= 600} {set flags [expr {$flags | (1 << 18)}]}
         if {$isFixedPitch} {set flags [expr {$flags | 1}]}
         set BFA($ttfname,flags) $flags

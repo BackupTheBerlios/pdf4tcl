@@ -1,3 +1,7 @@
+2012-03-31 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Fixed bug "that makes non-latin Italic TTF-fonts unusable".
+	  (Yaroslav Schekin)
+
 2012-03-22 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added setLineWidth and setLineDash methods to replace setLineStyle.
 
