@@ -2,7 +2,7 @@
 # this began as a port of pdf4php from php to tcl
 #
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
-#                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
+#                       Jens Ponisch <jens@ruessel.in-chemnitz.de>
 # Copyright (c) 2006-2012 by Peter Spjuth <peter.spjuth@gmail.com>
 # Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
 #

@@ -11,6 +11,23 @@
 <p>
 <h2>Changes</h2>
 
+Changes in v0.8 (2012-06-12):<br>
+<ul>
+ <li> Added curve method, replacing qCurve. </li>
+ <li> Handle built in zlib in 8.6 [Bug 18353]. </li>
+ <li> Support patterns for canvas dashes. </li>
+ <li> Added -fontmap to canvas dump to control fonts. </li>
+ <li> Added setLineWidth and setLineDash methods. </li>
+ <li> Fixed bug "that makes non-latin Italic TTF-fonts unusable". </li>
+</ul>
+
+Incompatible changes in v0.8:<br>
+<ul>
+ <li> Corrected text angle to be CCW like other angles. </li>
+ <li> Deprecated: qCurve.</li>
+ <li> Cleaned up to name ascend/descent font metrics consistently.</li>
+</ul>
+
 Changes in v0.7 (2010-01-30):<br>
 <ul>
  <li> Support for embedding TrueType or Type1 fonts. </li>

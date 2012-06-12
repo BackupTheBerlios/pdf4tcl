@@ -1,3 +1,6 @@
+2012-06-12 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Bumped revision to 0.8
+
 2012-03-31 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Bumped revision to 0.7.2
 
@@ -217,7 +220,7 @@
 
 	* Clean up and rearranged to Snit object.
 
-2005-01-14  Jens Pönisch   <jens@ruessel.in-chemnitz.de>
+2005-01-14  Jens Ponisch   <jens@ruessel.in-chemnitz.de>
 
 	* fixed circle implementation
 	* added support for arcs
@@ -226,7 +229,7 @@
 
 	* partially fixed font handling, still needs a lot of work
 
-2004-10-30  Jens Pönisch  <jens@ruessel.in-chemnitz.de>
+2004-10-30  Jens Ponisch  <jens@ruessel.in-chemnitz.de>
 
 	* added support for qCurve, circle and polygon
 	* linestyle can now be reset

@@ -27,7 +27,7 @@ checkdoc:
 	@eskil -block srcmeth docmeth
 
 web/mypdf.pdf: mkweb.tcl web/index.html
-	mkweb.tcl
+	./mkweb.tcl
 
 # Helpers
 
