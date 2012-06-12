@@ -72,6 +72,12 @@ test graphics-4.1 {line} -body {
     }
 } -result 1
 
+test graphics-4.1.1 {line} -body {
+    mytest {setLineWidth 10} {setLineDash 5 7} {line 100 100 400 700} {
+         10 w \[5 7\] 0 d 200 300 m 500 900 l S
+    }
+} -result 1
+
 test graphics-4.2 {line} -body {
     mytest -orient 1 \
             {setLineStyle 20} \
@@ -87,9 +93,23 @@ test graphics-4.3 {line style} -body {
     Apa destroy
 } -returnCodes 1 -result {Bad line width '-1', may not be negative}
 
+test graphics-4.3.1 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineWidth -1
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Bad line width '-1', may not be negative}
+
 test graphics-4.4 {line style} -body {
     pdf4tcl::new Apa
     Apa setLineStyle 1 0 0
+} -cleanup {
+    Apa destroy
+} -returnCodes 1 -result {Dash pattern may not be all zeroes}
+
+test graphics-4.4.1 {line style} -body {
+    pdf4tcl::new Apa
+    Apa setLineDash 0 0
 } -cleanup {
     Apa destroy
 } -returnCodes 1 -result {Dash pattern may not be all zeroes}

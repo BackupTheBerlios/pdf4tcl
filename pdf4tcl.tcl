@@ -2,7 +2,7 @@
 # this began as a port of pdf4php from php to tcl
 #
 # Copyright (c) 2004 by Frank Richter <frichter@truckle.in-chemnitz.de> and
-#                       Jens Pönisch <jens@ruessel.in-chemnitz.de>
+#                       Jens PÃ¶nisch <jens@ruessel.in-chemnitz.de>
 # Copyright (c) 2006-2012 by Peter Spjuth <peter.spjuth@gmail.com>
 # Copyright (c) 2009 by Yaroslav Schekin <ladayaroslav@yandex.ru>
 #
@@ -424,13 +424,13 @@ namespace eval pdf4tcl {
         #----------------------
         # post - PostScript table (needs data from OS/2 table)
         set ttfpos [lindex $ttftables(post) 1]
-        binary scan $ttfdata "@${ttfpos}SuSuSuSuSuSuIu" \
+        binary scan $ttfdata "@${ttfpos}SuSuSSuSSIu" \
                 ver_maj ver_min itan0 itan1 ulpos ulthick isFixedPitch
 
         set BFA($ttfname,ItalicAngle) [expr {$itan0 + $itan1 / 65536.0}]
 
         set flags 4 ; # "symbolic".
-        if {$BFA($ttfname,ItalicAngle) != 0} {set flags [expr {$flags | 32}]}
+        if {$BFA($ttfname,ItalicAngle) != 0} {set flags [expr {$flags | 64}]}
         if {$usWeightClass >= 600} {set flags [expr {$flags | (1 << 18)}]}
         if {$isFixedPitch} {set flags [expr {$flags | 1}]}
         set BFA($ttfname,flags) $flags
@@ -2711,6 +2711,34 @@ snit::type pdf4tcl::pdf4tcl {
         $self EndTextObj
         $self Pdfoutcmd $width "w"
         $self Pdfout "\[$args\] 0 d\n"
+    }
+
+    method setLineWidth {width} {
+        CheckNumeric $width "line width" -nonnegative
+        $self EndTextObj
+        $self Pdfoutcmd $width "w"
+    }
+
+    # Arguments are pairs for dash pattern plus an optional offset
+    method setLineDash {args} {
+        if {([llength $args] % 2) == 1} {
+            set offset [lindex $args end]
+            set args [lrange $args 0 end-1]
+        } else {
+            set offset 0
+        }
+        CheckNumeric $offset "dash offset" -nonnegative
+        # Validate dash pattern
+        set sum 0
+        foreach p $args {
+            CheckNumeric $p "dash pattern" -nonnegative
+            set sum [expr {$sum + $p}]
+        }
+        if {[llength $args] > 0 && $sum == 0} {
+            return -code error "Dash pattern may not be all zeroes"
+        }
+        $self EndTextObj
+        $self Pdfout "\[$args\] $offset d\n"
     }
 
     method DrawLine {args} {
