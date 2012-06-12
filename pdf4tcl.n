@@ -239,7 +239,7 @@ Database Class:	\\fB\\$3\\fR
 .de UL
 \\$1\l'|0\(ul'\\$2
 ..
-.TH "pdf4tcl" n 0.7.1 pdf4tcl "Pdf document generation"
+.TH "pdf4tcl" n 0.8 pdf4tcl "Pdf document generation"
 .BS
 .SH NAME
 pdf4tcl \- Pdf document generation
@@ -250,7 +250,7 @@ package require \fBdict \fR
 .sp
 package require \fBsnit \fR
 .sp
-package require \fBpdf4tcl  ?0.7.1?\fR
+package require \fBpdf4tcl  ?0.8?\fR
 .sp
 \fB::pdf4tcl::new\fR \fIobjectName\fR ?\fIoption value\fR...?
 .sp

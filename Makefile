@@ -2,12 +2,12 @@
 #
 # $Id$
 
-VERSION = 071
+VERSION = 08
 #TCLSH = $(HOME)/tcl/bin/tclsh8.5
 #TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
 TCLSH = tclsh
 TCLSH85 = tclsh8.5
-TCLKIT84 = $(HOME)/tclkit/v84/tclkit-linux-x86
+TCLKIT84 = $(HOME)/tclkit/v85/tclkit-linux-x86
 
 # TOOL paths
 NAGELFAR = nagelfar -encoding iso8859-1

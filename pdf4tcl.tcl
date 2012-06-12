@@ -9,7 +9,7 @@
 # See the file "licence.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package provide pdf4tcl 0.7.1
+package provide pdf4tcl 0.8
 
 package require pdf4tcl::stdmetrics
 package require pdf4tcl::glyph2unicode
@@ -1295,7 +1295,7 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # Deprecated destroy function
-    method cleanup {} {
+    method cleanup {} { # Deprecated
         $self destroy
     }
 
@@ -2339,7 +2339,7 @@ snit::type pdf4tcl::pdf4tcl {
 
     # Draw text at current position, with a newline before
     # DEPRECATED!
-    method drawText {str} {
+    method drawText {str} { # Deprecated
         $self BeginTextObj
         if {!$pdf(font_set)} {
             $self SetupFont
@@ -2732,7 +2732,7 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # qCurve is deprecated in favor of curve
-    method qCurve {x1 y1 xc yc x2 y2} {
+    method qCurve {x1 y1 xc yc x2 y2} { # Deprecated
         $self EndTextObj
         $self Trans $x1 $y1 x1 y1
         $self Trans $xc $yc xc yc
@@ -3156,7 +3156,7 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # Deprecated jpeg adder, use addImage
-    method addJpeg {filename id} {
+    method addJpeg {filename id} { # Deprecated
         if {!$pdf(inPage)} { $self startPage }
         variable images
 
