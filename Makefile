@@ -1,15 +1,9 @@
 # Makefile for pdf4tcl
-#
-# $Id$
 
-VERSION = 08
-#TCLSH = $(HOME)/tcl/bin/tclsh8.5
-#TCLSH = $(HOME)/tcl/install/bin/tclsh8.5
-TCLSH = tclsh
-TCLSH85 = tclsh8.5
-TCLKIT84 = $(HOME)/tclkit/v85/tclkit-linux-x86
+VERSION = 08p
 
 # TOOL paths
+TCLSH = tclsh
 NAGELFAR = nagelfar -encoding iso8859-1
 ESKIL    = eskil
 
@@ -22,9 +16,10 @@ pdf4tcl.html pdf4tcl.n : pdf4tcl.man mkdoc.tcl
 	./mkdoc.tcl
 
 checkdoc:
-	@egrep 'method [a-z]' pdf4tcl.man | grep '\[call' | egrep -v 'method configure' | sed 's/[][]/ /g' | sort > docmeth
-	@egrep 'method [a-z]' pdf4tcl.tcl | sort > srcmeth
-	@eskil -block srcmeth docmeth
+	@egrep 'method [a-z]' pdf4tcl.man | grep '\[call' | egrep -v 'method configure' | sed 's/[]["]/ /g' | sed 's/ arg / /g' | sed 's/  */ /g' | sed 's/call objectName/ /g' | sort > _docmeth
+	@egrep 'method [a-z]' pdf4tcl.tcl | sed 's/[{}]/ /g' | sed 's/  */ /g' | sort > _srcmeth
+	@$(ESKIL) -block _srcmeth _docmeth
+	@rm _srcmeth _docmeth
 
 web/mypdf.pdf: mkweb.tcl web/index.html
 	./mkweb.tcl
@@ -37,14 +32,12 @@ web/mypdf.pdf: mkweb.tcl web/index.html
 # Tests
 test: cleancc
 	$(TCLSH) tests/all.tcl
-test85: cleancc
-	$(TCLSH85) tests/all.tcl
 
 pdf4tcl_h.syntax : pdf4tcl.tcl pdf4tcl.syntax
-	$(TCLKIT84) `which $(NAGELFAR)` -header pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
+	$(NAGELFAR) -header pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
 
 check: pdf4tcl_h.syntax
-	$(TCLKIT84) `which $(NAGELFAR)` pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
+	$(NAGELFAR) pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
 
 bench: cleancc
 	$(TCLSH) bench/all.tcl
@@ -62,7 +55,7 @@ instrument: $(IFILES)
 	@rm -f $(LOGFILES)
 
 $(LOGFILES): $(IFILES)
-	@tclsh tests/all.tcl
+	@$(TCLSH) tests/all.tcl
 
 %.tcl_m: %.tcl_log 
 	@$(NAGELFAR) -markup $*.tcl
