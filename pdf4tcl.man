@@ -312,6 +312,10 @@ Select if the bookmark is closed by default. Default is false, i.e. not closed.
 
 [list_end]
 
+[call [arg objectName] [method attachFile] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "filename"] [arg "description"] [arg "content"]]
+
+This method TBW.
+
 
 [list_end]
 [subsection {OBJECT METHODS, TEXT}]

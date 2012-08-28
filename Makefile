@@ -31,7 +31,7 @@ web/mypdf.pdf: mkweb.tcl web/index.html
 
 # Tests
 test: cleancc
-	$(TCLSH) tests/all.tcl
+	$(TCLSH) tests/all.tcl $(TESTFLAGS)
 
 pdf4tcl_h.syntax : pdf4tcl.tcl pdf4tcl.syntax
 	$(NAGELFAR) -header pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'

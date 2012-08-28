@@ -1476,17 +1476,22 @@ snit::type pdf4tcl::pdf4tcl {
         # dimensions
         set oid [$self GetOid]
         lappend pdf(pages) $oid
-        $self Pdfout "$oid 0 obj\n"
-        $self Pdfout "<</Type /Page\n"
-        $self Pdfout "/Parent 2 0 R\n"
-        $self Pdfout "/Resources 3 0 R\n"
-        $self Pdfout [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
+        set pdf(pageobjid) $oid
+
+        # create page object without delimiter
+        set pdf(pageobj) {}
+        append pdf(pageobj) "$oid 0 obj\n"
+        append pdf(pageobj) "<</Type /Page\n"
+        append pdf(pageobj) "/Parent 2 0 R\n"
+        append pdf(pageobj) "/Resources 3 0 R\n"
+        append pdf(pageobj) [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
         if {$pdf(rotate) != 0} {
-            $self Pdfout "/Rotate $pdf(rotate)\n"
+            append pdf(pageobj) "/Rotate $pdf(rotate)\n"
         }
-        $self Pdfout "/Contents \[[$self NextOid] 0 R\]\n"
-        $self Pdfout ">>\n"
-        $self Pdfout "endobj\n\n"
+        append pdf(pageobj) "/Contents \[[$self NextOid] 0 R\]\n"
+
+        # reset annotations (this variable contains a list)
+        set pdf(annotations) {}
 
         # start of contents
         set oid [$self GetOid]
@@ -1529,6 +1534,15 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfout "$data_len\n"
         $self Pdfout "endobj\n\n"
         set pdf(inPage) false
+
+        # insert annotations array and write page object
+        if {[llength $pdf(annotations)] > 0} {
+            append pdf(pageobj) "/Annots \[[join $pdf(annotations) \n]\]\n"
+        }
+        append pdf(pageobj) ">>\n"
+        append pdf(pageobj) "endobj\n\n"
+        $self StoreXref $pdf(pageobjid)
+        $self Pdfout $pdf(pageobj)
 
         # Dump stored objects
         $self FlushObjects
@@ -3856,6 +3870,39 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Embed a file and create a file annotation
+    method attachFile {x y width height fn description content} {
+        # recompute coordinates to current system
+        $self Trans  $x $y x y
+        $self TransR $width $height width height
+        set x2 [expr {$x+$width}]
+        set y2 [expr {$y+$height}]
+
+        # 1. make stream with file contents
+        set body [MakeStream "<< /Type /EmbeddedFile " $content $pdf(compress)]
+        set sid [$self AddObject $body]
+
+        # 2. create file specification dictionary
+        set fsdict "<< /Type /Filespec\n"
+        append fsdict " /F [QuoteString $fn]\n"
+        append fsdict " /EF << /F $sid 0 R >>\n"
+        append fsdict ">>\n"
+        set fsid [$self AddObject $fsdict]
+
+        # 3. create annotation
+        set andict "<< /Type /Annot\n"
+        append andict "  /Subtype /FileAttachment\n"
+        append andict "  /FS $fsid 0 R\n"
+        append andict "  /Contents [QuoteString $description]\n"
+        append andict "  /Name /Paperclip\n"
+        append andict "  /Rect \[$x $y $x2 $y2\]\n"
+        append andict ">>\n"
+        set anid [$self AddObject $andict]
+
+        # 4. Insert annotation into current page
+        lappend pdf(annotations) "$anid 0 R"
+    }
+
     #######################################################################
     # Canvas Handling
     #######################################################################
@@ -4193,14 +4240,21 @@ snit::type pdf4tcl::pdf4tcl {
                 set fontsize $pdf(font_size)
                 # Next, figure out if the text fits within the bbox
                 # with the current font, or it needs to be scaled.
+                # compute width on canvas using font measure instead of bbox
+                # to get it right for angled text
                 set widest 0.0
+                set cwidest 0.0
                 foreach line $lines {
                     set width [$self getStringWidth $line 1]
+                    set cwidth [font measure $opts(-font) $line]
                     if {$width > $widest} {
                         set widest $width
                     }
+                    if {$cwidth > $cwidest} {
+                        set cwidest $cwidth
+                    }
                 }
-                set xscale [expr {$widest / ($x2 - $x1)}]
+                set xscale [expr {$widest / $cwidest}]
                 set yscale [expr {([llength $lines] * $fontsize) / \
                         ($y2 - $y1)}]
                 # Scale down if the font is too big
@@ -4215,6 +4269,10 @@ snit::type pdf4tcl::pdf4tcl {
                 # Move x/y to point nw/n/ne depending on anchor
                 # and justification
                 set width $widest
+
+                set xc $x ;# center of rotation coordinates
+                set yc $y ;# they are not adjusted
+
                 # First line is assumed to be height of bounding box.
                 # Add font size for each new line.
                 # Thus it is assumed that:
@@ -4256,7 +4314,30 @@ snit::type pdf4tcl::pdf4tcl {
                     # down to follow canvas coordinates we need a
                     # negative y scale here to get the text correct.
 
-                    $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
+                    # if -angle is present, turn
+                    if {[info exists opts(-angle)]} { # 8.6 only
+                        #puts "Angle is $opts(-angle)"
+                        set sx [expr {sin(-$opts(-angle)*3.14159265358979/180)}]
+                        set cx [expr {cos(-$opts(-angle)*3.14159265358979/180)}]
+                        set msx [expr {-$sx}]
+                        set mcx [expr {-$cx}]
+
+                        set mxc [expr {-$xc}]
+                        set myc [expr {-$yc}]
+                        # Compute test rotation matrix.
+                        # First subtract center of rotation, rotate, shift back
+
+                        set rotationmatrix [list 1 0 0 1 $mxc $myc]
+                        set rotationmatrix [MulMxM $rotationmatrix [list $cx $sx $msx $cx 0 0]]
+                        set rotationmatrix [MulMxM $rotationmatrix [list 1 0 0 1 $xc $yc]]
+
+                        # compute final coordinates.
+                        foreach {xs ys} [MulVxM [list $x0 $y] $rotationmatrix] break
+                        $self Pdfoutcmd $cx $sx $sx $mcx $xs $ys "Tm"
+                    } else {
+                        $self Pdfoutcmd 1 0 0 -1 $x0 $y "Tm"
+                    }
+
                     $self Pdfout "([CleanText $line $pdf(current_font)]) Tj\n"
 
                     if {$underline != -1} {
@@ -4266,7 +4347,7 @@ snit::type pdf4tcl::pdf4tcl {
                                                0 [expr {$index - 1}]] 1]
                             set ulw [$self getStringWidth [string index $line $index] 1]
                             lappend ulcoords [expr {$x0 + $ulx}] \
-                                    [expr {$y - $bboxt}] $ulw
+                                    [expr {$y + 1.0}] $ulw
                         }
                     }
                     incr lineNo
@@ -4275,10 +4356,20 @@ snit::type pdf4tcl::pdf4tcl {
                 $self EndTextObj
 
                 # Draw any underline
-                foreach {x y w} $ulcoords {
-                    $self Pdfoutcmd $x $y "m"
-                    $self Pdfoutcmd [expr {$x + $w}] $y "l"
-                    $self Pdfoutcmd "S"
+                if {[info exists rotationmatrix]} {
+                    # transform underlines by same matrix as text anchor point
+                    foreach {x y w} $ulcoords {
+                        # 8.5
+                        eval \$self Pdfoutcmd [MulVxM [list $x $y] $rotationmatrix] "m"
+                        eval \$self Pdfoutcmd [MulVxM [list [expr {$x + $w}] $y] $rotationmatrix] "l"
+                        $self Pdfoutcmd "S"
+                    }
+                } else {
+                    foreach {x y w} $ulcoords {
+                        $self Pdfoutcmd $x $y "m"
+                        $self Pdfoutcmd [expr {$x + $w}] $y "l"
+                        $self Pdfoutcmd "S"
+                    }
                 }
             }
             bitmap {
@@ -4817,7 +4908,14 @@ snit::type pdf4tcl::pdf4tcl {
         } else {
             set out [encoding convertto $FontsAttrs($fn,encoding) $in]
         }
-        return [string map {( \\( ) \\) \\ \\\\} $out]
+        # map special characters
+        return [string map {\n "\\n" \r "\\r" \t "\\t" \b "\\b" \f "\\f" ( "\\(" ) "\\)" \\ "\\\\"} $out]
+    }
+
+    # helper function: correctly quote string with parentheses
+    proc QuoteString {string} {
+        # map special characters
+        return "([string map {\n "\\n" \r "\\r" \t "\\t" \b "\\b" \f "\\f" ( "\\(" ) "\\)" \\ "\\\\"} $string])"
     }
 
     # helper function: consume and return an object id

@@ -302,6 +302,8 @@ package require \fBpdf4tcl  ?0.8?\fR
 .sp
 \fIobjectName\fR \fBbookmarkAdd\fR ?\fIoption value\fR...?
 .sp
+\fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfilename\fR \fIdescription\fR \fIcontent\fR
+.sp
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
 .sp
 \fIobjectName\fR \fBgetStringWidth\fR \fIstr\fR
@@ -603,6 +605,9 @@ Set the level of the bookmark. Default is 0.
 \fB-closed\fR \fIboolean\fR
 Select if the bookmark is closed by default. Default is false, i.e. not closed.
 .RE
+.TP
+\fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfilename\fR \fIdescription\fR \fIcontent\fR
+This method TBW.
 .PP
 .SS "OBJECT METHODS, TEXT"
 .TP
