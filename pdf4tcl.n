@@ -607,7 +607,12 @@ Select if the bookmark is closed by default. Default is false, i.e. not closed.
 .RE
 .TP
 \fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfilename\fR \fIdescription\fR \fIcontent\fR
-This method TBW.
+This method embeds a file into the PDF stream and add a file annotation to the current page. The location of the file annotation is given by the coordinates \fIx\fR, \fIy\fR, \fIwidth\fR, \fIheight\fR. The annotation is rendered as a paperclip icon, which allows the extraction of the attached file. A unique \fIfilename\fR must be set as well as a \fIdescription\fR, which is shown by the PDF viewer upon activating the annotation. The content of the file is given in the string variable \fIcontent\fR.
+.CS
+
+$pdfobject attachFile 0 0 100 100 "data.txt" "This is the description" "This should be stored in the file."
+
+.CE
 .PP
 .SS "OBJECT METHODS, TEXT"
 .TP

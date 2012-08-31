@@ -90,9 +90,9 @@ test canvas-3.1 {text} -constraints runin85 -body {
     set font "Helvetica -10"
     .c create text 10 10 -text "Apa\nBepa\nCepa" -underline 5 -anchor nw \
             -font $font -tag apa
-    puts "[.c bbox apa]"
-    puts "[font actual $font]"
-    puts "[font metric $font]"
+    #puts "[.c bbox apa]"
+    #puts "[font actual $font]"
+    #puts "[font metric $font]"
     # TODO: On a system where output is this:
     #9 10 45 73
     #-family {Nimbus Sans L} -size -14 -weight normal -slant roman -underline 0 -overstrike 0

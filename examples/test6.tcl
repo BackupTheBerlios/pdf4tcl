@@ -30,6 +30,10 @@ p1 bookmarkAdd -title "Bookmark 2.2" -level 1
 p1 bookmarkAdd -title "Bookmark 2.2.1" -level 2
 p1 bookmarkAdd -title "Bookmark 2.2.2" -level 2
 
+p1 attachFile 0 0 100 100 "data.txt" "This is the description" "This should be stored in the file."
+
+p1 attachFile 200 0 100 200 "data2.txt" "This is the second description" "This should be stored in the second file."
+
 p1 startPage
 p1 text "Bookmark 3" -x 100 -y 100
 p1 bookmarkAdd -title "Bookmark 3"

@@ -407,7 +407,11 @@ the canvas is drawn.</p></dd>
 <dd><p>Select if the bookmark is closed by default. Default is false, i.e. not closed.</p></dd>
 </dl></dd>
 <dt><a name="26"><i class="arg">objectName</i> <b class="method">attachFile</b> <i class="arg">x</i> <i class="arg">y</i> <i class="arg">width</i> <i class="arg">height</i> <i class="arg">filename</i> <i class="arg">description</i> <i class="arg">content</i></a></dt>
-<dd><p>This method TBW.</p></dd>
+<dd><p>This method embeds a file into the PDF stream and add a file annotation to the current page. The location of the file annotation is given by the coordinates <i class="arg">x</i>, <i class="arg">y</i>, <i class="arg">width</i>, <i class="arg">height</i>. The annotation is rendered as a paperclip icon, which allows the extraction of the attached file. A unique <i class="arg">filename</i> must be set as well as a <i class="arg">description</i>, which is shown by the PDF viewer upon activating the annotation. The content of the file is given in the string variable <i class="arg">content</i>.</p>
+<pre class="example">
+$pdfobject attachFile 0 0 100 100 &quot;data.txt&quot; &quot;This is the description&quot; &quot;This should be stored in the file.&quot;
+</pre>
+</dd>
 </dl>
 </div>
 <div id="subsection5" class="subsection"><h3><a name="subsection5">OBJECT METHODS, TEXT</a></h3>
