@@ -302,7 +302,9 @@ package require \fBpdf4tcl  ?0.8?\fR
 .sp
 \fIobjectName\fR \fBbookmarkAdd\fR ?\fIoption value\fR...?
 .sp
-\fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfilename\fR \fIdescription\fR \fIcontent\fR
+\fIobjectName\fR \fBembedFile\fR \fIfilename\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfid\fR \fIdescription\fR ?\fIoption value\fR...?
 .sp
 \fIobjectName\fR \fBsetFont\fR \fIsize\fR ?\fIfontname\fR?
 .sp
@@ -606,11 +608,28 @@ Set the level of the bookmark. Default is 0.
 Select if the bookmark is closed by default. Default is false, i.e. not closed.
 .RE
 .TP
-\fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfilename\fR \fIdescription\fR \fIcontent\fR
-This method embeds a file into the PDF stream and add a file annotation to the current page. The location of the file annotation is given by the coordinates \fIx\fR, \fIy\fR, \fIwidth\fR, \fIheight\fR. The annotation is rendered as a paperclip icon, which allows the extraction of the attached file. A unique \fIfilename\fR must be set as well as a \fIdescription\fR, which is shown by the PDF viewer upon activating the annotation. The content of the file is given in the string variable \fIcontent\fR.
+\fIobjectName\fR \fBembedFile\fR \fIfilename\fR ?\fIoption value\fR...?
+This method embeds a file into the PDF stream. File data is considered binary. Returns an id that can be used in subsequent calls to \fBattachFile\fR.
+.RS
+.TP
+\fB-id\fR \fIid\fR
+Explicitly select an id for the file. The \fIid\fR must be unique within the document.
+.TP
+\fB-contents\fR \fIdata\fR
+Provides the file contents instead of reading the actual file.
+.RE
+.TP
+\fIobjectName\fR \fBattachFile\fR \fIx\fR \fIy\fR \fIwidth\fR \fIheight\fR \fIfid\fR \fIdescription\fR ?\fIoption value\fR...?
+This method adds a file annotation to the current page. The location of the file annotation is given by the coordinates \fIx\fR, \fIy\fR, \fIwidth\fR, \fIheight\fR. The annotation is rendered by default as a paperclip icon, which allows the extraction of the attached file. An \fIfid\fR from a previous call to \fBembedFile\fR must be set as well as a \fIdescription\fR, which is shown by the PDF viewer upon activating the annotation.
+.RS
+.TP
+\fB-icon\fR \fIicon\fR
+Controls the appearance of the attachment. Valid values are Paperclip, Tag, Graph, or PushPin. Default value is Paperclip.
+.RE
 .CS
 
-$pdfobject attachFile 0 0 100 100 "data.txt" "This is the description" "This should be stored in the file."
+set fid [$pdfobject embedFile "data.txt" -contents "This should be stored in the file."]
+$pdfobject attachFile 0 0 100 100 $fid "This is the description"
 
 .CE
 .PP

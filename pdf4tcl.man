@@ -312,12 +312,33 @@ Select if the bookmark is closed by default. Default is false, i.e. not closed.
 
 [list_end]
 
-[call [arg objectName] [method attachFile] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "filename"] [arg "description"] [arg "content"]]
+[call [arg objectName] [method embedFile] [arg "filename"] [opt [arg "option value"]...]]
 
-This method embeds a file into the PDF stream and add a file annotation to the current page. The location of the file annotation is given by the coordinates [arg "x"], [arg "y"], [arg "width"], [arg "height"]. The annotation is rendered as a paperclip icon, which allows the extraction of the attached file. A unique [arg "filename"] must be set as well as a [arg "description"], which is shown by the PDF viewer upon activating the annotation. The content of the file is given in the string variable [arg "content"].
+This method embeds a file into the PDF stream. File data is considered binary. Returns an id that can be used in subsequent calls to [method attachFile].
+
+[list_begin options]
+
+[opt_def -id [arg id]]
+Explicitly select an id for the file. The [arg "id"] must be unique within the document.
+
+[opt_def -contents [arg data]]
+Provides the file contents instead of reading the actual file.
+[list_end]
+
+[call [arg objectName] [method attachFile] [arg "x"] [arg "y"] [arg "width"] [arg "height"] [arg "fid"] [arg "description"] [opt [arg "option value"]...]]
+
+This method adds a file annotation to the current page. The location of the file annotation is given by the coordinates [arg "x"], [arg "y"], [arg "width"], [arg "height"]. The annotation is rendered by default as a paperclip icon, which allows the extraction of the attached file. An [arg "fid"] from a previous call to [method embedFile] must be set as well as a [arg "description"], which is shown by the PDF viewer upon activating the annotation.
+
+[list_begin options]
+
+[opt_def -icon [arg icon]]
+Controls the appearance of the attachment. Valid values are Paperclip, Tag, Graph, or PushPin. Default value is Paperclip.
+
+[list_end]
 
 [example {
-$pdfobject attachFile 0 0 100 100 "data.txt" "This is the description" "This should be stored in the file."
+set fid [$pdfobject embedFile "data.txt" -contents "This should be stored in the file."]
+$pdfobject attachFile 0 0 100 100 $fid "This is the description"
 }]
 
 [list_end]

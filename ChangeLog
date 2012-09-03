@@ -1,3 +1,6 @@
+2012-09-03 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added embedFile method, splitting some functionality from attachFile.
+
 2012-08-28 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Patch from Christian Gollwitzer:
 	* Added attachFile method.
