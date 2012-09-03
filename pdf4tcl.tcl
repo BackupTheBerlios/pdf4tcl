@@ -1215,6 +1215,7 @@ snit::type pdf4tcl::pdf4tcl {
     constructor {args} {
         # In 8.5 recode these as dicts within the pdf array
         variable images
+        variable files
         variable fonts
         variable bitmaps
         variable patterns
@@ -1241,6 +1242,7 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(font_set) false
         set pdf(in_text_object) false
         array set images {}
+        array set files {}
         array set bitmaps {}
         array set patterns {}
         set pdf(objects) {}
@@ -1563,7 +1565,7 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # This must create optionally compressed PDF stream.
-    # dictval must contain correct string value without << terminator.
+    # dictval must contain correct string value without >> terminator.
     # Terminator and length will be added by this proc.
     proc MakeStream {dictval body compress} {
         set res $dictval
@@ -3870,16 +3872,32 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
-    # Embed a file and create a file annotation
-    method attachFile {x y width height fn description content} {
-        # recompute coordinates to current system
-        $self Trans  $x $y x y
-        $self TransR $width $height width height
-        set x2 [expr {$x+$width}]
-        set y2 [expr {$y+$height}]
+    # Embed a file and return a handle to the File Specification Object.
+    method embedFile {fn args} {
+        variable files
+        set id ""
+        set contents ""
+        set contentsIsSet 0
+        foreach {arg val} $args {
+            switch -- $arg {
+                -id {
+                    set id $val
+                }
+                -contents {
+                    set contents $val
+                    set contentsIsSet 1
+                }
+            }
+        }
+        if {!$contentsIsSet} {
+            set ch [open $fn r]
+            fconfigure $ch -translation binary
+            set contents [read $ch]
+            close $ch
+        }
 
         # 1. make stream with file contents
-        set body [MakeStream "<< /Type /EmbeddedFile " $content $pdf(compress)]
+        set body [MakeStream "<< /Type /EmbeddedFile " $contents $pdf(compress)]
         set sid [$self AddObject $body]
 
         # 2. create file specification dictionary
@@ -3889,12 +3907,47 @@ snit::type pdf4tcl::pdf4tcl {
         append fsdict ">>\n"
         set fsid [$self AddObject $fsdict]
 
-        # 3. create annotation
+        if {$id eq ""} {
+            set id file$fsid
+        }
+        set files($id) $fsid
+        
+        return $id
+    }
+
+    # Embed a file and create a file annotation
+    method attachFile {x y width height fid description args} {
+        variable files
+        set icon Paperclip
+
+        foreach {option value} $args {
+            switch -- $option {
+                -icon {
+                    if {[lsearch {Paperclip Tag Graph PushPin} $icon ] < 0} {
+                        return -code error "Unknown value for -icon"
+                    }
+                    set icon $value
+                }
+                default {
+                    return -code error "Unknown option $option"
+                }
+            }
+        }
+
+        # recompute coordinates to current system
+        $self Trans  $x $y x y
+        $self TransR $width $height width height
+        set x2 [expr {$x+$width}]
+        set y2 [expr {$y+$height}]
+
+        set fsid $files($fid)
+
+        # Create annotation
         set andict "<< /Type /Annot\n"
         append andict "  /Subtype /FileAttachment\n"
         append andict "  /FS $fsid 0 R\n"
         append andict "  /Contents [QuoteString $description]\n"
-        append andict "  /Name /Paperclip\n"
+        append andict "  /Name /$icon\n"
         append andict "  /Rect \[$x $y $x2 $y2\]\n"
         append andict ">>\n"
         set anid [$self AddObject $andict]

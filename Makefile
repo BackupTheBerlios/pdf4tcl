@@ -24,6 +24,15 @@ checkdoc:
 web/mypdf.pdf: mkweb.tcl web/index.html
 	./mkweb.tcl
 
+example:
+	@cd examples && $(TCLSH) test0.tcl
+	@cd examples && $(TCLSH) test1.tcl
+	@cd examples && $(TCLSH) test2.tcl
+	@cd examples && $(TCLSH) test3.tcl
+	@cd examples && $(TCLSH) test4.tcl
+	@cd examples && $(TCLSH) test5.tcl
+	@cd examples && $(TCLSH) test6.tcl
+
 # Helpers
 
 #metrics:

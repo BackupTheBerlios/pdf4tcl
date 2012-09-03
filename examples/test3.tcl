@@ -73,3 +73,4 @@ p1 canvas .c -fontmap {MyArial1 MyArial1 MyArial2 MyArial2}
 
 p1 write -file test3.pdf
 p1 cleanup
+exit

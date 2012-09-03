@@ -7,6 +7,8 @@ source [file join $thisDir init.tcl]
 
 if {![file exists tcl.jpg]} {
     file link tcl.jpg ../examples/tcl.jpg
+}
+if {![file exists tcl.ext]} {
     file link tcl.ext ../examples/tcl.jpg
 }
 

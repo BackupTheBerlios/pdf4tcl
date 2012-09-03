@@ -124,7 +124,8 @@ test page-3.1 {file attachment annnotation} -body {
     apa startPage
     apa setFont 12 Times-Roman
     apa drawTextBox 10 10 200 200 "This is a text mark"
-    apa attachFile  10 10 50 50 "data.txt" "This is the description" "This should be in the file."
+    apa embedFile "data.txt" -contents "This should be in the file." -id GG
+    apa attachFile 10 10 50 50 GG "This is the description"
     apa get
 } -cleanup {apa destroy} -match glob -result {*<< /Type /EmbeddedFile*This should be in the file.*<< /Type /Filespec*/F (data.txt)*<< /Type /Annot*/Contents (This is the description)*}
 

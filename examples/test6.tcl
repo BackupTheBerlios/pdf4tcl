@@ -30,9 +30,17 @@ p1 bookmarkAdd -title "Bookmark 2.2" -level 1
 p1 bookmarkAdd -title "Bookmark 2.2.1" -level 2
 p1 bookmarkAdd -title "Bookmark 2.2.2" -level 2
 
-p1 attachFile 0 0 100 100 "data.txt" "This is the description" "This should be stored in the file."
+set fid [p1 embedFile "data.txt" -contents "This should be stored in the file."]
+p1 attachFile 0 0 100 100 $fid "This is the description"
 
-p1 attachFile 200 0 100 200 "data2.txt" "This is the second description" "This should be stored in the second file."
+p1 embedFile "data2.txt" -contents "This should be stored in the second file \u00E5 \u00F5." -id ScndFile
+p1 attachFile 200 0 100 100 ScndFile "This is the second description" -icon Tag
+
+set fid [p1 embedFile "data3.txt" -contents "This should be stored in the third file."]
+p1 attachFile 0 200 100 100 $fid "This is the third description" -icon Graph
+
+set fid [p1 embedFile "data4.txt" -contents "This should be stored in the fourth file."]
+p1 attachFile 200 200 100 100 $fid "This is the fourth description" -icon PushPin
 
 p1 startPage
 p1 text "Bookmark 3" -x 100 -y 100
