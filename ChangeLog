@@ -1,3 +1,6 @@
+2012-09-06 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added startXObject method, for creating Form XObjects.
+
 2012-09-03 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added embedFile method, splitting some functionality from attachFile.
 

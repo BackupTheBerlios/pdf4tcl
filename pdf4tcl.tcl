@@ -1412,6 +1412,47 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(origypos) $height
     }
 
+    # Start on a new XObject
+    method startXObject {args} {
+        variable images
+        # Get some defaults from document
+        set localopts(-orient)    $options(-orient)
+        set localopts(-landscape) 0
+        set localopts(-margin)    0
+        set localopts(-paper)     {100 100}
+        set localopts(-rotate)    0
+        set localopts(-xobject)   1
+
+        # Parse options
+        foreach {option value} $args {
+            switch -- $option {
+                -paper {
+                        $self CheckPaper $option $value
+                }
+                -landscape {
+                    $self CheckBoolean $option $value
+                }
+                -margin {
+                    $self CheckMargin $option $value
+                }
+                -orient {
+                    $self CheckBoolean $option $value
+                }
+                -rotate {
+                    $self CheckRotation $option $value
+                }
+                default {
+                    return -code error "Unknown option $option"
+                }
+            }
+            set localopts($option) $value
+        }
+        set oid [eval \$self startPage [array get localopts]]
+        set id xobject$oid
+        set images($id) [list $pdf(width) $pdf(height) $oid]
+        return $id
+    }
+
     # Start on a new page
     method startPage {args} {
         # Get defaults from document
@@ -1420,6 +1461,8 @@ snit::type pdf4tcl::pdf4tcl {
         set localopts(-margin)    $options(-margin)
         set localopts(-paper)     $options(-paper)
         set localopts(-rotate)    $options(-rotate)
+        # Unofficial option to overlay startXObject on startPage
+        set localopts(-xobject)   0
 
         if {[llength $args] == 1} {
             # Single arg = paper
@@ -1456,6 +1499,9 @@ snit::type pdf4tcl::pdf4tcl {
                     -rotate {
                         $self CheckRotation $option $value
                     }
+                    -xobject {
+                        $self CheckBoolean $option $value
+                    }                        
                     default {
                         return -code error "Unknown option $option"
                     }
@@ -1474,24 +1520,26 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(orient) $localopts(-orient)
 
         set pdf(inPage) 1
+        set pdf(inXObject) $localopts(-xobject)
 
         # dimensions
-        set oid [$self GetOid]
-        lappend pdf(pages) $oid
-        set pdf(pageobjid) $oid
+        if {!$pdf(inXObject)} {
+            set oid [$self GetOid]
+            lappend pdf(pages) $oid
+            set pdf(pageobjid) $oid
 
-        # create page object without delimiter
-        set pdf(pageobj) {}
-        append pdf(pageobj) "$oid 0 obj\n"
-        append pdf(pageobj) "<</Type /Page\n"
-        append pdf(pageobj) "/Parent 2 0 R\n"
-        append pdf(pageobj) "/Resources 3 0 R\n"
-        append pdf(pageobj) [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
-        if {$pdf(rotate) != 0} {
-            append pdf(pageobj) "/Rotate $pdf(rotate)\n"
+            # create page object without delimiter
+            set pdf(pageobj) {}
+            append pdf(pageobj) "$oid 0 obj\n"
+            append pdf(pageobj) "<</Type /Page\n"
+            append pdf(pageobj) "/Parent 2 0 R\n"
+            append pdf(pageobj) "/Resources 3 0 R\n"
+            append pdf(pageobj) [format "/MediaBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
+            if {$pdf(rotate) != 0} {
+                append pdf(pageobj) "/Rotate $pdf(rotate)\n"
+            }
+            append pdf(pageobj) "/Contents \[[$self NextOid] 0 R\]\n"
         }
-        append pdf(pageobj) "/Contents \[[$self NextOid] 0 R\]\n"
-
         # reset annotations (this variable contains a list)
         set pdf(annotations) {}
 
@@ -1500,10 +1548,20 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfout "$oid 0 obj\n"
         # Allocate an object for the page length
         set pdf(pagelengthoid) [$self GetOid 1]
-        $self Pdfout "<<\n/Length $pdf(pagelengthoid) 0 R\n"
+        $self Pdfout "<<\n"
+        if {$pdf(inXObject)} {
+            $self Pdfout "/Type /XObject\n"
+            $self Pdfout "/Subtype /Form\n"
+            $self Pdfout [format "/BBox \[0 0 %g %g\]\n" $pdf(width) $pdf(height)]
+            # This matrix makes the final Xobject to be size 1x1 in user space
+            # just like an image
+            $self Pdfout [format "/Matrix \[%g 0 0 %g 0 0\]\n" [expr {1.0/$pdf(width)}] [expr {1.0/$pdf(height)}]]
+            # TBD: Resources?
+        }
         if {$pdf(compress)} {
             $self Pdfout "/Filter \[/FlateDecode\]\n"
         }
+        $self Pdfout "/Length $pdf(pagelengthoid) 0 R\n"
         $self Pdfout ">>\nstream\n"
         set pdf(data_start) $pdf(out_pos)
         set pdf(in_text_object) false
@@ -1513,6 +1571,8 @@ snit::type pdf4tcl::pdf4tcl {
 
         # capture output
         $self Flush
+
+        return $oid
     }
 
     # Finish a page
@@ -1538,13 +1598,15 @@ snit::type pdf4tcl::pdf4tcl {
         set pdf(inPage) false
 
         # insert annotations array and write page object
-        if {[llength $pdf(annotations)] > 0} {
-            append pdf(pageobj) "/Annots \[[join $pdf(annotations) \n]\]\n"
+        if {!$pdf(inXObject)} {
+            if {[llength $pdf(annotations)] > 0} {
+                append pdf(pageobj) "/Annots \[[join $pdf(annotations) \n]\]\n"
+            }
+            append pdf(pageobj) ">>\n"
+            append pdf(pageobj) "endobj\n\n"
+            $self StoreXref $pdf(pageobjid)
+            $self Pdfout $pdf(pageobj)
         }
-        append pdf(pageobj) ">>\n"
-        append pdf(pageobj) "endobj\n\n"
-        $self StoreXref $pdf(pageobjid)
-        $self Pdfout $pdf(pageobj)
 
         # Dump stored objects
         $self FlushObjects
@@ -3918,13 +3980,16 @@ snit::type pdf4tcl::pdf4tcl {
     # Embed a file and create a file annotation
     method attachFile {x y width height fid description args} {
         variable files
+        variable images
         set icon Paperclip
 
         foreach {option value} $args {
             switch -- $option {
                 -icon {
-                    if {[lsearch {Paperclip Tag Graph PushPin} $icon ] < 0} {
-                        return -code error "Unknown value for -icon"
+                    if {[lsearch {Paperclip Tag Graph PushPin} $value ] < 0} {
+                        if {![info exists images($value)]} {
+                            return -code error "Unknown value for -icon"
+                        }
                     }
                     set icon $value
                 }
@@ -3947,7 +4012,12 @@ snit::type pdf4tcl::pdf4tcl {
         append andict "  /Subtype /FileAttachment\n"
         append andict "  /FS $fsid 0 R\n"
         append andict "  /Contents [QuoteString $description]\n"
-        append andict "  /Name /$icon\n"
+        if {[info exists images($icon)]} {
+            foreach {_ _ iconOid} $images($icon) break
+            append andict "  /AP << /N $iconOid 0 R >>\n"
+        } else {
+            append andict "  /Name /$icon\n"
+        }
         append andict "  /Rect \[$x $y $x2 $y2\]\n"
         append andict ">>\n"
         set anid [$self AddObject $andict]
