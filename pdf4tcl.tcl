@@ -1419,7 +1419,7 @@ snit::type pdf4tcl::pdf4tcl {
         set localopts(-orient)    $options(-orient)
         set localopts(-landscape) 0
         set localopts(-margin)    0
-        set localopts(-paper)     {100 100}
+        set localopts(-paper)     {100p 100p}
         set localopts(-rotate)    0
         set localopts(-xobject)   1
 
@@ -1427,7 +1427,7 @@ snit::type pdf4tcl::pdf4tcl {
         foreach {option value} $args {
             switch -- $option {
                 -paper {
-                        $self CheckPaper $option $value
+                    $self CheckPaper $option $value
                 }
                 -landscape {
                     $self CheckBoolean $option $value
@@ -1451,6 +1451,11 @@ snit::type pdf4tcl::pdf4tcl {
         set id xobject$oid
         set images($id) [list $pdf(width) $pdf(height) $oid]
         return $id
+    }
+    # Finish an XObject, this is just a wrapper for endPage available
+    # for symmetry with startXObject.
+    method endXObject {} {
+        $self endPage
     }
 
     # Start on a new page

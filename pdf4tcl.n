@@ -288,6 +288,10 @@ package require \fBpdf4tcl  ?0.8?\fR
 .sp
 \fIobjectName\fR \fBendPage\fR
 .sp
+\fIobjectName\fR \fBstartXObject\fR ?\fIoption value\fR...?
+.sp
+\fIobjectName\fR \fBendXObject\fR
+.sp
 \fIobjectName\fR \fBfinish\fR
 .sp
 \fIobjectName\fR \fBget\fR
@@ -529,6 +533,19 @@ if the document is built page by page in e.g. an event driven environment
 it can be good to call \fBendPage\fR explicitly to have all the page's
 work finished before reentering the event loop.
 .TP
+\fIobjectName\fR \fBstartXObject\fR ?\fIoption value\fR...?
+This method starts a new XObject in the document.  An XObject is a reusable
+drawing object and behaves just like a page where you can draw any graphics.
+An XObject must be created between pages and this method will end any ongoing
+page. The return value is an id that can be used with \fBputImage\fR to draw
+it on the current page. All page settings (\fBPAGE CONFIGURATION\fR) are
+valid when creating an XObject. Default options are
+\fB-paper\fR = {100p 100p}, \fB-landscape\fR = 0,
+\fB-orient\fR = document default, \fB-margin\fR= 0.
+.TP
+\fIobjectName\fR \fBendXObject\fR
+This method ends an XObject definition. It works just like \fBendPage\fR.
+.TP
 \fIobjectName\fR \fBfinish\fR
 This method ends the document.
 This will do \fBendPage\fR if needed.
@@ -586,7 +603,7 @@ Option -splinesteps for lines/polygons is ignored.
 .sp
 Stipple offset is limited. The form x,y should work.
 .sp
-Window items requires Img to be present and must be visible on-screen when
+Window items require Img to be present and must be visible on-screen when
 the canvas is drawn.
 .TP
 \fIobjectName\fR \fBmetadata\fR ?\fIoption value\fR...?

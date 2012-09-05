@@ -220,6 +220,21 @@ if the document is built page by page in e.g. an event driven environment
 it can be good to call [method endPage] explicitly to have all the page's
 work finished before reentering the event loop.
 
+[call [arg objectName] [method startXObject] [opt [arg "option value"]...]]
+
+This method starts a new XObject in the document.  An XObject is a reusable
+drawing object and behaves just like a page where you can draw any graphics.
+An XObject must be created between pages and this method will end any ongoing
+page. The return value is an id that can be used with [method putImage] to draw
+it on the current page. All page settings ([sectref {PAGE CONFIGURATION}]) are
+valid when creating an XObject. Default options are
+[option -paper] = {100p 100p}, [option -landscape] = 0,
+[option -orient] = document default, [option -margin]= 0.
+
+[call [arg objectName] [method endXObject]]
+
+This method ends an XObject definition. It works just like [method endPage].
+
 [call [arg objectName] [method finish]]
 
 This method ends the document.
@@ -286,7 +301,7 @@ Option -splinesteps for lines/polygons is ignored.
 [para]
 Stipple offset is limited. The form x,y should work.
 [para]
-Window items requires Img to be present and must be visible on-screen when
+Window items require Img to be present and must be visible on-screen when
 the canvas is drawn.
 
 [call [arg objectName] [method metadata] [opt [arg "option value"]...]]
