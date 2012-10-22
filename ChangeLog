@@ -1,3 +1,7 @@
+2012-10-22 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Store font data while processing canvas text object, to end
+	  up in a consistent internal state. (arjen) [Bug 18754]
+
 2012-09-06 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added startXObject method, for creating Form XObjects.
 

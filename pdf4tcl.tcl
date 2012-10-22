@@ -2103,6 +2103,20 @@ snit::type pdf4tcl::pdf4tcl {
         }
     }
 
+    # Helpers to temporarily store and restore the current font state
+    method PushFont {} {
+        lappend pdf(font_stack) \
+                [list $pdf(current_font) $pdf(font_size) $pdf(font_set)]
+    }
+    method PopFont {} {
+        if {![info exists pdf(font_stack)] || [llength $pdf(font_stack)] < 1} {
+            return
+        }
+        set old [lindex $pdf(font_stack) end]
+        set pdf(font_stack) [lrange $pdf(font_stack) 0 end-1]
+        foreach {pdf(current_font) pdf(font_size) pdf(font_set)} $old break
+    }
+
     # Set the current font on the page
     method SetupFont {} {
         variable fonts
@@ -4364,6 +4378,7 @@ snit::type pdf4tcl::pdf4tcl {
                 foreach {x y} $coords break
                 foreach {x1 y1 x2 y2} [$path bbox $id] break
 
+                $self PushFont
                 $self CanvasSetFont $opts(-font) $canvasFontMapping
                 set fontsize $pdf(font_size)
                 # Next, figure out if the text fits within the bbox
@@ -4482,6 +4497,7 @@ snit::type pdf4tcl::pdf4tcl {
                     set y [expr {$y + $fontsize}]
                 }
                 $self EndTextObj
+                $self PopFont
 
                 # Draw any underline
                 if {[info exists rotationmatrix]} {
