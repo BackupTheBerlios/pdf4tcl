@@ -4397,6 +4397,11 @@ snit::type pdf4tcl::pdf4tcl {
                         set cwidest $cwidth
                     }
                 }
+                if {$cwidest == 0} {
+                    # The text does not produce any size, which probably
+                    # mean it is empty.
+                    return
+                }
                 set xscale [expr {$widest / $cwidest}]
                 set yscale [expr {([llength $lines] * $fontsize) / \
                         ($y2 - $y1)}]
@@ -4665,7 +4670,9 @@ snit::type pdf4tcl::pdf4tcl {
                     $self Pdfout "/$id Do\n"
                 }
             }
-        }
+        } ;# End of switch over item type
+        # Note: Any item above may return early if needed, so
+        # there should not be any code here.
     }
 
     method CanvasBezier {coords} {
