@@ -65,7 +65,7 @@ test text-3.3 {text method, fill, text position} -body {
 test text-3.4 {text method, fill, other color format} -body {
     mytest {setFont 20 Courier} \
             {text Gurkan -x 10 -y 10 -bg \#33FF66} {
-        q 0.2 1.0 0.4 rg 110 205 72 21.1 re f Q BT
+        q 0.2 1 0.4 rg 110 205 72 21.1 re f Q BT
     }
 } -result 1
 

@@ -1076,6 +1076,53 @@ namespace eval pdf4tcl {
         unset -nocomplain type1name
     }
 
+    # The incoming RBG triplet must contain values in the range 0.0 to 1.0
+    # The return value is CMYK as a list of values in the range 0.0 to 1.0
+    proc rgb2Cmyk {RGB} {
+        foreach {r g b} $RGB break
+
+        # Black, including some margin for float roundings
+        if {$r <= 0.00001 && $g <= 0.00001 && $b <= 0.00001} {
+            return [list 0.0 0.0 0.0 1.0]
+        }
+        set c [expr {1.0 - $r}]
+        set m [expr {1.0 - $g}]
+        set y [expr {1.0 - $b}]
+
+        # k is min of c/m/y
+        set k [lindex [lsort -real [list $c $m $y]] 0] ;# 8.5
+        # k is less than 1 since only black would give exactly 1
+        # so all divisions are safe.
+        # Since k is min, all numerators are >= 0
+        # All numerators are <= denominators, leaving all results <= 1.0
+        set c [expr {($c - $k) / (1.0 - $k)}]
+        set m [expr {($m - $k) / (1.0 - $k)}]
+        set y [expr {($y - $k) / (1.0 - $k)}]
+
+        return [list $c $m $y $k]
+    }
+
+    # The incoming CMYK must contain values in the range 0.0 to 1.0
+    # The return value is RGB as a list of values in the range 0.0 to 1.0
+    proc cmyk2Rgb {CMYK} {
+        foreach {c m y k} $CMYK break
+
+        # Black, including some margin for float roundings
+        if {$k >= 0.99999} {
+            return [list 0.0 0.0 0.0]
+        }
+
+        set c [expr {$c * (1.0 - $k) + $k}]
+        set m [expr {$m * (1.0 - $k) + $k}]
+        set y [expr {$y * (1.0 - $k) + $k}]
+
+        set r [expr {1.0 - $c}]
+        set g [expr {1.0 - $m}]
+        set b [expr {1.0 - $y}]
+
+        return [list $r $g $b]
+    }
+
     # 8.4 compatiblity patch for some functionality.
     if {[llength [info commands dict]] == 0} {
         proc ::dict {subC d i args} {
@@ -1102,6 +1149,8 @@ snit::type pdf4tcl::pdf4tcl {
     option -landscape -default 0      -validatemethod CheckBoolean \
             -configuremethod SetPageOption
     option -orient    -default 1      -validatemethod CheckBoolean
+    option -cmyk      -default 0      -validatemethod CheckBoolean \
+            -readonly 1
     option -unit      -default p      -validatemethod CheckUnit \
             -configuremethod SetUnit -readonly 1
     option -compress  -default 0      -validatemethod CheckBoolean \
@@ -1261,6 +1310,7 @@ snit::type pdf4tcl::pdf4tcl {
                 $options(-rotate)
         $self SetPageMargin $options(-margin)
         set pdf(orient) $options(-orient)
+        set pdf(cmyk) $options(-cmyk)
 
         # The first buffer if for collecting page data until end of page.
         # This is to support compressing whole pages.
@@ -1727,7 +1777,11 @@ snit::type pdf4tcl::pdf4tcl {
         # pattern references
         if {[array size patterns] > 0} {
             $self Pdfout "/ColorSpace <<\n"
-            $self Pdfout "/Cs1 \[/Pattern /DeviceRGB\]\n"
+            if {$pdf(cmyk)} {
+                $self Pdfout "/Cs1 \[/Pattern /DeviceCMYK\]\n"
+            } else {
+                $self Pdfout "/Cs1 \[/Pattern /DeviceRGB\]\n"
+            }
             $self Pdfout ">>\n"
 
             $self Pdfout "/Pattern <<\n"
@@ -2505,7 +2559,7 @@ snit::type pdf4tcl::pdf4tcl {
                     if {[string is boolean -strict $value]} {
                         set bg $value
                     } else {
-                        set bg [GetColor $value]
+                        set bg [$self GetColor $value]
                     }
                 }
                 "-y" {
@@ -2547,9 +2601,9 @@ snit::type pdf4tcl::pdf4tcl {
             # Temporarily shift fill color
             $self Pdfoutcmd "q"
             if {[llength $bg] > 1} {
-                $self Pdfout "$bg rg\n"
+                $self SetFillColor $bg
             } else {
-                $self Pdfout "$pdf(bgColor) rg\n"
+                $self SetFillColor $pdf(bgColor)
             }
             if {$angle || $xangle || $yangle} {
                 # Create rotated and skewed background polygon:
@@ -2763,33 +2817,45 @@ snit::type pdf4tcl::pdf4tcl {
     #######################################################################
 
     # Convert any user color to PDF color
-    proc GetColor {color} {
+    method GetColor {color} {
         # Remove list layers, to accept things that have been
         # multiply listified
         if {[llength $color] == 1} {
             set color [lindex $color 0]
         }
+        if {[llength $color] == 4} {
+            # Maybe range check them here...
+            if {$pdf(cmyk)} {
+                return $color
+            }
+            # Convert CMYK to RGB
+            set color [pdf4tcl::cmyk2Rgb $color]
+        }
         if {[llength $color] == 3} {
             # Maybe range check them here...
-            return $color
-        }
-        if {[regexp {^\#([[:xdigit:]]{2})([[:xdigit:]]{2})([[:xdigit:]]{2})$} \
+            set RGB $color
+        } elseif {[regexp {^\#([[:xdigit:]]{2})([[:xdigit:]]{2})([[:xdigit:]]{2})$} \
                 $color -> rHex gHex bHex]} {
             set red   [expr {[scan $rHex %x] / 255.0}]
             set green [expr {[scan $gHex %x] / 255.0}]
             set blue  [expr {[scan $bHex %x] / 255.0}]
-            return [list $red $green $blue]
+            set RGB [list $red $green $blue]
+        } else {
+            # Use catch both to catch bad color, and to catch Tk not present
+            if {[catch {winfo rgb . $color} tkcolor]} {
+                return -code error "Unknown color: $color"
+            }
+            foreach {red green blue} $tkcolor break
+            set red   [expr {($red   & 0xFF00) / 65280.0}]
+            set green [expr {($green & 0xFF00) / 65280.0}]
+            set blue  [expr {($blue  & 0xFF00) / 65280.0}]
+            set RGB [list $red $green $blue]
         }
-        # Use catch both to catch bad color, and to catch Tk not present
-        if {[catch {winfo rgb . $color} tkcolor]} {
-            return -code error "Unknown color: $color"
+        if {!$pdf(cmyk)} {
+            return $RGB
         }
-        foreach {red green blue} $tkcolor break
-        set red   [expr {($red   & 0xFF00) / 65280.0}]
-        set green [expr {($green & 0xFF00) / 65280.0}]
-        set blue  [expr {($blue  & 0xFF00) / 65280.0}]
-        return [list $red $green $blue]
-
+        # Convert RGB to CMYK
+        return [pdf4tcl::rgb2Cmyk $RGB]
     }
 
     ###<jpo 2004-11-08: replaced "on off" by "args"
@@ -3051,6 +3117,7 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     # Create a four-point spline that forms an arc along the unit circle
+    # from angle -phi2 to +phi2 (where phi2 is in radians)
     proc Simplearc {phi2} {
         set x0 [expr {cos($phi2)}]
         set y0 [expr {-sin($phi2)}]
@@ -3159,21 +3226,39 @@ snit::type pdf4tcl::pdf4tcl {
     }
 
     method setBgColor {args} {
-        set pdf(bgColor) [GetColor $args]
+        set pdf(bgColor) [$self GetColor $args]
+    }
+
+    method SetFillColor {color} {
+        if {$pdf(cmyk)} {
+            foreach {red green blue k} $color break
+            $self Pdfoutcmd $red $green $blue $k "k"
+        } else {
+            foreach {red green blue} $color break
+            $self Pdfoutcmd $red $green $blue "rg"
+        }
     }
 
     method setFillColor {args} {
         if {!$pdf(inPage)} { $self startPage }
-        set pdf(fillColor) [GetColor $args]
-        foreach {red green blue} $pdf(fillColor) break
-        $self Pdfoutcmd $red $green $blue "rg"
+        set pdf(fillColor) [$self GetColor $args]
+        $self SetFillColor $pdf(fillColor)
+    }
+
+    method SetStrokeColor {color} {
+        if {$pdf(cmyk)} {
+            foreach {red green blue k} $color break
+            $self Pdfoutcmd $red $green $blue $k "K"
+        } else {
+            foreach {red green blue} $color break
+            $self Pdfoutcmd $red $green $blue "RG"
+        }
     }
 
     method setStrokeColor {args} {
         if {!$pdf(inPage)} { $self startPage }
-        set pdf(strokeColor) [GetColor $args]
-        foreach {red green blue} $pdf(strokeColor) break
-        $self Pdfoutcmd $red $green $blue "RG"
+        set pdf(strokeColor) [$self GetColor $args]
+        $self SetStrokeColor $pdf(strokeColor)
     }
 
     # Draw a rectangle, internal version
@@ -4144,8 +4229,8 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfoutcmd "q"
         $self Pdfoutcmd 1.0 "w"
         $self Pdfout "\[\] 0 d\n"
-        $self Pdfoutcmd 0 0 0 "rg"
-        $self Pdfoutcmd 0 0 0 "RG"
+        $self Pdfoutcmd 0 0 0 "rg" ;# FIXA CMYK
+        $self Pdfoutcmd 0 0 0 "RG" ;# FIXA CMYK
         $self Pdfoutcmd 0 "J" ;# Butt cap style
         $self Pdfoutcmd 0 "j" ;# Miter join style
         # Miter limit; Tk switches from miter to bevel at 11 degrees
@@ -4167,10 +4252,9 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfoutcmd "W"
         if {$bg} {
             # Draw the region in background color if requested
-            foreach {red green blue} [GetColor [$path cget -background]] break
-            $self Pdfoutcmd $red $green $blue "rg"
+            $self SetFillColor [$self GetColor [$path cget -background]]
             $self Pdfoutcmd "f"
-            $self Pdfoutcmd 0 0 0 "rg"
+            $self Pdfoutcmd 0 0 0 "rg" ;# FIXA CMYK
         } else {
             $self Pdfoutcmd "n"
         }
@@ -4550,13 +4634,18 @@ snit::type pdf4tcl::pdf4tcl {
                     set bg $opts(-foreground)
                 }
                 # Build a two-color palette
-                set colors [concat [GetColor $bg] [GetColor $opts(-foreground)]]
+                set colors [concat [$self GetColor $bg] \
+                                    [$self GetColor $opts(-foreground)]]
                 set PaletteHex ""
                 foreach color $colors {
                     append PaletteHex [format %02x \
                             [expr {int(round($color * 255.0))}]]
                 }
-                set paletteX "\[ /Indexed /DeviceRGB "
+                if {$pdf(cmyk)} {
+                    set paletteX "\[ /Indexed /DeviceCMYK "
+                } else {
+                    set paletteX "\[ /Indexed /DeviceRGB "
+                }
                 append paletteX "1 < "
                 append paletteX $PaletteHex
                 append paletteX " > \]"
@@ -4862,24 +4951,26 @@ snit::type pdf4tcl::pdf4tcl {
 
     # Set the fill color from a Tk color
     method CanvasFillColor {color {bitmapid ""}} {
-        foreach {red green blue} [GetColor $color] break
+        set cList [$self GetColor $color]
+        foreach {red green blue} $cList break
         if {$bitmapid eq ""} {
-            $self Pdfoutcmd $red $green $blue "rg"
+            $self SetFillColor $cList
         } else {
             $self Pdfout "/Cs1 cs\n"
             #$self Pdfoutcmd $red $green $blue "scn"
-            $self Pdfoutcmd $red $green $blue "/$bitmapid scn"
+            $self Pdfoutcmd $red $green $blue "/$bitmapid scn" ;# FIXA CMYK
         }
     }
 
     # Set the stroke color from a Tk color
     method CanvasStrokeColor {color {bitmapid ""}} {
-        foreach {red green blue} [GetColor $color] break
+        set cList [$self GetColor $color]
+        foreach {red green blue} $cList break
         if {$bitmapid eq ""} {
-            $self Pdfoutcmd $red $green $blue "RG"
+            $self SetStrokeColor $cList
         } else {
             $self Pdfout "/Cs1 CS\n"
-            $self Pdfoutcmd $red $green $blue "/$bitmapid SCN"
+            $self Pdfoutcmd $red $green $blue "/$bitmapid SCN" ;# FIXA CMYK
         }
     }
 

@@ -1,3 +1,6 @@
+2012-10-28 Peter Spjuth   <peter.spjuth@gmail.com>
+	* Added document flag -cmyk and started on CMYK support.
+
 2012-10-22 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Store font data while processing canvas text object, to end
 	  up in a consistent internal state. (arjen) [Bug 18754]
