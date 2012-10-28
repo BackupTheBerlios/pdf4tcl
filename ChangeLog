@@ -82,6 +82,7 @@
 	* Added tests for font loading
 	* Corrected naming of bboxb/t metrics.
 	* Changed height metric to measure full bbox height
+	*** INCOMPATIBLE CHANGE ***
 
 2010-01-29 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Got font examples working.
