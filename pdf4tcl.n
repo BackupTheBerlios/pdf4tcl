@@ -272,6 +272,10 @@ package require \fBpdf4tcl  ?0.8?\fR
 .sp
 \fB::pdf4tcl::createFontSpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
 .sp
+\fB::pdf4tcl::rgb2Cmyk\fR \fIrgb\fR
+.sp
+\fB::pdf4tcl::cmyk2Rgb\fR \fIcmyk\fR
+.sp
 \fBobjectName\fR \fBmethod\fR ?\fIarg arg ...\fR?
 .sp
 \fIobjectName\fR \fBconfigure\fR
@@ -350,9 +354,15 @@ package require \fBpdf4tcl  ?0.8?\fR
 .sp
 \fIobjectName\fR \fBsetBgColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 .sp
+\fIobjectName\fR \fBsetBgColor\fR \fIc\fR \fIm\fR \fIy\fR \fIk\fR
+.sp
 \fIobjectName\fR \fBsetFillColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 .sp
+\fIobjectName\fR \fBsetFillColor\fR \fIc\fR \fIm\fR \fIy\fR \fIk\fR
+.sp
 \fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
+.sp
+\fIobjectName\fR \fBsetStrokeColor\fR \fIc\fR \fIm\fR \fIy\fR \fIk\fR
 .sp
 \fIobjectName\fR \fBsetLineWidth\fR \fIwidth\fR
 .sp
@@ -477,6 +487,17 @@ mypdf destroy
 \fB::pdf4tcl::createFontSpecEnc\fR \fIbasefontname\fR \fIfontname\fR \fIsubset\fR
 This call creates a font that can be used in documents from a base font.
 The \fIsubset\fR must be a list of unicode values.
+.TP
+\fB::pdf4tcl::rgb2Cmyk\fR \fIrgb\fR
+This call translates an RGB color value to a CMYK color value.
+It is used internally if \fI-cmyk\fR was set at object creation to
+translate colors.
+You can redfine this procedure to provide your own translation.
+.TP
+\fB::pdf4tcl::cmyk2Rgb\fR \fIcmyk\fR
+This call translates a CMYK color value to an RGB color value.
+It is used internally to translate colors.
+You can redfine this procedure to provide your own translation.
 .PP
 .SS "OBJECT COMMAND"
 All commands created by \fB::pdf4tcl::new\fR have the following
@@ -822,12 +843,21 @@ any color accepted by winfo rgb is accepted.
 \fIobjectName\fR \fBsetBgColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 Sets the background color for text operations where -bg is true.
 .TP
+\fIobjectName\fR \fBsetBgColor\fR \fIc\fR \fIm\fR \fIy\fR \fIk\fR
+Alternative calling form, to set color in CMYK color space.
+.TP
 \fIobjectName\fR \fBsetFillColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 Sets the fill color for graphics operations, and the foreground color for
 text operations.
 .TP
+\fIobjectName\fR \fBsetFillColor\fR \fIc\fR \fIm\fR \fIy\fR \fIk\fR
+Alternative calling form, to set color in CMYK color space.
+.TP
 \fIobjectName\fR \fBsetStrokeColor\fR \fIred\fR \fIgreen\fR \fIblue\fR
 Sets the stroke color for graphics operations.
+.TP
+\fIobjectName\fR \fBsetStrokeColor\fR \fIc\fR \fIm\fR \fIy\fR \fIk\fR
+Alternative calling form, to set color in CMYK color space.
 .PP
 .SS "OBJECT METHODS, GRAPHICS"
 .TP
@@ -932,6 +962,12 @@ Draw an outline of the rectangle.
 All pdf4tcl objects understand the options from \fBPAGE CONFIGURATION\fR,
 which defines default page settings when used with a pdf4tcl object.
 The objects also understand the following configuration options:
+.TP
+\fB-cmyk\fR \fIboolean\fR
+If true, pdf4tcl will try to generate the document in CMYK color space.
+See \fB::pdf4tcl::rgb2Cmyk\fR for a way to control color translation.
+Default value is false.
+This option can only be set at object creation.
 .TP
 \fB-compress\fR \fIboolean\fR
 Pages will be zlib compressed if this option is set to true.

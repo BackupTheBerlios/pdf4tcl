@@ -1076,7 +1076,7 @@ namespace eval pdf4tcl {
         unset -nocomplain type1name
     }
 
-    # The incoming RBG triplet must contain values in the range 0.0 to 1.0
+    # The incoming RBG must contain three values in the range 0.0 to 1.0
     # The return value is CMYK as a list of values in the range 0.0 to 1.0
     proc rgb2Cmyk {RGB} {
         foreach {r g b} $RGB break
@@ -1102,7 +1102,7 @@ namespace eval pdf4tcl {
         return [list $c $m $y $k]
     }
 
-    # The incoming CMYK must contain values in the range 0.0 to 1.0
+    # The incoming CMYK must contain four values in the range 0.0 to 1.0
     # The return value is RGB as a list of values in the range 0.0 to 1.0
     proc cmyk2Rgb {CMYK} {
         foreach {c m y k} $CMYK break
@@ -4229,8 +4229,13 @@ snit::type pdf4tcl::pdf4tcl {
         $self Pdfoutcmd "q"
         $self Pdfoutcmd 1.0 "w"
         $self Pdfout "\[\] 0 d\n"
-        $self Pdfoutcmd 0 0 0 "rg" ;# FIXA CMYK
-        $self Pdfoutcmd 0 0 0 "RG" ;# FIXA CMYK
+        if {$pdf(cmyk)} {
+            $self Pdfoutcmd 0 0 0 1 "k"
+            $self Pdfoutcmd 0 0 0 1 "K"
+        } else {
+            $self Pdfoutcmd 0 0 0 "rg"
+            $self Pdfoutcmd 0 0 0 "RG"
+        }
         $self Pdfoutcmd 0 "J" ;# Butt cap style
         $self Pdfoutcmd 0 "j" ;# Miter join style
         # Miter limit; Tk switches from miter to bevel at 11 degrees
@@ -4254,7 +4259,11 @@ snit::type pdf4tcl::pdf4tcl {
             # Draw the region in background color if requested
             $self SetFillColor [$self GetColor [$path cget -background]]
             $self Pdfoutcmd "f"
-            $self Pdfoutcmd 0 0 0 "rg" ;# FIXA CMYK
+            if {$pdf(cmyk)} {
+                $self Pdfoutcmd 0 0 0 1 "k"
+            } else {
+                $self Pdfoutcmd 0 0 0 "rg"
+            }
         } else {
             $self Pdfoutcmd "n"
         }
@@ -4959,25 +4968,33 @@ snit::type pdf4tcl::pdf4tcl {
     # Set the fill color from a Tk color
     method CanvasFillColor {color {bitmapid ""}} {
         set cList [$self GetColor $color]
-        foreach {red green blue} $cList break
         if {$bitmapid eq ""} {
             $self SetFillColor $cList
         } else {
+            foreach {red green blue k} $cList break
             $self Pdfout "/Cs1 cs\n"
             #$self Pdfoutcmd $red $green $blue "scn"
-            $self Pdfoutcmd $red $green $blue "/$bitmapid scn" ;# FIXA CMYK
+            if {$pdf(cmyk)} { #8.5
+                $self Pdfoutcmd $red $green $blue $k "/$bitmapid scn"
+            } else {
+                $self Pdfoutcmd $red $green $blue "/$bitmapid scn"
+            }
         }
     }
 
     # Set the stroke color from a Tk color
     method CanvasStrokeColor {color {bitmapid ""}} {
         set cList [$self GetColor $color]
-        foreach {red green blue} $cList break
         if {$bitmapid eq ""} {
             $self SetStrokeColor $cList
         } else {
+            foreach {red green blue k} $cList break
             $self Pdfout "/Cs1 CS\n"
-            $self Pdfoutcmd $red $green $blue "/$bitmapid SCN" ;# FIXA CMYK
+            if {$pdf(cmyk)} { #8.5
+                $self Pdfoutcmd $red $green $blue $k "/$bitmapid SCN"
+            } else {
+                $self Pdfoutcmd $red $green $blue "/$bitmapid SCN"
+            }
         }
     }
 

@@ -138,6 +138,19 @@ mypdf destroy
 This call creates a font that can be used in documents from a base font.
 The [arg "subset"] must be a list of unicode values.
 
+[call [cmd ::pdf4tcl::rgb2Cmyk] [arg "rgb"]]
+
+This call translates an RGB color value to a CMYK color value.
+It is used internally if [arg -cmyk] was set at object creation to 
+translate colors.
+You can redfine this procedure to provide your own translation.
+
+[call [cmd ::pdf4tcl::cmyk2Rgb] [arg "cmyk"]]
+
+This call translates a CMYK color value to an RGB color value.
+It is used internally to translate colors.
+You can redfine this procedure to provide your own translation.
+
 [list_end]
 
 [subsection {OBJECT COMMAND}]
@@ -543,12 +556,21 @@ any color accepted by winfo rgb is accepted.
 [call [arg objectName] [method setBgColor] [arg "red"] [arg "green"] [arg "blue"]]
 Sets the background color for text operations where -bg is true.
 
+[call [arg objectName] [method setBgColor] [arg "c"] [arg "m"] [arg "y"] [arg "k"]]
+Alternative calling form, to set color in CMYK color space.
+
 [call [arg objectName] [method setFillColor] [arg "red"] [arg "green"] [arg "blue"]]
 Sets the fill color for graphics operations, and the foreground color for
 text operations.
 
+[call [arg objectName] [method setFillColor] [arg "c"] [arg "m"] [arg "y"] [arg "k"]]
+Alternative calling form, to set color in CMYK color space.
+
 [call [arg objectName] [method setStrokeColor] [arg "red"] [arg "green"] [arg "blue"]]
 Sets the stroke color for graphics operations.
+
+[call [arg objectName] [method setStrokeColor] [arg "c"] [arg "m"] [arg "y"] [arg "k"]]
+Alternative calling form, to set color in CMYK color space.
 
 [list_end]
 [subsection {OBJECT METHODS, GRAPHICS}]
@@ -651,6 +673,13 @@ which defines default page settings when used with a pdf4tcl object.
 The objects also understand the following configuration options:
 
 [list_begin options]
+
+[opt_def -cmyk [arg boolean]]
+
+If true, pdf4tcl will try to generate the document in CMYK color space.
+See [cmd ::pdf4tcl::rgb2Cmyk] for a way to control color translation.
+Default value is false.
+This option can only be set at object creation.
 
 [opt_def -compress [arg boolean]]
 

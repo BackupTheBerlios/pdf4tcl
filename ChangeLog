@@ -1,3 +1,6 @@
+2012-11-01 Peter Spjuth   <peter.spjuth@gmail.com>
+	* More CMYK including documentation.
+
 2012-10-28 Peter Spjuth   <peter.spjuth@gmail.com>
 	* Added document flag -cmyk and started on CMYK support.
 
