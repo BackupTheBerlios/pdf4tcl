@@ -3936,7 +3936,7 @@ snit::type pdf4tcl::pdf4tcl {
             set filename [string range $bitmap 1 end]
         } else {
             # Internal bitmap
-            set filename [file join $pdf4tcl::dir "bitmaps" ${bitmap}.xbm]
+            set filename [file join $::pdf4tcl::dir "bitmaps" ${bitmap}.xbm]
         }
         if {![file exists $filename]} {
             return -code error "No such bitmap $bitmap"
@@ -5012,6 +5012,7 @@ snit::type pdf4tcl::pdf4tcl {
             return
         }
         # Translate options depending on state
+        set state $arr(-state)
         foreach item [array names arr] {
             if {[regexp -- "^-${state}(.*)\$" $item -> orig]} {
                 if {[info exists arr(-$orig)]} {

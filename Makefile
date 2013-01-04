@@ -43,10 +43,10 @@ test: cleancc
 	$(TCLSH) tests/all.tcl $(TESTFLAGS)
 
 pdf4tcl_h.syntax : pdf4tcl.tcl pdf4tcl.syntax
-	$(NAGELFAR) -header pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
+	$(NAGELFAR) -header pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*' -filter '*Unknown subcommand*'
 
 check: pdf4tcl_h.syntax
-	$(NAGELFAR) pdf4tcl_h.syntax pdf4tcl.tcl -filter '*Unknown variable*'
+	$(NAGELFAR) pdf4tcl_h.syntax pdf4tcl.tcl
 
 bench: cleancc
 	$(TCLSH) bench/all.tcl
